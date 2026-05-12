@@ -20,7 +20,8 @@ import {
   getCurrentWeekIndex,
   getDayOrdinal,
 } from '../utils/dateUtils';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord } from '../types';
 
@@ -31,7 +32,7 @@ import { ExpenseWithRecord } from '../types';
 const getPressureColor = (ratio: number, isPast: boolean): string => {
   if (!isPast) return colors.textDisabled; // future week — neutral
   if (ratio >= 0.9) return colors.success;
-  if (ratio >= 0.5) return colors.primary;
+  if (ratio >= 0.5) return colors.teal;
   if (ratio >= 0.2) return colors.warning;
   return colors.danger;
 };
@@ -39,7 +40,7 @@ const getPressureColor = (ratio: number, isPast: boolean): string => {
 const getPressureBg = (ratio: number, isPast: boolean): string => {
   if (!isPast) return colors.surfaceAlt;
   if (ratio >= 0.9) return colors.successLight;
-  if (ratio >= 0.5) return colors.primaryLight;
+  if (ratio >= 0.5) return colors.tealLight;
   if (ratio >= 0.2) return colors.warningLight;
   return colors.dangerLight;
 };
@@ -85,8 +86,8 @@ const WeekBar = ({
   delay: number;
 }) => {
   const barAnim = useRef(new Animated.Value(0)).current;
-  const color = isCurrent ? colors.primary : getPressureColor(coverage, isPast);
-  const bg = isCurrent ? colors.primaryLight : getPressureBg(coverage, isPast);
+  const color = isCurrent ? colors.teal : getPressureColor(coverage, isPast);
+  const bg = isCurrent ? colors.tealLight : getPressureBg(coverage, isPast);
 
   useEffect(() => {
     Animated.timing(barAnim, {
@@ -116,7 +117,7 @@ const WeekBar = ({
           <Ionicons name="checkmark-circle" size={14} color={colors.success} />
         )}
       </View>
-      <Text style={[styles.weekBarAmount, { color: isCurrent ? colors.primary : colors.textPrimary }]}>
+      <Text style={[styles.weekBarAmount, { color: isCurrent ? colors.teal : colors.textPrimary }]}>
         {formatCurrency(amount)}
       </Text>
       <Text style={styles.weekBarDates}>{dateRange}</Text>
@@ -202,7 +203,7 @@ const CommitmentFlowRow = ({
           const barColor = isPaid
             ? colors.success
             : isCurrentWeek
-            ? colors.primary
+            ? colors.teal
             : expense.type === 'personal'
             ? colors.personal
             : colors.business;
@@ -289,10 +290,11 @@ export default function FlowScreen() {
   const heroBarColor = coveragePct >= 90
     ? colors.success
     : coveragePct >= 50
-    ? '#60A5FA'
+    ? colors.teal
     : coveragePct >= 20
     ? colors.warning
     : colors.danger;
+  const heroIsPositive = coveragePct >= 50;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -350,9 +352,20 @@ export default function FlowScreen() {
                   </View>
                 </View>
 
-                {/* Hero bar */}
+                {/* Hero bar — gradient when positive, semantic color otherwise */}
                 <View style={styles.heroBarTrack}>
-                  <Animated.View style={[styles.heroBarFill, { width: heroBarWidth, backgroundColor: heroBarColor }]} />
+                  {heroIsPositive ? (
+                    <Animated.View style={[styles.heroBarFill, { width: heroBarWidth }]}>
+                      <LinearGradient
+                        colors={gradient.brand}
+                        start={gradient.brandStart}
+                        end={gradient.brandEnd}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    </Animated.View>
+                  ) : (
+                    <Animated.View style={[styles.heroBarFill, { width: heroBarWidth, backgroundColor: heroBarColor }]} />
+                  )}
                 </View>
 
                 {/* Row: Need / Covered / Unallocated */}
@@ -563,7 +576,7 @@ const styles = StyleSheet.create({
   },
   weekBarCardCurrent: {
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.teal,
   },
   weekBarHeader: {
     flexDirection: 'row',
@@ -575,7 +588,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.semibold,
   },
   nowPill: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.teal,
     borderRadius: radius.full,
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -654,7 +667,7 @@ const styles = StyleSheet.create({
   },
   thisWeekAmount: {
     fontWeight: typography.bold,
-    color: colors.primary,
+    color: colors.teal,
   },
   commitmentBars: {
     gap: spacing.sm,
@@ -670,7 +683,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   barLabelActive: {
-    color: colors.primary,
+    color: colors.teal,
     fontWeight: typography.semibold,
   },
   barTrack: {

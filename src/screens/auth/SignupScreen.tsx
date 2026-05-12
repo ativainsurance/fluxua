@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,14 +17,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth, SignupMeta } from '../../contexts/AuthContext';
 import { colors, typography, spacing, radius } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
+import { GradientButton } from '../../components/GradientButton';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
 };
-
-// ─────────────────────────────────────────────
-// Options
-// ─────────────────────────────────────────────
 
 type AccountType = 'personal' | 'business' | 'both';
 
@@ -34,17 +31,7 @@ const ACCOUNT_TYPES: { value: AccountType; label: string; icon: string }[] = [
   { value: 'both', label: 'Both', icon: 'git-merge-outline' },
 ];
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'MXN', 'AUD'];
-const LANGUAGES: { value: string; label: string }[] = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-  { value: 'pt', label: 'Português' },
-  { value: 'fr', label: 'Français' },
-];
-
-// ─────────────────────────────────────────────
-// Password strength
-// ─────────────────────────────────────────────
+// ── Password strength ──────────────────────────────────────────────────────
 
 type StrengthLevel = 'weak' | 'medium' | 'strong';
 
@@ -69,10 +56,6 @@ const STRENGTH_HINT = {
   medium: 'Add a symbol (!, @, #…) for a stronger password',
   strong: 'Great password!',
 } as const;
-
-// ─────────────────────────────────────────────
-// Sub-components
-// ─────────────────────────────────────────────
 
 const StrengthBar = ({ score, level }: { score: number; level: StrengthLevel }) => {
   if (score === 0) return null;
@@ -103,47 +86,57 @@ const sbStyles = StyleSheet.create({
   hint: { fontSize: typography.xs, color: colors.textDisabled, flex: 1 },
 });
 
-// ─────────────────────────────────────────────
-// Main component
-// ─────────────────────────────────────────────
+// ── FadeInSection ──────────────────────────────────────────────────────────
+
+const FadeInSection = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 300,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+  return <Animated.View style={{ opacity }}>{children}</Animated.View>;
+};
+
+// ── Main component ─────────────────────────────────────────────────────────
 
 export default function SignupScreen({ navigation }: Props) {
   const { signUp } = useAuth();
 
-  // Form state
   const [firstName, setFirstName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
   const [accountType, setAccountType] = useState<AccountType>('personal');
-  const [currency, setCurrency] = useState('USD');
-  const [language, setLanguage] = useState('en');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Derived validation
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const { level: pwLevel, score: pwScore } = getPasswordStrength(password);
-  const passwordValid = pwScore >= 2; // Medium or Strong: 8+ chars + number
+  const passwordValid = pwScore >= 2;
   const confirmVisible = passwordValid;
   const confirmMatch = confirm.length > 0 && confirm === password;
   const confirmMismatch = confirm.length > 0 && confirm !== password;
 
+  const section1Complete = firstName.trim().length > 0 && emailValid;
+  const section2Complete = accountType === 'personal' || businessName.trim().length > 0;
+
   const validate = (): string | null => {
     if (!firstName.trim()) return 'Please enter your first name.';
     if (!emailValid) return 'Please enter a valid email address.';
-    if (pwScore < 1) return 'Password must be at least 8 characters.';
-    if (pwScore < 2) return 'Password must contain at least one number.';
-    if (!confirmVisible || !confirmMatch) return 'Passwords do not match.';
     if ((accountType === 'business' || accountType === 'both') && !businessName.trim()) {
       return 'Please enter your business name.';
     }
+    if (pwScore < 1) return 'Password must be at least 8 characters.';
+    if (pwScore < 2) return 'Password must contain at least one number.';
+    if (!confirmVisible || !confirmMatch) return 'Passwords do not match.';
     return null;
   };
 
@@ -158,8 +151,8 @@ export default function SignupScreen({ navigation }: Props) {
         firstName: firstName.trim(),
         businessName: businessName.trim() || undefined,
         accountType,
-        currency,
-        language,
+        currency: 'USD',
+        language: 'en',
       };
       await signUp(email.trim().toLowerCase(), password, meta);
       setSuccess(true);
@@ -170,7 +163,7 @@ export default function SignupScreen({ navigation }: Props) {
     }
   };
 
-  // ── Success state ──────────────────────────────────────────────────────────
+  // ── Success ────────────────────────────────────────────────────────────────
   if (success) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -186,15 +179,17 @@ export default function SignupScreen({ navigation }: Props) {
           <Text style={styles.successSub}>
             Click the link in your email to activate your account, then come back and sign in.
           </Text>
-          <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.btnText}>Go to Sign In</Text>
-          </TouchableOpacity>
+          <GradientButton
+            title="Go to Sign In"
+            onPress={() => navigation.navigate('Login')}
+            style={styles.btn}
+          />
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Form ──────────────────────────────────────────────────────────────────
+  // ── Form ───────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -206,18 +201,15 @@ export default function SignupScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Back */}
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
 
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.subtitle}>Start controlling your money flow</Text>
+            <Text style={styles.subtitle}>Take control of your money flow</Text>
           </View>
 
-          {/* Error */}
           {!!error && (
             <View style={styles.errorBox}>
               <Ionicons name="alert-circle" size={16} color={colors.danger} />
@@ -225,10 +217,9 @@ export default function SignupScreen({ navigation }: Props) {
             </View>
           )}
 
-          {/* ── PERSONAL INFO ────────────────────────── */}
-          <Text style={styles.sectionLabel}>PERSONAL INFO</Text>
+          {/* ── Block 1: Basic Info ───────────────────── */}
+          <Text style={[styles.sectionLabel, { marginTop: 0 }]}>BASIC INFO</Text>
 
-          {/* First Name */}
           <View style={styles.field}>
             <Text style={styles.label}>First Name</Text>
             <View style={styles.inputRow}>
@@ -248,7 +239,6 @@ export default function SignupScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/* Email */}
           <View style={styles.field}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputRow}>
@@ -270,192 +260,149 @@ export default function SignupScreen({ navigation }: Props) {
             </View>
           </View>
 
-          {/* ── ACCOUNT TYPE ─────────────────────────── */}
-          <Text style={styles.sectionLabel}>WHAT WILL YOU USE FLUXUA FOR?</Text>
-          <View style={styles.pillRow}>
-            {ACCOUNT_TYPES.map(({ value, label, icon }) => {
-              const active = accountType === value;
-              return (
-                <TouchableOpacity
-                  key={value}
-                  style={[styles.pill, active && styles.pillActive]}
-                  onPress={() => setAccountType(value)}
-                >
-                  <Ionicons
-                    name={icon as any}
-                    size={14}
-                    color={active ? colors.primary : colors.textSecondary}
-                  />
-                  <Text style={[styles.pillText, active && styles.pillTextActive]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          {/* ── Block 2: Setup ────────────────────────── */}
+          {section1Complete && (
+            <FadeInSection>
+              <Text style={styles.sectionLabel}>YOUR SETUP</Text>
 
-          {/* Business Name (conditional) */}
-          {(accountType === 'business' || accountType === 'both') && (
-            <View style={styles.field}>
-              <Text style={styles.label}>Business Name</Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[styles.input, businessName.trim().length > 0 && styles.inputWithCheck]}
-                  value={businessName}
-                  onChangeText={setBusinessName}
-                  placeholder="Acme Corp"
-                  placeholderTextColor={colors.textDisabled}
-                  autoCapitalize="words"
-                />
-                {businessName.trim().length > 0 && (
-                  <View style={styles.checkIcon}>
-                    <Ionicons name="checkmark-circle" size={18} color={colors.success} />
-                  </View>
-                )}
+              <View style={styles.pillRow}>
+                {ACCOUNT_TYPES.map(({ value, label, icon }) => {
+                  const active = accountType === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      style={[styles.pill, active && styles.pillActive]}
+                      onPress={() => setAccountType(value)}
+                    >
+                      <Ionicons
+                        name={icon as any}
+                        size={14}
+                        color={active ? colors.primary : colors.textSecondary}
+                      />
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-            </View>
+
+              {(accountType === 'business' || accountType === 'both') && (
+                <View style={styles.field}>
+                  <Text style={styles.label}>Business Name</Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={[styles.input, businessName.trim().length > 0 && styles.inputWithCheck]}
+                      value={businessName}
+                      onChangeText={setBusinessName}
+                      placeholder="Acme Corp"
+                      placeholderTextColor={colors.textDisabled}
+                      autoCapitalize="words"
+                    />
+                    {businessName.trim().length > 0 && (
+                      <View style={styles.checkIcon}>
+                        <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+            </FadeInSection>
           )}
 
-          {/* ── PREFERENCES ──────────────────────────── */}
-          <Text style={styles.sectionLabel}>PREFERENCES</Text>
+          {/* ── Block 3: Security ─────────────────────── */}
+          {section1Complete && section2Complete && (
+            <FadeInSection delay={150}>
+              <Text style={styles.sectionLabel}>SECURITY</Text>
 
-          {/* Currency */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Currency</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
-              <View style={styles.pillRowInner}>
-                {CURRENCIES.map((c) => (
-                  <TouchableOpacity
-                    key={c}
-                    style={[styles.pill, styles.pillSm, currency === c && styles.pillActive]}
-                    onPress={() => setCurrency(c)}
-                  >
-                    <Text style={[styles.pillText, currency === c && styles.pillTextActive]}>{c}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-
-          {/* Language */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Language</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
-              <View style={styles.pillRowInner}>
-                {LANGUAGES.map(({ value, label }) => (
-                  <TouchableOpacity
-                    key={value}
-                    style={[styles.pill, styles.pillSm, language === value && styles.pillActive]}
-                    onPress={() => setLanguage(value)}
-                  >
-                    <Text style={[styles.pillText, language === value && styles.pillTextActive]}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-            <Text style={styles.fieldHint}>Full translation requires app language settings</Text>
-          </View>
-
-          {/* ── SECURITY ─────────────────────────────── */}
-          <Text style={styles.sectionLabel}>SECURITY</Text>
-
-          {/* Password */}
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={[styles.input, styles.passwordInput, passwordValid && styles.inputWithCheck]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="8+ characters, at least one number"
-                placeholderTextColor={colors.textDisabled}
-                secureTextEntry={!showPw}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity
-                onPress={() => setShowPw(!showPw)}
-                style={[styles.checkIcon, styles.eyeBtn]}
-              >
-                <Ionicons
-                  name={showPw ? 'eye-off' : 'eye'}
-                  size={18}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
-            <StrengthBar score={pwScore} level={pwLevel} />
-          </View>
-
-          {/* Confirm Password — only shown when password is valid */}
-          {confirmVisible && (
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                Confirm Password{' '}
-                <Text style={styles.labelHint}>· Must match your password</Text>
-              </Text>
-              <View style={styles.inputRow}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    confirmMatch && styles.inputWithCheck,
-                    confirmMismatch && styles.inputError,
-                  ]}
-                  value={confirm}
-                  onChangeText={setConfirm}
-                  placeholder="Repeat your password"
-                  placeholderTextColor={colors.textDisabled}
-                  secureTextEntry={!showConfirm}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirm(!showConfirm)}
-                  style={[styles.checkIcon, styles.eyeBtn]}
-                >
-                  <Ionicons
-                    name={showConfirm ? 'eye-off' : 'eye'}
-                    size={18}
-                    color={colors.textSecondary}
+              <View style={styles.field}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={[styles.input, styles.passwordInput, passwordValid && styles.inputWithCheck]}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="8+ characters, at least one number"
+                    placeholderTextColor={colors.textDisabled}
+                    secureTextEntry={!showPw}
+                    autoCapitalize="none"
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowPw(!showPw)}
+                    style={[styles.checkIcon, styles.eyeBtn]}
+                  >
+                    <Ionicons
+                      name={showPw ? 'eye-off' : 'eye'}
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <StrengthBar score={pwScore} level={pwLevel} />
               </View>
-              {confirmMatch && (
-                <View style={styles.matchRow}>
-                  <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-                  <Text style={[styles.matchText, { color: colors.success }]}>Passwords match</Text>
+
+              {confirmVisible && (
+                <View style={styles.field}>
+                  <Text style={styles.label}>
+                    Confirm Password{' '}
+                    <Text style={styles.labelHint}>· Must match your password</Text>
+                  </Text>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        styles.passwordInput,
+                        confirmMatch && styles.inputWithCheck,
+                        confirmMismatch && styles.inputError,
+                      ]}
+                      value={confirm}
+                      onChangeText={setConfirm}
+                      placeholder="Repeat your password"
+                      placeholderTextColor={colors.textDisabled}
+                      secureTextEntry={!showConfirm}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowConfirm(!showConfirm)}
+                      style={[styles.checkIcon, styles.eyeBtn]}
+                    >
+                      <Ionicons
+                        name={showConfirm ? 'eye-off' : 'eye'}
+                        size={18}
+                        color={colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {confirmMatch && (
+                    <View style={styles.matchRow}>
+                      <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+                      <Text style={[styles.matchText, { color: colors.success }]}>Passwords match</Text>
+                    </View>
+                  )}
+                  {confirmMismatch && (
+                    <View style={styles.matchRow}>
+                      <Ionicons name="close-circle" size={13} color={colors.danger} />
+                      <Text style={[styles.matchText, { color: colors.danger }]}>Passwords don't match</Text>
+                    </View>
+                  )}
                 </View>
               )}
-              {confirmMismatch && (
-                <View style={styles.matchRow}>
-                  <Ionicons name="close-circle" size={13} color={colors.danger} />
-                  <Text style={[styles.matchText, { color: colors.danger }]}>Passwords don't match</Text>
-                </View>
-              )}
-            </View>
+            </FadeInSection>
           )}
 
           {/* ── CTA ──────────────────────────────────── */}
-          <TouchableOpacity
-            style={[styles.btn, loading && styles.btnDisabled]}
+          <GradientButton
+            title="Start tracking my flow"
             onPress={handleSignup}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.btnText}>Start tracking my flow</Text>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            style={styles.btn}
+          />
 
-          {/* Trust signal */}
           <View style={styles.trustRow}>
             <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
-            <Text style={styles.trustText}>Your financial data stays private and protected</Text>
+            <Text style={styles.trustText}>Bank-level encryption. Your data is private.</Text>
           </View>
 
-          {/* Terms */}
           <Text style={styles.terms}>
             By creating an account, you agree to our{' '}
             <Text style={styles.termsLink}>Terms of Service</Text>
@@ -463,7 +410,6 @@ export default function SignupScreen({ navigation }: Props) {
             <Text style={styles.termsLink}>Privacy Policy</Text>
           </Text>
 
-          {/* Sign in link */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -522,7 +468,7 @@ const styles = StyleSheet.create({
     color: colors.textDisabled,
     letterSpacing: 0.8,
     marginBottom: spacing.sm,
-    marginTop: spacing.lg,
+    marginTop: spacing.xxl,
   },
   field: { marginBottom: spacing.base },
   label: {
@@ -557,23 +503,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   eyeBtn: {},
-  fieldHint: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
-    marginTop: 4,
-  },
-
-  // Pill selectors
   pillRow: {
     flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.base,
   },
-  pillRowInner: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  hScroll: { marginBottom: spacing.xs },
   pill: {
     flex: 1,
     flexDirection: 'row',
@@ -586,10 +520,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.background,
-  },
-  pillSm: {
-    flex: 0,
-    paddingHorizontal: spacing.base,
   },
   pillActive: {
     borderColor: colors.primary,
@@ -604,8 +534,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.semibold,
   },
-
-  // Match indicator
   matchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -613,20 +541,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   matchText: { fontSize: typography.xs, fontWeight: typography.medium },
-
-  // CTA area
   btn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
     marginTop: spacing.xl,
-  },
-  btnDisabled: { opacity: 0.6 },
-  btnText: {
-    color: '#fff',
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
   },
   trustRow: {
     flexDirection: 'row',
@@ -661,8 +577,6 @@ const styles = StyleSheet.create({
     fontSize: typography.sm,
     fontWeight: typography.semibold,
   },
-
-  // Success state
   successContainer: {
     flex: 1,
     justifyContent: 'center',

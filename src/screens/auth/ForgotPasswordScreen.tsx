@@ -7,7 +7,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, typography, spacing, radius } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
+import { GradientButton } from '../../components/GradientButton';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
@@ -53,9 +53,10 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           <Text style={styles.successSub}>
             The link expires in 15 minutes. Check your spam folder if you don't see it.
           </Text>
-          <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.btnText}>Back to Sign In</Text>
-          </TouchableOpacity>
+          <GradientButton
+            title="Back to Sign In"
+            onPress={() => navigation.navigate('Login')}
+          />
         </View>
       </SafeAreaView>
     );
@@ -93,17 +94,12 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               autoFocus
             />
 
-            <TouchableOpacity
-              style={[styles.btn, (!email.trim() || loading) && styles.btnDisabled]}
+            <GradientButton
+              title="Send reset link"
               onPress={handleSubmit}
-              disabled={!email.trim() || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnText}>Send reset link</Text>
-              )}
-            </TouchableOpacity>
+              loading={loading}
+              disabled={!email.trim()}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -153,19 +149,6 @@ const styles = StyleSheet.create({
     fontSize: typography.base,
     color: colors.textPrimary,
     backgroundColor: colors.background,
-  },
-  btn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
-  btnDisabled: { opacity: 0.5 },
-  btnText: {
-    color: '#fff',
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
   },
   // Success state
   successContainer: {

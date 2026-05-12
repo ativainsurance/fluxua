@@ -48,19 +48,25 @@ const MainNavigator = () => (
     initialRouteName="Flow"
     screenOptions={({ route }) => ({
       headerShown: false,
-      tabBarActiveTintColor: colors.primary,
+      tabBarActiveTintColor: colors.teal,
       tabBarInactiveTintColor: colors.textSecondary,
       tabBarStyle: {
         backgroundColor: colors.surface,
         borderTopColor: colors.border,
         borderTopWidth: 1,
-        paddingBottom: 4,
-        height: 60,
+        paddingBottom: 6,
+        paddingTop: 6,
+        height: 64,
+        shadowColor: colors.navy,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+        elevation: 8,
       },
       tabBarLabelStyle: {
         fontSize: 11,
         fontWeight: '600',
-        marginBottom: 4,
+        marginBottom: 2,
       },
       tabBarIcon: ({ focused, color, size }) => {
         const icons: Record<string, { active: string; inactive: string }> = {

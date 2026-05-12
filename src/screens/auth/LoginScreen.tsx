@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors, typography, spacing, radius } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
+import { GradientButton } from '../../components/GradientButton';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -40,7 +40,13 @@ export default function LoginScreen({ navigation }: Props) {
     try {
       await signIn(email.trim().toLowerCase(), password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      const msg = err instanceof Error ? err.message : '';
+      const lower = msg.toLowerCase();
+      setError(
+        lower.includes('invalid') || lower.includes('credentials')
+          ? 'Incorrect email or password.'
+          : msg || 'Login failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -91,12 +97,7 @@ export default function LoginScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.field}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Password</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text style={styles.forgotLink}>Forgot password?</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>Password</Text>
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={[styles.input, styles.passwordInput]}
@@ -118,19 +119,20 @@ export default function LoginScreen({ navigation }: Props) {
                   />
                 </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ForgotPassword')}
+                style={styles.forgotRow}
+              >
+                <Text style={styles.forgotLink}>Forgot password?</Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.btn, loading && styles.btnDisabled]}
+            <GradientButton
+              title="Sign In"
               onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
+              loading={loading}
+              style={styles.btn}
+            />
 
             {/* Trust signal */}
             <View style={styles.trustRow}>
@@ -213,11 +215,9 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: spacing.base,
   },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+  forgotRow: {
+    alignItems: 'flex-end',
+    marginTop: 6,
   },
   label: {
     fontSize: typography.sm,
@@ -254,19 +254,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   btn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
     marginTop: spacing.sm,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  btnText: {
-    color: '#fff',
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
   },
   trustRow: {
     flexDirection: 'row',

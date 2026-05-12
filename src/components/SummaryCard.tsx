@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
 import { MonthlySummary } from '../types';
 import { formatCurrency } from '../utils/dateUtils';
 
@@ -25,9 +26,14 @@ export const SummaryCard = ({ summary }: Props) => {
         </View>
       </View>
 
-      {/* Progress bar */}
+      {/* Progress bar — gradient fill */}
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+        <LinearGradient
+          colors={gradient.brand}
+          start={gradient.brandStart}
+          end={gradient.brandEnd}
+          style={[styles.progressFill, { width: `${progressPct}%` }]}
+        />
       </View>
       <Text style={styles.progressLabel}>
         {progressPct.toFixed(0)}% completed ({summary.paidCount}/{summary.expenseCount})
@@ -128,7 +134,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.success,
     borderRadius: radius.full,
   },
   progressLabel: {
