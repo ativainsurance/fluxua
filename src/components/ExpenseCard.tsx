@@ -94,14 +94,6 @@ export const ExpenseCard = ({
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;
 
-  // Pressure tint: overdue → warm red background glow
-  const cardPressureBorder: object | undefined =
-    status === 'overdue'
-      ? { borderWidth: 1, borderColor: colors.danger + '55' }
-      : status === 'due-soon'
-      ? { borderWidth: 1, borderColor: colors.warning + '55' }
-      : undefined;
-
   const handleLongPress = () => {
     Alert.alert(expense.name, 'What would you like to do?', [
       { text: 'Edit', onPress: () => onEdit?.(expense) },
@@ -152,13 +144,16 @@ export const ExpenseCard = ({
 
   return (
     <TouchableOpacity
-      style={[styles.card, cardPressureBorder]}
+      style={styles.card}
       onLongPress={handleLongPress}
       activeOpacity={0.8}
     >
+      {/* Status accent strip */}
+      <View style={[styles.accentBar, { backgroundColor: statusConfig.color }]} />
+
       {/* Left: Category icon */}
-      <View style={[styles.iconWrapper, { backgroundColor: colors.primaryLight }]}>
-        <Ionicons name={categoryIcon as any} size={20} color={colors.primary} />
+      <View style={[styles.iconWrapper, { backgroundColor: statusConfig.bg }]}>
+        <Ionicons name={categoryIcon as any} size={20} color={statusConfig.color} />
       </View>
 
       {/* Middle: Name + details */}
@@ -298,13 +293,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.md,
+    paddingLeft: spacing.base,
     marginBottom: spacing.sm,
-    ...shadows.sm,
+    ...shadows.md,
     gap: spacing.md,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
@@ -406,7 +410,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   amount: {
-    fontSize: typography.base,
+    fontSize: typography.md,
     fontWeight: typography.bold,
     color: colors.textPrimary,
   },
@@ -415,7 +419,7 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   actualAmount: {
-    fontSize: typography.base,
+    fontSize: typography.md,
     fontWeight: typography.bold,
     color: colors.textPrimary,
   },

@@ -14,8 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth, SignupMeta } from '../../contexts/AuthContext';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { GradientButton } from '../../components/GradientButton';
 
@@ -166,7 +167,14 @@ export default function SignupScreen({ navigation }: Props) {
   // ── Success ────────────────────────────────────────────────────────────────
   if (success) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <View style={styles.outer}>
+        <LinearGradient
+          colors={['#F8FAFC', '#EEF2F7']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <SafeAreaView style={styles.safe}>
         <View style={styles.successContainer}>
           <View style={styles.successIcon}>
             <Ionicons name="checkmark-circle" size={56} color={colors.success} />
@@ -185,22 +193,31 @@ export default function SignupScreen({ navigation }: Props) {
             style={styles.btn}
           />
         </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
   }
 
   // ── Form ───────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <View style={styles.outer}>
+      <LinearGradient
+        colors={['#F8FAFC', '#EEF2F7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
         >
+          <ScrollView
+            contentContainerStyle={styles.scrollOuter}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+          <View style={styles.content}>
           <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
           </TouchableOpacity>
@@ -416,15 +433,27 @@ export default function SignupScreen({ navigation }: Props) {
               <Text style={styles.footerLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </View>{/* /content */}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  outer: { flex: 1 },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
+  scrollOuter: {
+    alignItems: 'center',
+  },
+  content: {
+    maxWidth: 480,
+    width: '100%',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xxxl,
+  },
   scroll: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxxl,

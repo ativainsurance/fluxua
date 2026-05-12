@@ -13,8 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../contexts/AuthContext';
-import { colors, typography, spacing, radius } from '../../theme';
+import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { GradientButton } from '../../components/GradientButton';
 
@@ -53,20 +54,33 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
+    <View style={styles.outer}>
+      <LinearGradient
+        colors={['#F8FAFC', '#EEF2F7']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flex}
         >
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.content}>
           {/* Logo / Branding */}
           <View style={styles.brand}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="wallet" size={32} color={colors.primary} />
-            </View>
+            <LinearGradient
+              colors={['#3B82F6', '#14B8A6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoCircle}
+            >
+              <Ionicons name="wallet" size={30} color="#fff" />
+            </LinearGradient>
             <Text style={styles.appName}>Fluxua</Text>
             <Text style={styles.tagline}>Stay ahead of every commitment</Text>
           </View>
@@ -148,30 +162,38 @@ export default function LoginScreen({ navigation }: Props) {
               <Text style={styles.footerLink}>Create one</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            </View>{/* /content */}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  outer: { flex: 1 },
+  safe: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
-  container: {
+  scroll: {
     flexGrow: 1,
+    alignItems: 'center',
+  },
+  content: {
+    maxWidth: 480,
+    width: '100%',
     paddingHorizontal: spacing.xl,
-    justifyContent: 'center',
     paddingVertical: spacing.xxxl,
+    justifyContent: 'center',
+    flexGrow: 1,
   },
   brand: {
     alignItems: 'center',
-    marginBottom: spacing.xxxl,
+    marginBottom: spacing.xl,
   },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: colors.primaryLight,
+    width: 68,
+    height: 68,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -191,6 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
+    ...shadows.lg,
   },
   formTitle: {
     fontSize: typography.lg,

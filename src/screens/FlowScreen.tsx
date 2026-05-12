@@ -368,23 +368,25 @@ export default function FlowScreen() {
                   )}
                 </View>
 
-                {/* Row: Need / Covered / Unallocated */}
+                {/* Row: Covered / Remaining / Committed — value first, label below */}
                 <View style={styles.heroStats}>
                   <View style={styles.heroStat}>
-                    <Text style={styles.heroStatLabel}>You need</Text>
-                    <Text style={styles.heroStatValue}>{formatCurrency(weekNeeded)}</Text>
+                    <Text style={[styles.heroStatValue, { color: colors.success }]}>
+                      {formatCurrency(weekCovered)}
+                    </Text>
+                    <Text style={styles.heroStatLabel}>covered</Text>
                   </View>
                   <View style={styles.heroStatDivider} />
                   <View style={styles.heroStat}>
-                    <Text style={styles.heroStatLabel}>Covered</Text>
-                    <Text style={[styles.heroStatValue, { color: colors.success }]}>{formatCurrency(weekCovered)}</Text>
-                  </View>
-                  <View style={styles.heroStatDivider} />
-                  <View style={styles.heroStat}>
-                    <Text style={styles.heroStatLabel}>Unallocated</Text>
                     <Text style={[styles.heroStatValue, { color: weekUnallocated > 0 ? colors.danger : colors.success }]}>
                       {formatCurrency(weekUnallocated)}
                     </Text>
+                    <Text style={styles.heroStatLabel}>remaining</Text>
+                  </View>
+                  <View style={styles.heroStatDivider} />
+                  <View style={styles.heroStat}>
+                    <Text style={styles.heroStatValue}>{formatCurrency(weekNeeded)}</Text>
+                    <Text style={styles.heroStatLabel}>committed</Text>
                   </View>
                 </View>
               </View>
@@ -518,7 +520,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.bold,
   },
   heroBarTrack: {
-    height: 10,
+    height: 14,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full,
     overflow: 'hidden',
@@ -543,10 +545,12 @@ const styles = StyleSheet.create({
   },
   heroStatLabel: {
     fontSize: typography.xs,
-    color: colors.textSecondary,
+    color: colors.textDisabled,
+    letterSpacing: 0.3,
+    marginTop: 2,
   },
   heroStatValue: {
-    fontSize: typography.base,
+    fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
   },
@@ -573,10 +577,17 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     flex: 1,
     gap: 4,
+    opacity: 0.82,
   },
   weekBarCardCurrent: {
     borderWidth: 1.5,
     borderColor: colors.teal,
+    opacity: 1,
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
   },
   weekBarHeader: {
     flexDirection: 'row',
@@ -608,8 +619,8 @@ const styles = StyleSheet.create({
     color: colors.textDisabled,
   },
   weekBarTrack: {
-    height: 6,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    height: 8,
+    backgroundColor: 'rgba(0,0,0,0.07)',
     borderRadius: radius.full,
     overflow: 'hidden',
     marginTop: 4,
