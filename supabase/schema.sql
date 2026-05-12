@@ -59,7 +59,35 @@ CREATE TABLE IF NOT EXISTS expense_records (
 );
 
 -- ─────────────────────────────
--- 3. AUTO-UPDATE updated_at
+-- 3. PROFILES TABLE
+-- Stores user preferences set at signup.
+-- Auto-created via trigger when auth.users row is inserted.
+-- ─────────────────────────────
+CREATE TABLE IF NOT EXISTS profiles (
+  id            UUID          PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  first_name    TEXT,
+  business_name TEXT,
+  account_type  TEXT          NOT NULL DEFAULT 'personal'
+                                CHECK (account_type IN ('personal', 'business', 'both')),
+  currency      TEXT          NOT NULL DEFAULT 'USD',
+  language      TEXT          NOT NULL DEFAULT 'en',
+  created_at    TIMESTAMPTZ   DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ   DEFAULT NOW()
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own profile"
+  ON profiles FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert their own profile"
+  ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+  ON profiles FOR UPDATE USING (auth.uid() = id);
+
+-- ─────────────────────────────
+-- 4. AUTO-UPDATE updated_at
 -- ─────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -72,6 +100,31 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER expenses_updated_at
   BEFORE UPDATE ON expenses
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Auto-create profile row when a new user signs up
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, first_name, business_name, account_type, currency, language)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'first_name',
+    NEW.raw_user_meta_data->>'business_name',
+    COALESCE(NEW.raw_user_meta_data->>'account_type', 'personal'),
+    COALESCE(NEW.raw_user_meta_data->>'currency', 'USD'),
+    COALESCE(NEW.raw_user_meta_data->>'language', 'en')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ─────────────────────────────
 -- 4. ROW LEVEL SECURITY (RLS)

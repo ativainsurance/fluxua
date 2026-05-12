@@ -91,7 +91,12 @@ export default function LoginScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Password</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                  <Text style={styles.forgotLink}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
               <View style={styles.passwordWrapper}>
                 <TextInput
                   style={[styles.input, styles.passwordInput]}
@@ -126,6 +131,12 @@ export default function LoginScreen({ navigation }: Props) {
                 <Text style={styles.btnText}>Sign In</Text>
               )}
             </TouchableOpacity>
+
+            {/* Trust signal */}
+            <View style={styles.trustRow}>
+              <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
+              <Text style={styles.trustText}>Your financial data stays private and protected</Text>
+            </View>
           </View>
 
           {/* Sign up link */}
@@ -202,11 +213,22 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: spacing.base,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
   label: {
     fontSize: typography.sm,
     fontWeight: typography.medium,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
+  },
+  forgotLink: {
+    fontSize: typography.sm,
+    color: colors.primary,
+    fontWeight: typography.medium,
   },
   input: {
     borderWidth: 1.5,
@@ -245,6 +267,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: typography.base,
     fontWeight: typography.semibold,
+  },
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    marginTop: spacing.md,
+  },
+  trustText: {
+    fontSize: typography.xs,
+    color: colors.textDisabled,
   },
   footer: {
     flexDirection: 'row',
