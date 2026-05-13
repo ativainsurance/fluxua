@@ -9,9 +9,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuth } from '../contexts/AuthContext';
 import { colors, typography, spacing, radius, shadows } from '../theme';
+import { SettingsStackParamList } from '../navigation/types';
+
+type Nav = NativeStackNavigationProp<SettingsStackParamList, 'SettingsHome'>;
 
 // ─────────────────────────────────────────────
 // Row component — icon · label · right element
@@ -185,6 +190,7 @@ const secS = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 export default function SettingsScreen() {
+  const navigation = useNavigation<Nav>();
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
@@ -203,7 +209,10 @@ export default function SettingsScreen() {
   };
 
   const emailDisplay = user?.email ?? '';
-  const displayName = emailDisplay.split('@')[0] ?? 'User';
+  const meta = (user?.user_metadata ?? {}) as Record<string, string>;
+  const displayName = meta.display_name ?? meta.first_name ?? emailDisplay.split('@')[0] ?? 'User';
+  const currency = meta.currency ?? 'USD';
+  const language = meta.language === 'pt' ? 'Portuguese' : meta.language === 'es' ? 'Spanish' : 'English';
 
   return (
     <SafeAreaView style={s.safe}>
@@ -217,7 +226,11 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── Premium Profile Card ── */}
-        <View style={s.profileCard}>
+        <TouchableOpacity
+          style={s.profileCard}
+          onPress={() => navigation.navigate('PersonalDetails')}
+          activeOpacity={0.88}
+        >
           <View style={s.profileGlowA} />
           <View style={s.profileGlowB} />
           <View style={s.profileRing} />
@@ -240,8 +253,10 @@ export default function SettingsScreen() {
                 <Text style={s.profileBadgeLabel}>Personal &amp; Business</Text>
               </View>
             </View>
+
+            <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.4)" />
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* ── Account ── */}
         <Section label="Account">
@@ -251,7 +266,7 @@ export default function SettingsScreen() {
             iconBg={colors.primaryLight}
             label="Personal Details"
             right={{ type: 'chevron' }}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('PersonalDetails')}
             isFirst
           />
           <SettingsRow
@@ -260,6 +275,7 @@ export default function SettingsScreen() {
             iconBg={colors.primaryLight}
             label="Email"
             right={{ type: 'value', text: emailDisplay }}
+            onPress={() => navigation.navigate('Email')}
           />
           <SettingsRow
             icon="shield-outline"
@@ -267,7 +283,7 @@ export default function SettingsScreen() {
             iconBg={colors.personalLight}
             label="Security"
             right={{ type: 'chevron' }}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('Security')}
             isLast
           />
         </Section>
@@ -282,8 +298,12 @@ export default function SettingsScreen() {
             right={{
               type: 'toggle',
               value: notificationsOn,
-              onChange: setNotificationsOn,
+              onChange: (v) => {
+                setNotificationsOn(v);
+                navigation.navigate('Notifications');
+              },
             }}
+            onPress={() => navigation.navigate('Notifications')}
             isFirst
           />
           <SettingsRow
@@ -291,16 +311,16 @@ export default function SettingsScreen() {
             iconColor={colors.success}
             iconBg={colors.successLight}
             label="Currency"
-            right={{ type: 'value', text: 'USD' }}
-            onPress={() => {}}
+            right={{ type: 'value', text: currency }}
+            onPress={() => navigation.navigate('Currency')}
           />
           <SettingsRow
             icon="language-outline"
             iconColor={colors.teal}
             iconBg={colors.tealLight}
             label="Language"
-            right={{ type: 'value', text: 'English' }}
-            onPress={() => {}}
+            right={{ type: 'value', text: language }}
+            onPress={() => navigation.navigate('Language')}
             isLast
           />
         </Section>
@@ -313,7 +333,7 @@ export default function SettingsScreen() {
             iconBg={colors.businessLight}
             label="Help &amp; FAQ"
             right={{ type: 'chevron' }}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('HelpFaq')}
             isFirst
           />
           <SettingsRow
@@ -322,7 +342,7 @@ export default function SettingsScreen() {
             iconBg={colors.surfaceAlt}
             label="Privacy Policy"
             right={{ type: 'chevron' }}
-            onPress={() => {}}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <SettingsRow
             icon="star-outline"

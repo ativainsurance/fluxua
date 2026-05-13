@@ -21,10 +21,21 @@ import DashboardScreen from '../screens/DashboardScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 
+// Settings sub-screens
+import PersonalDetailsScreen from '../screens/settings/PersonalDetailsScreen';
+import EmailScreen from '../screens/settings/EmailScreen';
+import SecurityScreen from '../screens/settings/SecurityScreen';
+import NotificationsScreen from '../screens/settings/NotificationsScreen';
+import CurrencyScreen from '../screens/settings/CurrencyScreen';
+import LanguageScreen from '../screens/settings/LanguageScreen';
+import HelpFaqScreen from '../screens/settings/HelpFaqScreen';
+import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
+
 import {
   RootStackParamList,
   AuthStackParamList,
   MainTabParamList,
+  SettingsStackParamList,
 } from './types';
 
 // ─────────────────────────────────────────────
@@ -34,6 +45,7 @@ import {
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 const AuthNavigator = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -41,6 +53,26 @@ const AuthNavigator = () => (
     <AuthStack.Screen name="Signup" component={SignupScreen} />
     <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
   </AuthStack.Navigator>
+);
+
+// ── Settings stack navigator ──
+const SettingsNavigator = () => (
+  <SettingsStack.Navigator
+    screenOptions={{
+      headerShown: false,
+      animation: 'slide_from_right',
+    }}
+  >
+    <SettingsStack.Screen name="SettingsHome" component={SettingsScreen} />
+    <SettingsStack.Screen name="PersonalDetails" component={PersonalDetailsScreen} />
+    <SettingsStack.Screen name="Email" component={EmailScreen} />
+    <SettingsStack.Screen name="Security" component={SecurityScreen} />
+    <SettingsStack.Screen name="Notifications" component={NotificationsScreen} />
+    <SettingsStack.Screen name="Currency" component={CurrencyScreen} />
+    <SettingsStack.Screen name="Language" component={LanguageScreen} />
+    <SettingsStack.Screen name="HelpFaq" component={HelpFaqScreen} />
+    <SettingsStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+  </SettingsStack.Navigator>
 );
 
 const MainNavigator = () => (
@@ -98,7 +130,7 @@ const MainNavigator = () => (
     />
     <MainTab.Screen
       name="Settings"
-      component={SettingsScreen}
+      component={SettingsNavigator}
       options={{ tabBarLabel: 'Settings' }}
     />
   </MainTab.Navigator>

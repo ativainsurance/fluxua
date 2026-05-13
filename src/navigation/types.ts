@@ -27,3 +27,35 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
 };
+
+// ─────────────────────────────────────────────
+// Settings sub-screen stack
+// ─────────────────────────────────────────────
+
+export type SettingsStackParamList = {
+  SettingsHome: undefined;
+  PersonalDetails: undefined;
+  Email: undefined;
+  Security: undefined;
+  Notifications: undefined;
+  Currency: undefined;
+  Language: undefined;
+  HelpFaq: undefined;
+  PrivacyPolicy: undefined;
+};
+
+// ─────────────────────────────────────────────
+// Settings sub-screen stack
+// ─────────────────────────────────────────────
+
+export type SettingsStackParamList = {
+  SettingsHome: undefined;
+  PersonalDetails: undefined;
+  Email: undefined;
+  Security: undefined;
+  Notifications: undefined;
+  Currency: undefined;
+  Language: undefined;
+  HelpFaq: undefined;
+  PrivacyPolicy: undefined;
+};
