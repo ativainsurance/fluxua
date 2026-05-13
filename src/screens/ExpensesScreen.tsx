@@ -207,7 +207,7 @@ export default function ExpensesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#EEF2F8' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

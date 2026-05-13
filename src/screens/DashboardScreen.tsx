@@ -92,6 +92,7 @@ const HeroCard = ({
       {/* Glow orbs — simulated gradient feel */}
       <View style={heroStyles.glowTopRight} />
       <View style={heroStyles.glowBottomLeft} />
+      <View style={heroStyles.glowCenter} />
 
       {/* Content */}
       <View style={heroStyles.content}>
@@ -145,35 +146,48 @@ const heroStyles = StyleSheet.create({
     backgroundColor: colors.navy,
     borderRadius: 28,
     overflow: 'hidden',
-    // Deep elevated shadow with teal tint
+    // Break out of scroll padding to feel immersive
+    marginHorizontal: -spacing.base,
+    // Deeper elevated shadow with teal tint
     shadowColor: '#14B8A6',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.32,
+    shadowRadius: 36,
+    elevation: 12,
   },
   glowTopRight: {
     position: 'absolute',
     top: -60,
     right: -60,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
     backgroundColor: '#14B8A6',
-    opacity: 0.18,
+    opacity: 0.20,
   },
   glowBottomLeft: {
     position: 'absolute',
     bottom: -80,
     left: -40,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
     backgroundColor: '#3B82F6',
-    opacity: 0.14,
+    opacity: 0.15,
+  },
+  glowCenter: {
+    position: 'absolute',
+    top: '20%',
+    right: '30%',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: '#7C3AED',
+    opacity: 0.07,
   },
   content: {
     padding: spacing.xl,
+    paddingBottom: spacing.xxl,
     gap: spacing.sm,
   },
   greeting: {
@@ -257,80 +271,153 @@ const heroStyles = StyleSheet.create({
 });
 
 // ─────────────────────────────────────────────
-// Colored Stat Cards — quick visual signals
+// Stat Cards — primary/secondary hierarchy
 // ─────────────────────────────────────────────
 
 const StatCards = ({
   paidCount,
   unpaidCount,
   totalCount,
-  personalTotal,
-  businessTotal,
+  totalPaid,
 }: {
   paidCount: number;
   unpaidCount: number;
   totalCount: number;
-  personalTotal: number;
-  businessTotal: number;
+  totalPaid: number;
 }) => (
-  <View style={statStyles.row}>
-    <View style={[statStyles.card, { backgroundColor: colors.successLight }]}>
-      <View style={[statStyles.iconCircle, { backgroundColor: '#D1FAE5' }]}>
-        <Ionicons name="checkmark-done" size={16} color={colors.success} />
+  <View style={statStyles.container}>
+    {/* Primary: Completed — full-width horizontal card, most important signal */}
+    <View style={[statStyles.primaryCard, { backgroundColor: colors.successLight }]}>
+      <View style={[statStyles.primaryIcon, { backgroundColor: '#D1FAE5' }]}>
+        <Ionicons name="checkmark-done" size={22} color={colors.success} />
       </View>
-      <Text style={[statStyles.value, { color: colors.success }]}>{paidCount}</Text>
-      <Text style={statStyles.label}>Completed</Text>
+      <View style={statStyles.primaryBody}>
+        <Text style={[statStyles.primaryValue, { color: colors.success }]}>
+          {paidCount} <Text style={statStyles.primaryOf}>/ {totalCount}</Text>
+        </Text>
+        <Text style={statStyles.primaryLabel}>Commitments completed</Text>
+      </View>
+      <View style={statStyles.primaryRight}>
+        <View style={[statStyles.progressDot,
+          { backgroundColor: paidCount === totalCount ? colors.success : colors.warning }
+        ]} />
+        <Text style={[statStyles.progressLabel, {
+          color: paidCount === totalCount ? colors.success : colors.warning
+        }]}>
+          {totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0}%
+        </Text>
+      </View>
     </View>
 
-    <View style={[statStyles.card, { backgroundColor: colors.warningLight }]}>
-      <View style={[statStyles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
-        <Ionicons name="hourglass-outline" size={16} color={colors.warning} />
+    {/* Secondary row */}
+    <View style={statStyles.secondaryRow}>
+      <View style={[statStyles.secondaryCard, { backgroundColor: colors.warningLight }]}>
+        <View style={[statStyles.secondaryIcon, { backgroundColor: '#FEF3C7' }]}>
+          <Ionicons name="hourglass-outline" size={15} color={colors.warning} />
+        </View>
+        <Text style={[statStyles.secondaryValue, { color: colors.warning }]}>{unpaidCount}</Text>
+        <Text style={statStyles.secondaryLabel}>Remaining</Text>
       </View>
-      <Text style={[statStyles.value, { color: colors.warning }]}>{unpaidCount}</Text>
-      <Text style={statStyles.label}>Unallocated</Text>
-    </View>
 
-    <View style={[statStyles.card, { backgroundColor: colors.primaryLight }]}>
-      <View style={[statStyles.iconCircle, { backgroundColor: '#DBEAFE' }]}>
-        <Ionicons name="receipt-outline" size={16} color={colors.primary} />
+      <View style={[statStyles.secondaryCard, { backgroundColor: colors.primaryLight }]}>
+        <View style={[statStyles.secondaryIcon, { backgroundColor: '#DBEAFE' }]}>
+          <Ionicons name="receipt-outline" size={15} color={colors.primary} />
+        </View>
+        <Text style={[statStyles.secondaryValue, { color: colors.primary }]}>{totalCount}</Text>
+        <Text style={statStyles.secondaryLabel}>Total Bills</Text>
       </View>
-      <Text style={[statStyles.value, { color: colors.primary }]}>{totalCount}</Text>
-      <Text style={statStyles.label}>Total Bills</Text>
     </View>
   </View>
 );
 
 const statStyles = StyleSheet.create({
-  row: {
+  container: {
+    gap: spacing.sm,
+  },
+  // Primary card — full width, horizontal
+  primaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.xl,
+    padding: spacing.base,
+    gap: spacing.md,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  primaryIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  primaryBody: {
+    flex: 1,
+    gap: 3,
+  },
+  primaryValue: {
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    lineHeight: 28,
+  },
+  primaryOf: {
+    fontSize: typography.md,
+    fontWeight: typography.regular,
+    color: colors.textSecondary,
+  },
+  primaryLabel: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+    fontWeight: typography.medium,
+  },
+  primaryRight: {
+    alignItems: 'center',
+    gap: 3,
+    flexShrink: 0,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  progressLabel: {
+    fontSize: typography.sm,
+    fontWeight: typography.bold,
+  },
+  // Secondary cards — side by side
+  secondaryRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  card: {
+  secondaryCard: {
     flex: 1,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
-    // Soft shadow
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
     elevation: 1,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  secondaryIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
   },
-  value: {
-    fontSize: typography.xl,
+  secondaryValue: {
+    fontSize: typography.lg,
     fontWeight: typography.bold,
   },
-  label: {
+  secondaryLabel: {
     fontSize: 10,
     color: colors.textSecondary,
     fontWeight: typography.medium,
@@ -425,14 +512,14 @@ const rowStyles = StyleSheet.create({
   wrapper: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.sm,
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 3,
   },
   accentBar: {
     width: 4,
@@ -445,12 +532,12 @@ const rowStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.base,
     gap: spacing.md,
   },
   iconCircle: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -458,7 +545,7 @@ const rowStyles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    gap: 5,
+    gap: 6,
   },
   name: {
     fontSize: typography.base,
@@ -498,17 +585,19 @@ const rowStyles = StyleSheet.create({
   },
   right: {
     alignItems: 'flex-end',
-    gap: spacing.sm,
+    gap: spacing.xs,
     flexShrink: 0,
+    paddingRight: spacing.xs,
   },
   amount: {
-    fontSize: typography.base,
+    fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
   checkBtn: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
     borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
@@ -630,8 +719,7 @@ export default function DashboardScreen() {
               paidCount={summary.paidCount}
               unpaidCount={summary.expenseCount - summary.paidCount}
               totalCount={summary.expenseCount}
-              personalTotal={summary.personalTotal}
-              businessTotal={summary.businessTotal}
+              totalPaid={summary.totalPaid}
             />
 
             {/* ── 3. UPCOMING / ALL DONE ── */}
@@ -691,7 +779,7 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#EEF2F8' },
   scroll: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,

@@ -23,7 +23,7 @@ import {
 import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MonthSelector } from '../components/MonthSelector';
-import { ExpenseWithRecord } from '../types';
+import { ExpenseWithRecord, getCategoryIcon } from '../types';
 
 // ─────────────────────────────────────────────
 // Pressure color logic
@@ -141,7 +141,7 @@ const WeekBar = ({
 };
 
 // ─────────────────────────────────────────────
-// Per-commitment animated bar row
+// Per-commitment card — clean, single-week focus
 // ─────────────────────────────────────────────
 
 const CommitmentFlowRow = ({
@@ -159,90 +159,86 @@ const CommitmentFlowRow = ({
 }) => {
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
   const thisWeek = weeks[weekIndex];
-  const maxAmount = Math.max(...weeks.map((w) => w.amount));
   const isPaid = expense.record?.is_paid ?? false;
+  const isWaived = expense.record?.is_waived ?? false;
+  const isResolved = isPaid || isWaived;
+  const categoryIcon = getCategoryIcon(expense.category);
 
-  const barAnims = useRef(weeks.map(() => new Animated.Value(0))).current;
-
+  const barAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const animations = weeks.map((week, i) => {
-      const pct = maxAmount > 0 ? week.amount / maxAmount : 0;
-      return Animated.timing(barAnims[i], {
-        toValue: pct,
-        duration: 600,
-        delay: delay + i * 80,
-        useNativeDriver: false,
-      });
-    });
-    Animated.parallel(animations).start();
-  }, [expense.id, weekIndex]);
+    Animated.timing(barAnim, {
+      toValue: isResolved ? 1 : 0,
+      duration: 600,
+      delay,
+      useNativeDriver: false,
+    }).start();
+  }, [isResolved]);
+
+  const barWidth = barAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
+  });
+
+  const accentColor = isResolved
+    ? colors.success
+    : expense.type === 'personal' ? colors.personal : colors.business;
+  const accentBg = isResolved
+    ? colors.successLight
+    : expense.type === 'personal' ? colors.personalLight : colors.businessLight;
 
   return (
     <View style={styles.commitmentCard}>
-      <View style={styles.commitmentHeader}>
-        <View style={styles.commitmentTitleRow}>
-          <Text style={styles.commitmentName}>{expense.name}</Text>
-          {isPaid && (
-            <View style={styles.paidChip}>
-              <Ionicons name="checkmark" size={10} color={colors.success} />
-              <Text style={styles.paidChipText}>Completed</Text>
-            </View>
-          )}
-        </View>
-        {thisWeek && (
-          <Text style={styles.thisWeekLabel}>
-            This week: <Text style={styles.thisWeekAmount}>{formatCurrency(thisWeek.amount)}</Text>
-          </Text>
-        )}
-      </View>
+      {/* Left accent bar */}
+      <View style={[styles.commitmentAccent, { backgroundColor: accentColor }]} />
 
-      <View style={styles.commitmentBars}>
-        {weeks.map((week, i) => {
-          const pct = maxAmount > 0 ? (week.amount / maxAmount) * 100 : 0;
-          const isCurrentWeek = i === weekIndex;
-          const barColor = isPaid
-            ? colors.success
-            : isCurrentWeek
-            ? colors.teal
-            : expense.type === 'personal'
-            ? colors.personal
-            : colors.business;
+      <View style={styles.commitmentBody}>
+        {/* Icon + info */}
+        <View style={styles.commitmentRow}>
+          <View style={[styles.commitmentIcon, { backgroundColor: accentBg }]}>
+            <Ionicons name={categoryIcon as any} size={18} color={accentColor} />
+          </View>
 
-          const barWidth = barAnims[i].interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0%', '100%'],
-            extrapolate: 'clamp',
-          });
+          <View style={styles.commitmentMeta}>
+            <Text style={styles.commitmentName} numberOfLines={1}>{expense.name}</Text>
+            <Text style={styles.commitmentDue}>Due on the {getDayOrdinal(expense.due_day)}</Text>
+          </View>
 
-          return (
-            <View key={week.week} style={styles.barRow}>
-              <Text style={[styles.barLabel, isCurrentWeek && styles.barLabelActive]}>
-                W{week.week}
-              </Text>
-              <View style={styles.barTrack}>
-                <Animated.View
-                  style={[
-                    styles.barFill,
-                    {
-                      width: barWidth,
-                      backgroundColor: barColor,
-                      opacity: isCurrentWeek ? 1 : 0.55,
-                    },
-                  ]}
-                />
+          <View style={styles.commitmentRight}>
+            <Text style={[styles.commitmentAmount, { color: isResolved ? colors.success : colors.textPrimary }]}>
+              {formatCurrency(expense.amount)}
+            </Text>
+            {isResolved ? (
+              <View style={styles.resolvedChip}>
+                <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={10} color={colors.success} />
+                <Text style={styles.resolvedChipText}>{isWaived ? 'Waived' : 'Done'}</Text>
               </View>
-              <Text style={[styles.barAmount, isCurrentWeek && { color: colors.textPrimary, fontWeight: typography.semibold }]}>
-                {formatCurrency(week.amount)}
+            ) : thisWeek ? (
+              <Text style={styles.weekAllocLabel}>
+                <Text style={styles.weekAllocAmt}>{formatCurrency(thisWeek.amount)}</Text> this wk
               </Text>
-            </View>
-          );
-        })}
-      </View>
+            ) : null}
+          </View>
+        </View>
 
-      <View style={styles.commitmentFooter}>
-        <Text style={styles.dueText}>
-          Full commitment of {formatCurrency(expense.amount)} due on the {getDayOrdinal(expense.due_day)}
-        </Text>
+        {/* Single progress bar — paid progress */}
+        {!isResolved && (
+          <View style={styles.singleBarTrack}>
+            <Animated.View style={[styles.singleBarFill, { width: barWidth, backgroundColor: accentColor }]} />
+            {/* Static indicator showing weekly slice */}
+            {thisWeek && expense.amount > 0 && (
+              <View style={[
+                styles.weekSliceMarker,
+                { left: `${Math.min((thisWeek.amount / expense.amount) * 100, 100)}%` as any }
+              ]} />
+            )}
+          </View>
+        )}
+        {isResolved && (
+          <View style={[styles.singleBarTrack, { backgroundColor: colors.successLight }]}>
+            <View style={[styles.singleBarFill, { width: '100%', backgroundColor: colors.success, opacity: 0.6 }]} />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -440,7 +436,7 @@ export default function FlowScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#EEF2F8' },
   scroll: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
@@ -638,27 +634,65 @@ const styles = StyleSheet.create({
   // ── Commitment Card ──
   commitmentCard: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.base,
-    ...shadows.sm,
-    marginBottom: spacing.xs,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 2,
+    flexDirection: 'row',
   },
-  commitmentHeader: {
-    marginBottom: spacing.md,
+  commitmentAccent: {
+    width: 4,
+    borderRadius: 4,
+    margin: 4,
+    marginRight: 0,
   },
-  commitmentTitleRow: {
+  commitmentBody: {
+    flex: 1,
+    padding: spacing.md,
+    paddingLeft: spacing.sm,
+    gap: spacing.sm,
+  },
+  commitmentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginBottom: 4,
+  },
+  commitmentIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  commitmentMeta: {
+    flex: 1,
+    gap: 3,
   },
   commitmentName: {
     fontSize: typography.base,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
-    flex: 1,
   },
-  paidChip: {
+  commitmentDue: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+  },
+  commitmentRight: {
+    alignItems: 'flex-end',
+    gap: 4,
+    flexShrink: 0,
+  },
+  commitmentAmount: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    letterSpacing: -0.3,
+  },
+  resolvedChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
@@ -667,62 +701,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  paidChipText: {
-    fontSize: typography.xs,
+  resolvedChipText: {
+    fontSize: 10,
     color: colors.success,
     fontWeight: typography.semibold,
   },
-  thisWeekLabel: {
-    fontSize: typography.sm,
+  weekAllocLabel: {
+    fontSize: 10,
     color: colors.textSecondary,
   },
-  thisWeekAmount: {
+  weekAllocAmt: {
     fontWeight: typography.bold,
     color: colors.teal,
   },
-  commitmentBars: {
-    gap: spacing.sm,
-  },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  barLabel: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-    width: 24,
-  },
-  barLabelActive: {
-    color: colors.teal,
-    fontWeight: typography.semibold,
-  },
-  barTrack: {
-    flex: 1,
-    height: 10,
+  singleBarTrack: {
+    height: 5,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full,
-    overflow: 'hidden',
+    overflow: 'visible',
+    position: 'relative',
   },
-  barFill: {
+  singleBarFill: {
     height: '100%',
     borderRadius: radius.full,
   },
-  barAmount: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-    textAlign: 'right',
-    width: 56,
-  },
-  commitmentFooter: {
-    marginTop: spacing.md,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-  },
-  dueText: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-    textAlign: 'center',
+  weekSliceMarker: {
+    position: 'absolute',
+    top: -2,
+    width: 2,
+    height: 9,
+    borderRadius: 1,
+    backgroundColor: colors.teal,
+    opacity: 0.7,
   },
 });
