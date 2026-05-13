@@ -12,6 +12,124 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { colors, typography, spacing, radius, shadows } from '../theme';
 
+// ─────────────────────────────────────────────
+// Settings row component
+// ─────────────────────────────────────────────
+
+const SettingsRow = ({
+  icon,
+  iconColor,
+  iconBg,
+  label,
+  value,
+  chevron = false,
+  onPress,
+  danger = false,
+}: {
+  icon: string;
+  iconColor: string;
+  iconBg: string;
+  label: string;
+  value?: string;
+  chevron?: boolean;
+  onPress?: () => void;
+  danger?: boolean;
+}) => (
+  <TouchableOpacity
+    style={rowStyles.row}
+    onPress={onPress}
+    activeOpacity={onPress ? 0.65 : 1}
+    disabled={!onPress}
+  >
+    <View style={[rowStyles.iconWrap, { backgroundColor: iconBg }]}>
+      <Ionicons name={icon as any} size={18} color={iconColor} />
+    </View>
+    <Text style={[rowStyles.label, danger && { color: colors.danger }]}>{label}</Text>
+    {value ? <Text style={rowStyles.value} numberOfLines={1}>{value}</Text> : null}
+    {chevron && (
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={danger ? colors.danger : colors.textDisabled}
+      />
+    )}
+  </TouchableOpacity>
+);
+
+const rowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.md + 2,
+    gap: spacing.md,
+  },
+  iconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  label: {
+    flex: 1,
+    fontSize: typography.base,
+    fontWeight: typography.medium,
+    color: colors.textPrimary,
+  },
+  value: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    maxWidth: 160,
+  },
+});
+
+// ─────────────────────────────────────────────
+// Section group — label + card wrapper
+// ─────────────────────────────────────────────
+
+const SectionCard = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <View style={sectionStyles.group}>
+    <Text style={sectionStyles.label}>{label}</Text>
+    <View style={sectionStyles.card}>
+      {children}
+    </View>
+  </View>
+);
+
+const sectionStyles = StyleSheet.create({
+  group: {
+    gap: spacing.xs,
+  },
+  label: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    paddingHorizontal: spacing.xs,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    ...shadows.card,
+  },
+});
+
+const Divider = () => <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />;
+
+// ─────────────────────────────────────────────
+// SettingsScreen
+// ─────────────────────────────────────────────
+
 export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -29,65 +147,102 @@ export default function SettingsScreen() {
     }
   };
 
+  const emailDisplay = user?.email ?? '';
+  const displayName = emailDisplay.split('@')[0] ?? 'User';
+
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Header */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ── */}
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
         </View>
 
-        {/* User card */}
-        <View style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={28} color={colors.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.userEmail} numberOfLines={1}>{user?.email}</Text>
-            <Text style={styles.userSub}>Personal & Business Commitments</Text>
+        {/* ── Premium Profile Card — dark navy ── */}
+        <View style={styles.profileCard}>
+          {/* Ambient glow */}
+          <View style={styles.profileGlowA} />
+          <View style={styles.profileGlowB} />
+          {/* Decorative ring */}
+          <View style={styles.profileRing} />
+
+          <View style={styles.profileContent}>
+            {/* Avatar */}
+            <View style={styles.avatarRing}>
+              <View style={styles.avatarInner}>
+                <Text style={styles.avatarInitial}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{displayName}</Text>
+              <Text style={styles.profileEmail} numberOfLines={1}>{emailDisplay}</Text>
+              <View style={styles.profileBadge}>
+                <View style={styles.profileBadgeDot} />
+                <Text style={styles.profileBadgeText}>Personal & Business</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Settings rows */}
-        <View style={styles.card}>
-          {/* Account */}
-          <View style={styles.row}>
-            <View style={styles.rowIcon}>
-              <Ionicons name="person-circle-outline" size={20} color={colors.primary} />
-            </View>
-            <Text style={styles.rowLabel}>Account</Text>
-            <Text style={styles.rowValue} numberOfLines={1}>{user?.email ?? ''}</Text>
-          </View>
+        {/* ── Account section ── */}
+        <SectionCard label="Account">
+          <SettingsRow
+            icon="person-circle-outline"
+            iconColor={colors.primary}
+            iconBg={colors.primaryLight}
+            label="Email"
+            value={emailDisplay}
+          />
+        </SectionCard>
 
-          <View style={styles.divider} />
+        {/* ── App section ── */}
+        <SectionCard label="App">
+          <SettingsRow
+            icon="shield-checkmark-outline"
+            iconColor={colors.teal}
+            iconBg={colors.tealLight}
+            label="Privacy"
+            value="Your data stays private"
+          />
+          <Divider />
+          <SettingsRow
+            icon="information-circle-outline"
+            iconColor={colors.textSecondary}
+            iconBg={colors.surfaceAlt}
+            label="App Version"
+            value="1.0.0"
+          />
+        </SectionCard>
 
-          {/* Version */}
-          <View style={styles.row}>
-            <View style={styles.rowIcon}>
-              <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-            </View>
-            <Text style={styles.rowLabel}>App Version</Text>
-            <Text style={styles.rowValue}>1.0.0</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Sign Out */}
+        {/* ── Account actions ── */}
+        <SectionCard label="Actions">
           {!confirmSignOut ? (
-            <TouchableOpacity
-              style={styles.row}
+            <SettingsRow
+              icon="log-out-outline"
+              iconColor={colors.danger}
+              iconBg={colors.dangerLight}
+              label="Sign Out"
+              danger
+              chevron
               onPress={() => setConfirmSignOut(true)}
-              activeOpacity={0.6}
-            >
-              <View style={[styles.rowIcon, { backgroundColor: colors.dangerLight }]}>
-                <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-              </View>
-              <Text style={[styles.rowLabel, { color: colors.danger }]}>Sign Out</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.danger} />
-            </TouchableOpacity>
+            />
           ) : (
             <View style={styles.confirmBox}>
-              <Text style={styles.confirmText}>Sign out of Fluxua?</Text>
+              <View style={styles.confirmHeader}>
+                <View style={[styles.confirmIconWrap, { backgroundColor: colors.dangerLight }]}>
+                  <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+                </View>
+                <View>
+                  <Text style={styles.confirmTitle}>Sign out of Fluxua?</Text>
+                  <Text style={styles.confirmSub}>You can sign back in anytime.</Text>
+                </View>
+              </View>
               {signOutError ? (
                 <Text style={styles.confirmError}>{signOutError}</Text>
               ) : null}
@@ -95,6 +250,7 @@ export default function SettingsScreen() {
                 <TouchableOpacity
                   style={styles.cancelBtn}
                   onPress={() => { setConfirmSignOut(false); setSignOutError(''); }}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
@@ -102,18 +258,24 @@ export default function SettingsScreen() {
                   style={[styles.signOutBtn, loading && { opacity: 0.6 }]}
                   onPress={handleSignOut}
                   disabled={loading}
+                  activeOpacity={0.7}
                 >
+                  <Ionicons name="log-out-outline" size={14} color="#fff" />
                   <Text style={styles.signOutBtnText}>{loading ? 'Signing out…' : 'Sign Out'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
-        </View>
+        </SectionCard>
 
-        {/* App info */}
-        <Text style={styles.footer}>
-          Fluxua · Track every commitment
-        </Text>
+        {/* ── Footer ── */}
+        <View style={styles.footer}>
+          <View style={styles.footerBrand}>
+            <View style={styles.footerDot} />
+          </View>
+          <Text style={styles.footerText}>Fluxua · Track every commitment</Text>
+          <Text style={styles.footerSub}>Made with calm intelligence.</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -126,104 +288,164 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
     gap: spacing.base,
   },
-  header: {
-    paddingTop: spacing.md,
-  },
+
+  // ── Header ──
+  header: { paddingTop: spacing.md },
   title: {
     fontSize: typography.xl,
     fontWeight: typography.bold,
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
-  userCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
+
+  // ── Premium profile card ──
+  profileCard: {
+    backgroundColor: colors.navy,
+    borderRadius: radius.xxl,
+    overflow: 'hidden',
+    ...shadows.hero,
+  },
+  profileGlowA: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.teal,
+    opacity: 0.14,
+  },
+  profileGlowB: {
+    position: 'absolute',
+    bottom: -50,
+    left: -30,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: colors.primary,
+    opacity: 0.11,
+  },
+  profileRing: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    ...shadows.sm,
+    gap: spacing.base,
+    padding: spacing.xl,
+    paddingVertical: spacing.xxl,
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primaryLight,
+  avatarRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  avatarInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  userEmail: {
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
+  avatarInitial: {
+    fontSize: typography.xl,
+    fontWeight: typography.bold,
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
-  userSub: {
+  profileInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  profileName: {
+    fontSize: typography.md,
+    fontWeight: typography.bold,
+    color: '#FFFFFF',
+    textTransform: 'capitalize',
+    letterSpacing: -0.2,
+  },
+  profileEmail: {
     fontSize: typography.sm,
-    color: colors.textSecondary,
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.55)',
+    fontWeight: typography.regular,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    ...shadows.sm,
-  },
-  row: {
+  profileBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
+    gap: 5,
+    marginTop: 4,
+  },
+  profileBadgeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.teal,
+  },
+  profileBadgeText: {
+    fontSize: typography.xs,
+    color: colors.teal,
+    fontWeight: typography.semibold,
+    letterSpacing: 0.2,
+  },
+
+  // ── Sign-out confirm ──
+  confirmBox: {
+    padding: spacing.base,
     gap: spacing.md,
   },
-  rowIcon: {
+  confirmHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  confirmIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.primaryLight,
+    borderRadius: 11,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
-  rowLabel: {
-    flex: 1,
-    fontSize: typography.base,
-    color: colors.textPrimary,
-    fontWeight: typography.medium,
-  },
-  rowValue: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    maxWidth: 160,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.divider ?? colors.border,
-    marginLeft: spacing.base + 36 + spacing.md,
-  },
-  confirmBox: {
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    gap: spacing.sm,
-  },
-  confirmText: {
+  confirmTitle: {
     fontSize: typography.base,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
+  },
+  confirmSub: {
+    fontSize: typography.sm,
+    color: colors.textSecondary,
+    marginTop: 1,
   },
   confirmError: {
     fontSize: typography.sm,
     color: colors.danger,
+    paddingHorizontal: spacing.xs,
   },
   confirmActions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: 4,
   },
   cancelBtn: {
     flex: 1,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     alignItems: 'center',
+    backgroundColor: colors.surface,
   },
   cancelBtnText: {
     fontSize: typography.sm,
@@ -234,18 +456,52 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.danger,
     borderRadius: radius.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    shadowColor: colors.danger,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.30,
+    shadowRadius: 8,
+    elevation: 3,
   },
   signOutBtnText: {
     fontSize: typography.sm,
     fontWeight: typography.semibold,
     color: '#fff',
   },
+
+  // ── Footer ──
   footer: {
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: spacing.sm,
+  },
+  footerBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  footerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.teal,
+    opacity: 0.6,
+  },
+  footerText: {
     textAlign: 'center',
     fontSize: typography.xs,
     color: colors.textDisabled,
-    paddingTop: spacing.sm,
+    fontWeight: '500',
+  },
+  footerSub: {
+    textAlign: 'center',
+    fontSize: 10,
+    color: colors.textDisabled,
+    opacity: 0.7,
   },
 });

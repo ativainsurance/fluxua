@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { useExpenses } from '../hooks/useExpenses';
 import {
@@ -21,16 +22,15 @@ import {
   getDayOrdinal,
 } from '../utils/dateUtils';
 import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
 
 // ─────────────────────────────────────────────
-// Pressure color logic
+// Pressure color helpers
 // ─────────────────────────────────────────────
 
 const getPressureColor = (ratio: number, isPast: boolean): string => {
-  if (!isPast) return colors.textDisabled; // future week — neutral
+  if (!isPast) return colors.textDisabled;
   if (ratio >= 0.9) return colors.success;
   if (ratio >= 0.5) return colors.teal;
   if (ratio >= 0.2) return colors.warning;
@@ -45,7 +45,6 @@ const getPressureBg = (ratio: number, isPast: boolean): string => {
   return colors.dangerLight;
 };
 
-/** Coverage ratio for a given week based on which commitments are paid */
 const getWeekCoverage = (
   expenses: ExpenseWithRecord[],
   weekIndex: number,
@@ -65,7 +64,7 @@ const getWeekCoverage = (
 };
 
 // ─────────────────────────────────────────────
-// Animated weekly bar for the overview grid
+// Week Bar Card — sophisticated grid tiles
 // ─────────────────────────────────────────────
 
 const WeekBar = ({
@@ -105,34 +104,36 @@ const WeekBar = ({
   });
 
   return (
-    <View style={[styles.weekBarCard, isCurrent && styles.weekBarCardCurrent, { backgroundColor: bg }]}>
-      <View style={styles.weekBarHeader}>
-        <Text style={[styles.weekBarLabel, { color }]}>{label}</Text>
-        {isCurrent && (
-          <View style={styles.nowPill}>
-            <Text style={styles.nowPillText}>NOW</Text>
-          </View>
-        )}
-        {isPast && !isCurrent && coverage >= 0.9 && (
-          <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-        )}
+    <View style={[
+      weekStyles.card,
+      { backgroundColor: bg },
+      isCurrent && weekStyles.cardCurrent,
+    ]}>
+      <View style={weekStyles.header}>
+        <Text style={[weekStyles.label, { color }]}>{label}</Text>
+        <View style={weekStyles.headerRight}>
+          {isCurrent && (
+            <View style={weekStyles.nowPill}>
+              <Text style={weekStyles.nowText}>NOW</Text>
+            </View>
+          )}
+          {isPast && !isCurrent && coverage >= 0.9 && (
+            <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+          )}
+        </View>
       </View>
-      <Text style={[styles.weekBarAmount, { color: isCurrent ? colors.teal : colors.textPrimary }]}>
+
+      <Text style={[weekStyles.amount, { color: isCurrent ? colors.tealDark : colors.textPrimary }]}>
         {formatCurrency(amount)}
       </Text>
-      <Text style={styles.weekBarDates}>{dateRange}</Text>
+      <Text style={weekStyles.dateRange}>{dateRange}</Text>
 
-      {/* Progress bar */}
-      <View style={styles.weekBarTrack}>
-        <Animated.View
-          style={[
-            styles.weekBarFill,
-            { width: barWidth, backgroundColor: color },
-          ]}
-        />
+      <View style={weekStyles.track}>
+        <Animated.View style={[weekStyles.fill, { width: barWidth, backgroundColor: color }]} />
       </View>
+
       {isPast && (
-        <Text style={[styles.weekBarCoverage, { color }]}>
+        <Text style={[weekStyles.coverage, { color }]}>
           {Math.round(coverage * 100)}% covered
         </Text>
       )}
@@ -140,8 +141,82 @@ const WeekBar = ({
   );
 };
 
+const weekStyles = StyleSheet.create({
+  card: {
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    minWidth: '45%',
+    flex: 1,
+    gap: 4,
+    ...shadows.sm,
+  },
+  cardCurrent: {
+    borderWidth: 1.5,
+    borderColor: colors.teal,
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.20,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    letterSpacing: 0.3,
+  },
+  nowPill: {
+    backgroundColor: colors.teal,
+    borderRadius: radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  nowText: {
+    fontSize: 9,
+    fontWeight: typography.bold,
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  amount: {
+    fontSize: typography.base,
+    fontWeight: typography.bold,
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+  dateRange: {
+    fontSize: typography.xs,
+    color: colors.textTertiary,
+  },
+  track: {
+    height: 6,
+    backgroundColor: 'rgba(0,0,0,0.07)',
+    borderRadius: radius.full,
+    overflow: 'hidden',
+    marginTop: spacing.xs,
+  },
+  fill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
+  coverage: {
+    fontSize: 10,
+    fontWeight: typography.semibold,
+    marginTop: 2,
+    letterSpacing: 0.1,
+  },
+});
+
 // ─────────────────────────────────────────────
-// Per-commitment card — clean, single-week focus
+// Commitment Flow Card — clean, single-week focus
+// No repetitive W1/W2/W3/W4 bars
 // ─────────────────────────────────────────────
 
 const CommitmentFlowRow = ({
@@ -188,61 +263,160 @@ const CommitmentFlowRow = ({
     : expense.type === 'personal' ? colors.personalLight : colors.businessLight;
 
   return (
-    <View style={styles.commitmentCard}>
-      {/* Left accent bar */}
-      <View style={[styles.commitmentAccent, { backgroundColor: accentColor }]} />
-
-      <View style={styles.commitmentBody}>
-        {/* Icon + info */}
-        <View style={styles.commitmentRow}>
-          <View style={[styles.commitmentIcon, { backgroundColor: accentBg }]}>
-            <Ionicons name={categoryIcon as any} size={18} color={accentColor} />
+    <View style={flowRowStyles.card}>
+      <View style={[flowRowStyles.accentStrip, { backgroundColor: accentColor }]} />
+      <View style={flowRowStyles.body}>
+        {/* Row: icon + info + amount */}
+        <View style={flowRowStyles.mainRow}>
+          <View style={[flowRowStyles.iconCircle, { backgroundColor: accentBg }]}>
+            <Ionicons name={categoryIcon as any} size={17} color={accentColor} />
           </View>
 
-          <View style={styles.commitmentMeta}>
-            <Text style={styles.commitmentName} numberOfLines={1}>{expense.name}</Text>
-            <Text style={styles.commitmentDue}>Due on the {getDayOrdinal(expense.due_day)}</Text>
+          <View style={flowRowStyles.meta}>
+            <Text style={flowRowStyles.name} numberOfLines={1}>{expense.name}</Text>
+            <Text style={flowRowStyles.due}>Due on the {getDayOrdinal(expense.due_day)}</Text>
           </View>
 
-          <View style={styles.commitmentRight}>
-            <Text style={[styles.commitmentAmount, { color: isResolved ? colors.success : colors.textPrimary }]}>
+          <View style={flowRowStyles.right}>
+            <Text style={[
+              flowRowStyles.amount,
+              { color: isResolved ? colors.success : colors.textPrimary }
+            ]}>
               {formatCurrency(expense.amount)}
             </Text>
             {isResolved ? (
-              <View style={styles.resolvedChip}>
-                <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={10} color={colors.success} />
-                <Text style={styles.resolvedChipText}>{isWaived ? 'Waived' : 'Done'}</Text>
+              <View style={flowRowStyles.resolvedChip}>
+                <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={9} color={colors.success} />
+                <Text style={flowRowStyles.resolvedText}>{isWaived ? 'Waived' : 'Done'}</Text>
               </View>
             ) : thisWeek ? (
-              <Text style={styles.weekAllocLabel}>
-                <Text style={styles.weekAllocAmt}>{formatCurrency(thisWeek.amount)}</Text> this wk
+              <Text style={flowRowStyles.weekAlloc}>
+                <Text style={flowRowStyles.weekAllocAmt}>{formatCurrency(thisWeek.amount)}</Text>
+                {' '}this wk
               </Text>
             ) : null}
           </View>
         </View>
 
-        {/* Single progress bar — paid progress */}
-        {!isResolved && (
-          <View style={styles.singleBarTrack}>
-            <Animated.View style={[styles.singleBarFill, { width: barWidth, backgroundColor: accentColor }]} />
-            {/* Static indicator showing weekly slice */}
-            {thisWeek && expense.amount > 0 && (
-              <View style={[
-                styles.weekSliceMarker,
-                { left: `${Math.min((thisWeek.amount / expense.amount) * 100, 100)}%` as any }
-              ]} />
-            )}
-          </View>
-        )}
-        {isResolved && (
-          <View style={[styles.singleBarTrack, { backgroundColor: colors.successLight }]}>
-            <View style={[styles.singleBarFill, { width: '100%', backgroundColor: colors.success, opacity: 0.6 }]} />
-          </View>
-        )}
+        {/* Single progress bar */}
+        <View style={flowRowStyles.barTrack}>
+          <Animated.View style={[
+            flowRowStyles.barFill,
+            {
+              width: barWidth,
+              backgroundColor: accentColor,
+              opacity: isResolved ? 0.7 : 1,
+            }
+          ]} />
+          {/* Week slice marker — shows where current week falls */}
+          {!isResolved && thisWeek && expense.amount > 0 && (
+            <View style={[
+              flowRowStyles.sliceMarker,
+              { left: `${Math.min((thisWeek.amount / expense.amount) * 100, 96)}%` as any }
+            ]} />
+          )}
+        </View>
       </View>
     </View>
   );
 };
+
+const flowRowStyles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    ...shadows.card,
+  },
+  accentStrip: {
+    width: 5,
+  },
+  body: {
+    flex: 1,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  mainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  meta: {
+    flex: 1,
+    gap: 3,
+  },
+  name: {
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+  },
+  due: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+  },
+  right: {
+    alignItems: 'flex-end',
+    gap: 4,
+    flexShrink: 0,
+  },
+  amount: {
+    fontSize: typography.lg,
+    fontWeight: typography.bold,
+    letterSpacing: -0.5,
+  },
+  resolvedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.successLight,
+    borderRadius: radius.full,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  resolvedText: {
+    fontSize: 10,
+    color: colors.success,
+    fontWeight: typography.semibold,
+  },
+  weekAlloc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+  },
+  weekAllocAmt: {
+    fontWeight: typography.bold,
+    color: colors.teal,
+  },
+  barTrack: {
+    height: 5,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.full,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
+  sliceMarker: {
+    position: 'absolute',
+    top: -3,
+    width: 2,
+    height: 11,
+    borderRadius: 1,
+    backgroundColor: colors.teal,
+    opacity: 0.7,
+  },
+});
 
 // ─────────────────────────────────────────────
 // FlowScreen
@@ -259,7 +433,6 @@ export default function FlowScreen() {
   const currentWeekIdx = isCurrentMonth ? getCurrentWeekIndex(month, year) : 0;
   const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year, getShortMonthName(month));
 
-  // Current week hero data
   const currentWeekData = totalWeeklyBreakdown[currentWeekIdx];
   const weekNeeded = currentWeekData?.amount ?? 0;
   const weekCoverage = getWeekCoverage(expenses, currentWeekIdx, month, year);
@@ -267,12 +440,12 @@ export default function FlowScreen() {
   const weekUnallocated = weekNeeded - weekCovered;
   const coveragePct = weekNeeded > 0 ? weekCoverage * 100 : 0;
 
-  // Animate the hero bar
+  // Hero bar animation
   const heroAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(heroAnim, {
       toValue: weekCoverage,
-      duration: 900,
+      duration: 1000,
       useNativeDriver: false,
     }).start();
   }, [weekCoverage]);
@@ -283,14 +456,12 @@ export default function FlowScreen() {
     extrapolate: 'clamp',
   });
 
-  const heroBarColor = coveragePct >= 90
-    ? colors.success
-    : coveragePct >= 50
-    ? colors.teal
-    : coveragePct >= 20
-    ? colors.warning
-    : colors.danger;
-  const heroIsPositive = coveragePct >= 50;
+  const heroBarColor =
+    coveragePct >= 90 ? colors.success :
+    coveragePct >= 50 ? colors.teal :
+    coveragePct >= 20 ? colors.warning :
+    colors.danger;
+  const heroPositive = coveragePct >= 50;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -298,18 +469,17 @@ export default function FlowScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.primary} />
+          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.teal} />
         }
       >
         {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>Flow</Text>
-            <Text style={styles.subtitle}>What's happening with your money</Text>
+            <Text style={styles.subtitle}>Weekly cash commitment rhythm</Text>
           </View>
         </View>
 
-        {/* Month selector */}
         <MonthSelector
           month={month}
           year={year}
@@ -318,71 +488,97 @@ export default function FlowScreen() {
 
         {loading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.teal} />
           </View>
         ) : expenses.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="pulse-outline" size={40} color={colors.textDisabled} />
+            <View style={styles.emptyIcon}>
+              <Ionicons name="pulse-outline" size={28} color={colors.textTertiary} />
+            </View>
             <Text style={styles.emptyTitle}>No commitments this month</Text>
             <Text style={styles.emptyText}>Add commitments in the Commitments tab to see your flow here.</Text>
           </View>
         ) : (
           <>
-            {/* ── Current Week Hero Card ── */}
+            {/* ── Dark Hero Card — matches Dashboard aesthetic ── */}
             {isCurrentMonth && currentWeekData && (
               <View style={styles.heroCard}>
-                <View style={styles.heroTop}>
-                  <View>
-                    <Text style={styles.heroEyebrow}>THIS WEEK</Text>
-                    <Text style={styles.heroTitle}>
-                      {getShortMonthName(month)} {currentWeekData.startDay}–{currentWeekData.endDay}
-                    </Text>
-                  </View>
-                  <View style={[
-                    styles.heroBadge,
-                    { backgroundColor: heroBarColor + '22' }
-                  ]}>
-                    <Text style={[styles.heroBadgeText, { color: heroBarColor }]}>
-                      {Math.round(coveragePct)}% covered
-                    </Text>
-                  </View>
-                </View>
+                {/* Ambient glow orbs */}
+                <View style={styles.heroGlowA} />
+                <View style={styles.heroGlowB} />
+                {/* Decorative ring */}
+                <View style={styles.heroRing} />
 
-                {/* Hero bar — gradient when positive, semantic color otherwise */}
-                <View style={styles.heroBarTrack}>
-                  {heroIsPositive ? (
-                    <Animated.View style={[styles.heroBarFill, { width: heroBarWidth }]}>
-                      <LinearGradient
-                        colors={gradient.brand}
-                        start={gradient.brandStart}
-                        end={gradient.brandEnd}
-                        style={StyleSheet.absoluteFill}
-                      />
-                    </Animated.View>
-                  ) : (
-                    <Animated.View style={[styles.heroBarFill, { width: heroBarWidth, backgroundColor: heroBarColor }]} />
-                  )}
-                </View>
+                <View style={styles.heroContent}>
+                  {/* Header */}
+                  <View style={styles.heroHeaderRow}>
+                    <View>
+                      <Text style={styles.heroEyebrow}>THIS WEEK</Text>
+                      <Text style={styles.heroTitle}>
+                        {getShortMonthName(month)} {currentWeekData.startDay}–{currentWeekData.endDay}
+                      </Text>
+                    </View>
+                    <View style={[styles.heroBadge, { backgroundColor: heroBarColor + '22' }]}>
+                      <View style={[styles.heroBadgeDot, { backgroundColor: heroBarColor }]} />
+                      <Text style={[styles.heroBadgeText, { color: heroBarColor }]}>
+                        {Math.round(coveragePct)}% covered
+                      </Text>
+                    </View>
+                  </View>
 
-                {/* Row: Covered / Remaining / Committed — value first, label below */}
-                <View style={styles.heroStats}>
-                  <View style={styles.heroStat}>
-                    <Text style={[styles.heroStatValue, { color: colors.success }]}>
-                      {formatCurrency(weekCovered)}
-                    </Text>
-                    <Text style={styles.heroStatLabel}>covered</Text>
+                  {/* Amount */}
+                  <Text style={styles.heroAmount}>{formatCurrency(weekNeeded)}</Text>
+                  <Text style={styles.heroAmountLabel}>committed this week</Text>
+
+                  {/* Progress bar with glow */}
+                  <View style={styles.heroBarTrack}>
+                    {heroPositive ? (
+                      <Animated.View style={[styles.heroBarFill, { width: heroBarWidth }]}>
+                        <LinearGradient
+                          colors={gradient.brand}
+                          start={gradient.brandStart}
+                          end={gradient.brandEnd}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </Animated.View>
+                    ) : (
+                      <Animated.View style={[
+                        styles.heroBarFill,
+                        {
+                          width: heroBarWidth,
+                          backgroundColor: heroBarColor,
+                          shadowColor: heroBarColor,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.8,
+                          shadowRadius: 6,
+                        }
+                      ]} />
+                    )}
                   </View>
-                  <View style={styles.heroStatDivider} />
-                  <View style={styles.heroStat}>
-                    <Text style={[styles.heroStatValue, { color: weekUnallocated > 0 ? colors.danger : colors.success }]}>
-                      {formatCurrency(weekUnallocated)}
-                    </Text>
-                    <Text style={styles.heroStatLabel}>remaining</Text>
-                  </View>
-                  <View style={styles.heroStatDivider} />
-                  <View style={styles.heroStat}>
-                    <Text style={styles.heroStatValue}>{formatCurrency(weekNeeded)}</Text>
-                    <Text style={styles.heroStatLabel}>committed</Text>
+
+                  {/* Stats row */}
+                  <View style={styles.heroStats}>
+                    <View style={styles.heroStat}>
+                      <Text style={[styles.heroStatValue, { color: '#34D399' }]}>
+                        {formatCurrency(weekCovered)}
+                      </Text>
+                      <Text style={styles.heroStatLabel}>COVERED</Text>
+                    </View>
+                    <View style={styles.heroStatDivider} />
+                    <View style={styles.heroStat}>
+                      <Text style={[
+                        styles.heroStatValue,
+                        { color: weekUnallocated > 0 ? '#FBBF24' : '#34D399' }
+                      ]}>
+                        {formatCurrency(weekUnallocated)}
+                      </Text>
+                      <Text style={styles.heroStatLabel}>REMAINING</Text>
+                    </View>
+                    <View style={styles.heroStatDivider} />
+                    <View style={styles.heroStat}>
+                      <Text style={styles.heroStatValue}>{formatCurrency(weekNeeded)}</Text>
+                      <Text style={styles.heroStatLabel}>COMMITTED</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -390,13 +586,11 @@ export default function FlowScreen() {
 
             {/* ── Month Flow Grid ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{getShortMonthName(month)} Flow</Text>
-              <View style={styles.weekBarsGrid}>
+              <Text style={styles.sectionLabel}>{getShortMonthName(month)} Flow</Text>
+              <View style={styles.weekGrid}>
                 {totalWeeklyBreakdown.map((week, i) => {
                   const coverage = getWeekCoverage(expenses, i, month, year);
-                  const isPastOrCurrent = isCurrentMonth
-                    ? i <= currentWeekIdx
-                    : true; // for past months treat all as past
+                  const isPastOrCurrent = isCurrentMonth ? i <= currentWeekIdx : true;
                   const isCurrent = isCurrentMonth && i === currentWeekIdx;
                   return (
                     <WeekBar
@@ -416,7 +610,7 @@ export default function FlowScreen() {
 
             {/* ── Per-Commitment Flow ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Per Commitment</Text>
+              <Text style={styles.sectionLabel}>Per Commitment</Text>
               {expenses.map((expense, i) => (
                 <CommitmentFlowRow
                   key={expense.id}
@@ -424,7 +618,7 @@ export default function FlowScreen() {
                   weekIndex={currentWeekIdx}
                   month={month}
                   year={year}
-                  delay={i * 100}
+                  delay={i * 80}
                 />
               ))}
             </View>
@@ -436,12 +630,14 @@ export default function FlowScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F8' },
+  safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
     gap: spacing.base,
   },
+
+  // ── Header ──
   header: {
     paddingTop: spacing.md,
     flexDirection: 'row',
@@ -452,16 +648,15 @@ const styles = StyleSheet.create({
     fontSize: typography.xl,
     fontWeight: typography.bold,
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     marginTop: 2,
   },
-  center: {
-    paddingTop: spacing.xxxl,
-    alignItems: 'center',
-  },
+
+  center: { paddingTop: spacing.xxxl, alignItems: 'center' },
   empty: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -469,6 +664,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     ...shadows.sm,
+  },
+  emptyIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.surfaceAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
   emptyTitle: {
     fontSize: typography.md,
@@ -479,17 +683,53 @@ const styles = StyleSheet.create({
     fontSize: typography.sm,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
 
-  // ── Hero Card ──
+  // ── Dark hero card — Navy, matches Overview ──
   heroCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.lg,
-    ...shadows.md,
+    backgroundColor: colors.navy,
+    borderRadius: radius.xxl,
+    overflow: 'hidden',
+    marginHorizontal: -spacing.base,
+    ...shadows.hero,
+  },
+  heroGlowA: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: colors.teal,
+    opacity: 0.15,
+  },
+  heroGlowB: {
+    position: 'absolute',
+    bottom: -60,
+    left: -30,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: colors.primary,
+    opacity: 0.12,
+  },
+  heroRing: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  heroContent: {
+    padding: spacing.xl,
+    paddingBottom: spacing.xxl,
     gap: spacing.md,
   },
-  heroTop: {
+  heroHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -497,29 +737,53 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
-    color: colors.textDisabled,
-    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.40)',
+    letterSpacing: 1.2,
   },
   heroTitle: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
-    color: colors.textPrimary,
-    marginTop: 2,
+    color: '#FFFFFF',
+    marginTop: 3,
+    letterSpacing: -0.3,
   },
   heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  heroBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   heroBadgeText: {
     fontSize: typography.xs,
     fontWeight: typography.bold,
   },
+  heroAmount: {
+    fontSize: typography.display,
+    fontWeight: typography.extrabold,
+    color: '#FFFFFF',
+    letterSpacing: -2,
+    lineHeight: 54,
+  },
+  heroAmountLabel: {
+    fontSize: typography.xs,
+    color: 'rgba(255,255,255,0.35)',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: -8,
+  },
   heroBarTrack: {
-    height: 14,
-    backgroundColor: colors.surfaceAlt,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: radius.full,
     overflow: 'hidden',
+    marginTop: spacing.xs,
   },
   heroBarFill: {
     height: '100%',
@@ -528,210 +792,46 @@ const styles = StyleSheet.create({
   heroStats: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.07)',
+    marginTop: spacing.xs,
   },
   heroStat: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   heroStatDivider: {
     width: 1,
-    height: 36,
-    backgroundColor: colors.border,
-  },
-  heroStatLabel: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
-    letterSpacing: 0.3,
-    marginTop: 2,
+    height: 32,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   heroStatValue: {
-    fontSize: typography.lg,
+    fontSize: typography.base,
     fontWeight: typography.bold,
-    color: colors.textPrimary,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
-
-  // ── Section ──
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: typography.md,
+  heroStatLabel: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.35)',
     fontWeight: typography.semibold,
-    color: colors.textPrimary,
+    letterSpacing: 0.8,
   },
 
-  // ── Week Bars Grid ──
-  weekBarsGrid: {
+  // ── Sections ──
+  section: { gap: spacing.sm },
+  sectionLabel: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  weekGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  weekBarCard: {
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    minWidth: '45%',
-    flex: 1,
-    gap: 4,
-    opacity: 0.82,
-  },
-  weekBarCardCurrent: {
-    borderWidth: 1.5,
-    borderColor: colors.teal,
-    opacity: 1,
-    shadowColor: colors.teal,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  weekBarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  weekBarLabel: {
-    fontSize: typography.xs,
-    fontWeight: typography.semibold,
-  },
-  nowPill: {
-    backgroundColor: colors.teal,
-    borderRadius: radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  nowPillText: {
-    fontSize: 9,
-    fontWeight: typography.bold,
-    color: '#fff',
-    letterSpacing: 0.5,
-  },
-  weekBarAmount: {
-    fontSize: typography.base,
-    fontWeight: typography.bold,
-  },
-  weekBarDates: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
-  },
-  weekBarTrack: {
-    height: 8,
-    backgroundColor: 'rgba(0,0,0,0.07)',
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    marginTop: 4,
-  },
-  weekBarFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  weekBarCoverage: {
-    fontSize: typography.xs,
-    fontWeight: typography.medium,
-    marginTop: 2,
-  },
-
-  // ── Commitment Card ──
-  commitmentCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    marginBottom: spacing.sm,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
-    elevation: 2,
-    flexDirection: 'row',
-  },
-  commitmentAccent: {
-    width: 4,
-    borderRadius: 4,
-    margin: 4,
-    marginRight: 0,
-  },
-  commitmentBody: {
-    flex: 1,
-    padding: spacing.md,
-    paddingLeft: spacing.sm,
-    gap: spacing.sm,
-  },
-  commitmentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  commitmentIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  commitmentMeta: {
-    flex: 1,
-    gap: 3,
-  },
-  commitmentName: {
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-  },
-  commitmentDue: {
-    fontSize: typography.xs,
-    color: colors.textSecondary,
-  },
-  commitmentRight: {
-    alignItems: 'flex-end',
-    gap: 4,
-    flexShrink: 0,
-  },
-  commitmentAmount: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    letterSpacing: -0.3,
-  },
-  resolvedChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: colors.successLight,
-    borderRadius: radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  resolvedChipText: {
-    fontSize: 10,
-    color: colors.success,
-    fontWeight: typography.semibold,
-  },
-  weekAllocLabel: {
-    fontSize: 10,
-    color: colors.textSecondary,
-  },
-  weekAllocAmt: {
-    fontWeight: typography.bold,
-    color: colors.teal,
-  },
-  singleBarTrack: {
-    height: 5,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
-    overflow: 'visible',
-    position: 'relative',
-  },
-  singleBarFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  weekSliceMarker: {
-    position: 'absolute',
-    top: -2,
-    width: 2,
-    height: 9,
-    borderRadius: 1,
-    backgroundColor: colors.teal,
-    opacity: 0.7,
   },
 });

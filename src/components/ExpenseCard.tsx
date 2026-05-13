@@ -26,10 +26,10 @@ interface Props {
   onDelete?: (expense: ExpenseWithRecord) => void;
   onExcludeFromMonth?: (expense: ExpenseWithRecord) => void;
   onWaive?: (expense: ExpenseWithRecord) => void;
-  /** Weekly allocation for this commitment in the current week */
   weeklyAllocation?: number;
 }
 
+// ── Status configuration — semantic, not decorative ──
 const STATUS_CONFIG = {
   paid: {
     color: colors.success,
@@ -56,7 +56,7 @@ const STATUS_CONFIG = {
     icon: 'time',
   },
   upcoming: {
-    color: colors.textSecondary,
+    color: colors.textTertiary,
     bg: colors.surfaceAlt,
     label: 'Upcoming',
     icon: 'calendar-outline',
@@ -93,6 +93,13 @@ export const ExpenseCard = ({
   const hasActualDiff = isPaid && actualAmount !== undefined && actualAmount !== plannedAmount;
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;
+
+  // Amount color — status-aware
+  const amountColor =
+    isResolved ? colors.success :
+    status === 'overdue' ? colors.danger :
+    status === 'due-soon' ? colors.warning :
+    colors.textPrimary;
 
   const handleLongPress = () => {
     Alert.alert(expense.name, 'What would you like to do?', [
@@ -144,30 +151,37 @@ export const ExpenseCard = ({
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card,
+        // Very subtle status tint on entire card for overdue/due-soon
+        status === 'overdue' && { backgroundColor: '#FFFAFA' },
+        isResolved && { opacity: 0.88 },
+      ]}
       onLongPress={handleLongPress}
-      activeOpacity={0.8}
+      activeOpacity={0.82}
     >
-      {/* Status accent strip */}
-      <View style={[styles.accentBar, { backgroundColor: statusConfig.color }]} />
+      {/* Left accent strip — 5px, full height */}
+      <View style={[styles.accentStrip, { backgroundColor: statusConfig.color }]} />
 
-      {/* Left: Category icon */}
+      {/* Category icon */}
       <View style={[styles.iconWrapper, { backgroundColor: statusConfig.bg }]}>
         <Ionicons name={categoryIcon as any} size={20} color={statusConfig.color} />
       </View>
 
-      {/* Middle: Name + details */}
+      {/* Info column */}
       <View style={styles.info}>
+        {/* Name row */}
         <View style={styles.nameRow}>
           <Text style={styles.name} numberOfLines={1}>{expense.name}</Text>
           <View
             style={[
               styles.typeBadge,
               {
-                backgroundColor:
-                  expense.type === 'personal'
-                    ? colors.personalLight
-                    : colors.businessLight,
+                backgroundColor: 'transparent',
+                borderWidth: 1,
+                borderColor: expense.type === 'personal'
+                  ? colors.personal + '50'
+                  : colors.business + '50',
               },
             ]}
           >
@@ -175,10 +189,9 @@ export const ExpenseCard = ({
               style={[
                 styles.typeText,
                 {
-                  color:
-                    expense.type === 'personal'
-                      ? colors.personal
-                      : colors.business,
+                  color: expense.type === 'personal'
+                    ? colors.personal
+                    : colors.business,
                 },
               ]}
             >
@@ -187,14 +200,15 @@ export const ExpenseCard = ({
           </View>
         </View>
 
+        {/* Meta row */}
         <View style={styles.metaRow}>
           <Text style={styles.category}>{categoryLabel}</Text>
-          <Text style={styles.dot}>·</Text>
+          <View style={styles.metaDot} />
           <Text style={styles.dueDay}>{formatDueDay(expense.due_day)}</Text>
           {expense.is_recurring && (
             <>
-              <Text style={styles.dot}>·</Text>
-              <Ionicons name="repeat" size={12} color={colors.textSecondary} />
+              <View style={styles.metaDot} />
+              <Ionicons name="repeat" size={11} color={colors.textTertiary} />
             </>
           )}
         </View>
@@ -202,7 +216,7 @@ export const ExpenseCard = ({
         {/* Date range */}
         {(expense.start_date || expense.end_date) && (
           <View style={styles.dateRangeRow}>
-            <Ionicons name="calendar-outline" size={11} color={colors.textDisabled} />
+            <Ionicons name="calendar-outline" size={10} color={colors.textDisabled} />
             <Text style={styles.dateRangeText}>
               {expense.start_date ? formatShortDate(expense.start_date) : ''}
               {expense.end_date ? ` → ${formatShortDate(expense.end_date)}` : ''}
@@ -211,18 +225,19 @@ export const ExpenseCard = ({
         )}
 
         {/* Weekly allocation */}
-        {weeklyAllocation !== undefined && !isPaid && (
+        {weeklyAllocation !== undefined && !isResolved && (
           <Text style={styles.weeklyAlloc}>
-            This week: <Text style={styles.weeklyAllocAmt}>{formatCurrency(weeklyAllocation)}</Text> allocated
+            This week:{' '}
+            <Text style={styles.weeklyAllocAmt}>{formatCurrency(weeklyAllocation)}</Text>
           </Text>
         )}
 
-        {/* Badges row: status + autopay */}
+        {/* Badges row */}
         <View style={styles.badgesRow}>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
             <Ionicons
               name={statusConfig.icon as any}
-              size={11}
+              size={10}
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
@@ -231,7 +246,7 @@ export const ExpenseCard = ({
           </View>
           {expense.is_autopay && (
             <View style={styles.autopayBadge}>
-              <Ionicons name="flash" size={10} color={colors.primary} />
+              <Ionicons name="flash" size={9} color={colors.primary} />
               <Text style={styles.autopayText}>
                 {expense.autopay_method?.toUpperCase() ?? 'AUTO'}
                 {expense.autopay_last4 ? ` ···· ${expense.autopay_last4}` : ''}
@@ -241,15 +256,19 @@ export const ExpenseCard = ({
         </View>
       </View>
 
-      {/* Right: Amount + edit + toggle */}
+      {/* Right panel — amount + actions */}
       <View style={styles.right}>
         {hasActualDiff ? (
           <View style={styles.amountStack}>
-            <Text style={styles.actualAmount}>{formatCurrency(actualAmount!)}</Text>
+            <Text style={[styles.amount, { color: amountColor }]}>
+              {formatCurrency(actualAmount!)}
+            </Text>
             <Text style={styles.plannedAmount}>{formatCurrency(plannedAmount)}</Text>
           </View>
         ) : (
-          <Text style={styles.amount}>{formatCurrency(plannedAmount)}</Text>
+          <Text style={[styles.amount, { color: amountColor }]}>
+            {formatCurrency(plannedAmount)}
+          </Text>
         )}
         {hasCredit && (
           <Text style={styles.creditAmt}>-{formatCurrency(creditAmount!)} credit</Text>
@@ -263,7 +282,7 @@ export const ExpenseCard = ({
           onPress={() => onEdit?.(expense)}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Ionicons name="pencil-outline" size={13} color={colors.textSecondary} />
+          <Ionicons name="pencil-outline" size={12} color={colors.textSecondary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -277,7 +296,7 @@ export const ExpenseCard = ({
         >
           <Ionicons
             name={isWaived ? 'gift-outline' : 'checkmark'}
-            size={14}
+            size={13}
             color={isResolved ? '#fff' : colors.textDisabled}
           />
         </TouchableOpacity>
@@ -292,23 +311,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
-    padding: spacing.base,
-    paddingLeft: spacing.base,
+    paddingVertical: spacing.md,
+    paddingRight: spacing.md,
     marginBottom: spacing.sm,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
+    ...shadows.card,
     gap: spacing.md,
     overflow: 'hidden',
   },
-  accentBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
+  accentStrip: {
+    width: 5,
+    alignSelf: 'stretch',
+    borderRadius: 0,
   },
   iconWrapper: {
     width: 44,
@@ -320,7 +333,7 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
   nameRow: {
     flexDirection: 'row',
@@ -341,6 +354,7 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
+    letterSpacing: 0.1,
   },
   metaRow: {
     flexDirection: 'row',
@@ -351,13 +365,15 @@ const styles = StyleSheet.create({
     fontSize: typography.xs,
     color: colors.textSecondary,
   },
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.textDisabled,
+  },
   dueDay: {
     fontSize: typography.xs,
     color: colors.textSecondary,
-  },
-  dot: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
   },
   dateRangeRow: {
     flexDirection: 'row',
@@ -393,6 +409,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: typography.xs,
     fontWeight: typography.medium,
+    letterSpacing: 0.1,
   },
   autopayBadge: {
     flexDirection: 'row',
@@ -412,22 +429,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.sm,
     flexShrink: 0,
+    paddingRight: spacing.xs,
   },
   amount: {
-    fontSize: typography.lg,
+    fontSize: typography.xl,     // 24px — dominant financial number
     fontWeight: typography.bold,
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   amountStack: {
     alignItems: 'flex-end',
-    gap: 1,
-  },
-  actualAmount: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
+    gap: 2,
   },
   plannedAmount: {
     fontSize: typography.xs,
@@ -473,3 +484,4 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
 });
+  

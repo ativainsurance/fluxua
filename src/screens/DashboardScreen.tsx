@@ -29,7 +29,9 @@ import { PaidAmountModal } from '../components/PaidAmountModal';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
 
 // ─────────────────────────────────────────────
-// Hero Card — the dominant financial snapshot
+// Hero Card — dominant financial snapshot
+// Inspired by premium fintech depth:
+//   large display number → progress bar → 3-stat row
 // ─────────────────────────────────────────────
 
 const HeroCard = ({
@@ -60,7 +62,7 @@ const HeroCard = ({
   useEffect(() => {
     Animated.timing(barAnim, {
       toValue: pct,
-      duration: 1000,
+      duration: 1100,
       useNativeDriver: false,
     }).start();
   }, [pct]);
@@ -71,13 +73,16 @@ const HeroCard = ({
     extrapolate: 'clamp',
   });
 
+  // Semantic color for progress — shifts from red → yellow → teal → green
   const barColor =
-    pct >= 0.9 ? '#34D399' : pct >= 0.5 ? '#60A5FA' : pct >= 0.2 ? '#FBBF24' : '#F87171';
+    pct >= 0.9 ? '#34D399' :
+    pct >= 0.6 ? colors.teal :
+    pct >= 0.3 ? '#FBBF24' : '#F87171';
 
-  const trend = pct >= 0.5 ? '↑' : '↓';
-  const trendColor = pct >= 0.5 ? '#34D399' : '#F87171';
+  const trendUp = pct >= 0.5;
+  const trendColor = trendUp ? '#34D399' : '#F87171';
 
-  // Week data
+  // Weekly context
   const weekIdx = getCurrentWeekIndex(month, year);
   const weekBreakdowns = getWeeklyBreakdown(total, month, year, getShortMonthName(month));
   const thisWeek = weekBreakdowns[weekIdx];
@@ -89,49 +94,88 @@ const HeroCard = ({
 
   return (
     <View style={heroStyles.card}>
-      {/* Glow orbs — simulated gradient feel */}
+      {/* ── Ambient glow layers ── */}
       <View style={heroStyles.glowTopRight} />
       <View style={heroStyles.glowBottomLeft} />
       <View style={heroStyles.glowCenter} />
 
-      {/* Content */}
-      <View style={heroStyles.content}>
-        <Text style={heroStyles.greeting}>{greeting}</Text>
-        <Text style={heroStyles.name} numberOfLines={1}>{userName}</Text>
+      {/* ── Decorative geometry ── */}
+      <View style={heroStyles.ringOuter} />
+      <View style={heroStyles.ringInner} />
 
-        <View style={heroStyles.amountRow}>
-          <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
-          <View style={[heroStyles.trendBadge, { backgroundColor: trendColor + '22' }]}>
-            <Text style={[heroStyles.trendText, { color: trendColor }]}>
-              {trend} {coveragePct}% covered
+      {/* ── Content ── */}
+      <View style={heroStyles.content}>
+        {/* Header row: greeting + coverage badge */}
+        <View style={heroStyles.headerRow}>
+          <View>
+            <Text style={heroStyles.eyebrow}>{greeting}</Text>
+            <Text style={heroStyles.userName} numberOfLines={1}>{userName}</Text>
+          </View>
+          <View style={[heroStyles.coverageBadge, { backgroundColor: trendColor + '22' }]}>
+            <View style={[heroStyles.coverageDot, { backgroundColor: trendColor }]} />
+            <Text style={[heroStyles.coverageText, { color: trendColor }]}>
+              {coveragePct}% covered
             </Text>
           </View>
         </View>
 
-        <Text style={heroStyles.amountLabel}>Total Flow · {getMonthName(month)} {year}</Text>
+        {/* Display amount */}
+        <View style={heroStyles.amountBlock}>
+          <Text style={heroStyles.amountLabel}>
+            {getMonthName(month)} {year} · Total Flow
+          </Text>
+          <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
+        </View>
 
-        {/* Progress bar */}
-        <View style={heroStyles.progressTrack}>
-          <Animated.View style={[heroStyles.progressFill, { width: barWidth, backgroundColor: barColor }]} />
+        {/* Progress bar with glow */}
+        <View style={heroStyles.progressSection}>
+          <View style={heroStyles.progressTrack}>
+            <Animated.View
+              style={[
+                heroStyles.progressFill,
+                {
+                  width: barWidth,
+                  backgroundColor: barColor,
+                  shadowColor: barColor,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.9,
+                  shadowRadius: 8,
+                  elevation: 4,
+                },
+              ]}
+            />
+          </View>
+          <View style={heroStyles.progressLabels}>
+            <Text style={heroStyles.progressLabelLeft}>
+              {formatCurrency(paid)} settled
+            </Text>
+            <Text style={heroStyles.progressLabelRight}>
+              {paidCount}/{totalCount} bills
+            </Text>
+          </View>
         </View>
 
         {/* 3-stat row */}
         <View style={heroStyles.statsRow}>
           <View style={heroStyles.stat}>
             <Text style={heroStyles.statValue}>{formatCurrency(paid)}</Text>
-            <Text style={heroStyles.statLabel}>Settled</Text>
+            <Text style={heroStyles.statLabel}>SETTLED</Text>
           </View>
           <View style={heroStyles.statDivider} />
           <View style={heroStyles.stat}>
-            <Text style={heroStyles.statValue}>{formatCurrency(total - paid)}</Text>
-            <Text style={heroStyles.statLabel}>Remaining</Text>
+            <Text style={[heroStyles.statValue, { color: total - paid > 0 ? '#FBBF24' : '#34D399' }]}>
+              {formatCurrency(total - paid)}
+            </Text>
+            <Text style={heroStyles.statLabel}>REMAINING</Text>
           </View>
           {thisWeek && (
             <>
               <View style={heroStyles.statDivider} />
               <View style={heroStyles.stat}>
-                <Text style={heroStyles.statValue}>{formatCurrency(weekNeeded)}</Text>
-                <Text style={heroStyles.statLabel}>This week</Text>
+                <Text style={[heroStyles.statValue, { color: colors.teal }]}>
+                  {formatCurrency(weekNeeded)}
+                </Text>
+                <Text style={heroStyles.statLabel}>THIS WEEK</Text>
               </View>
             </>
           )}
@@ -144,134 +188,190 @@ const HeroCard = ({
 const heroStyles = StyleSheet.create({
   card: {
     backgroundColor: colors.navy,
-    borderRadius: 28,
+    borderRadius: radius.xxl,
     overflow: 'hidden',
-    // Break out of scroll padding to feel immersive
-    marginHorizontal: -spacing.base,
-    // Deeper elevated shadow with teal tint
-    shadowColor: '#14B8A6',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.32,
-    shadowRadius: 36,
-    elevation: 12,
+    marginHorizontal: -spacing.base,   // break out of scroll padding — immersive
+    ...shadows.hero,
   },
+
+  // ── Ambient glow orbs ──
   glowTopRight: {
     position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#14B8A6',
-    opacity: 0.20,
+    top: -70,
+    right: -70,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: colors.teal,
+    opacity: 0.16,
   },
   glowBottomLeft: {
     position: 'absolute',
-    bottom: -80,
-    left: -40,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: '#3B82F6',
-    opacity: 0.15,
+    bottom: -90,
+    left: -50,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: colors.primary,
+    opacity: 0.13,
   },
   glowCenter: {
     position: 'absolute',
-    top: '20%',
-    right: '30%',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    top: '15%',
+    right: '20%',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     backgroundColor: '#7C3AED',
     opacity: 0.07,
   },
+
+  // ── Decorative concentric rings (premium depth) ──
+  ringOuter: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  ringInner: {
+    position: 'absolute',
+    top: -20,
+    right: -20,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.04)',
+  },
+
+  // ── Content ──
   content: {
     padding: spacing.xl,
     paddingBottom: spacing.xxl,
-    gap: spacing.sm,
+    gap: spacing.lg,
   },
-  greeting: {
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  eyebrow: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  name: {
+  userName: {
     fontSize: typography.sm,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: -2,
-    marginBottom: spacing.xs,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 3,
+    fontWeight: typography.medium,
   },
-  amountRow: {
+  coverageBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    flexWrap: 'wrap',
-  },
-  amount: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -1,
-  },
-  trendBadge: {
+    gap: 5,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  trendText: {
+  coverageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  coverageText: {
     fontSize: typography.xs,
     fontWeight: typography.bold,
   },
+
+  // ── Amount display ──
+  amountBlock: {
+    gap: 4,
+  },
   amountLabel: {
     fontSize: typography.xs,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: -4,
+    color: 'rgba(255,255,255,0.35)',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  amount: {
+    fontSize: typography.display,   // 48px — dominant financial number
+    fontWeight: typography.extrabold,
+    color: '#FFFFFF',
+    letterSpacing: -2,
+    lineHeight: 54,
+  },
+
+  // ── Progress bar ──
+  progressSection: {
+    gap: spacing.xs,
   },
   progressTrack: {
-    height: 5,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: radius.full,
     overflow: 'hidden',
-    marginTop: spacing.xs,
   },
   progressFill: {
     height: '100%',
     borderRadius: radius.full,
   },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressLabelLeft: {
+    fontSize: typography.xs,
+    color: 'rgba(255,255,255,0.40)',
+    fontWeight: typography.medium,
+  },
+  progressLabelRight: {
+    fontSize: typography.xs,
+    color: 'rgba(255,255,255,0.40)',
+    fontWeight: typography.medium,
+  },
+
+  // ── Stats row ──
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: 'rgba(255,255,255,0.07)',
+    marginTop: -spacing.xs,
   },
   stat: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   statDivider: {
     width: 1,
-    height: 28,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    height: 32,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   statValue: {
-    fontSize: typography.sm,
+    fontSize: typography.base,
     fontWeight: typography.bold,
     color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.45)',
-    fontWeight: typography.medium,
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.35)',
+    fontWeight: typography.semibold,
+    letterSpacing: 0.8,
   },
 });
 
 // ─────────────────────────────────────────────
-// Stat Cards — primary/secondary hierarchy
+// Stat Cards — primary / secondary hierarchy
 // ─────────────────────────────────────────────
 
 const StatCards = ({
@@ -286,26 +386,25 @@ const StatCards = ({
   totalPaid: number;
 }) => (
   <View style={statStyles.container}>
-    {/* Primary: Completed — full-width horizontal card, most important signal */}
+    {/* Primary card — full width, Completed as dominant signal */}
     <View style={[statStyles.primaryCard, { backgroundColor: colors.successLight }]}>
       <View style={[statStyles.primaryIcon, { backgroundColor: '#D1FAE5' }]}>
         <Ionicons name="checkmark-done" size={22} color={colors.success} />
       </View>
       <View style={statStyles.primaryBody}>
         <Text style={[statStyles.primaryValue, { color: colors.success }]}>
-          {paidCount} <Text style={statStyles.primaryOf}>/ {totalCount}</Text>
+          {paidCount}
+          <Text style={statStyles.primaryDenom}> / {totalCount}</Text>
         </Text>
         <Text style={statStyles.primaryLabel}>Commitments completed</Text>
       </View>
       <View style={statStyles.primaryRight}>
-        <View style={[statStyles.progressDot,
-          { backgroundColor: paidCount === totalCount ? colors.success : colors.warning }
-        ]} />
-        <Text style={[statStyles.progressLabel, {
+        <Text style={[statStyles.primaryPct, {
           color: paidCount === totalCount ? colors.success : colors.warning
         }]}>
           {totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0}%
         </Text>
+        <Text style={statStyles.primaryPctLabel}>done</Text>
       </View>
     </View>
 
@@ -313,7 +412,7 @@ const StatCards = ({
     <View style={statStyles.secondaryRow}>
       <View style={[statStyles.secondaryCard, { backgroundColor: colors.warningLight }]}>
         <View style={[statStyles.secondaryIcon, { backgroundColor: '#FEF3C7' }]}>
-          <Ionicons name="hourglass-outline" size={15} color={colors.warning} />
+          <Ionicons name="hourglass-outline" size={14} color={colors.warning} />
         </View>
         <Text style={[statStyles.secondaryValue, { color: colors.warning }]}>{unpaidCount}</Text>
         <Text style={statStyles.secondaryLabel}>Remaining</Text>
@@ -321,7 +420,7 @@ const StatCards = ({
 
       <View style={[statStyles.secondaryCard, { backgroundColor: colors.primaryLight }]}>
         <View style={[statStyles.secondaryIcon, { backgroundColor: '#DBEAFE' }]}>
-          <Ionicons name="receipt-outline" size={15} color={colors.primary} />
+          <Ionicons name="receipt-outline" size={14} color={colors.primary} />
         </View>
         <Text style={[statStyles.secondaryValue, { color: colors.primary }]}>{totalCount}</Text>
         <Text style={statStyles.secondaryLabel}>Total Bills</Text>
@@ -331,10 +430,7 @@ const StatCards = ({
 );
 
 const statStyles = StyleSheet.create({
-  container: {
-    gap: spacing.sm,
-  },
-  // Primary card — full width, horizontal
+  container: { gap: spacing.sm },
   primaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,29 +438,26 @@ const statStyles = StyleSheet.create({
     padding: spacing.base,
     gap: spacing.md,
     shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.10,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 2,
   },
   primaryIcon: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
   },
-  primaryBody: {
-    flex: 1,
-    gap: 3,
-  },
+  primaryBody: { flex: 1, gap: 3 },
   primaryValue: {
     fontSize: typography.xl,
     fontWeight: typography.bold,
     lineHeight: 28,
   },
-  primaryOf: {
+  primaryDenom: {
     fontSize: typography.md,
     fontWeight: typography.regular,
     color: colors.textSecondary,
@@ -376,38 +469,34 @@ const statStyles = StyleSheet.create({
   },
   primaryRight: {
     alignItems: 'center',
-    gap: 3,
+    gap: 2,
     flexShrink: 0,
+    paddingRight: spacing.xs,
   },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  progressLabel: {
-    fontSize: typography.sm,
+  primaryPct: {
+    fontSize: typography.lg,
     fontWeight: typography.bold,
+    letterSpacing: -0.5,
   },
-  // Secondary cards — side by side
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  primaryPctLabel: {
+    fontSize: 9,
+    color: colors.textTertiary,
+    fontWeight: typography.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+  secondaryRow: { flexDirection: 'row', gap: spacing.sm },
   secondaryCard: {
     flex: 1,
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
     gap: spacing.xs,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 1,
+    ...shadows.sm,
   },
   secondaryIcon: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -421,16 +510,16 @@ const statStyles = StyleSheet.create({
     fontSize: 10,
     color: colors.textSecondary,
     fontWeight: typography.medium,
-    textAlign: 'center',
   },
 });
 
 // ─────────────────────────────────────────────
-// Premium Commitment Row
+// Commitment Row — premium fintech card
 // ─────────────────────────────────────────────
 
 const STATUS_ACCENT: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
   paid:       { accent: colors.success,  bg: colors.successLight,  label: 'Completed', icon: 'checkmark-circle' },
+  waived:     { accent: '#8B5CF6',       bg: '#EDE9FE',            label: 'Waived',    icon: 'gift-outline' },
   overdue:    { accent: colors.danger,   bg: colors.dangerLight,   label: 'Overdue',   icon: 'alert-circle' },
   'due-soon': { accent: colors.warning,  bg: colors.warningLight,  label: 'Due Soon',  icon: 'time' },
   upcoming:   { accent: colors.primary,  bg: colors.primaryLight,  label: 'Upcoming',  icon: 'calendar-outline' },
@@ -444,38 +533,42 @@ const CommitmentRow = ({
   onTogglePaid: (expense: ExpenseWithRecord, isPaid: boolean) => void;
 }) => {
   const isPaid = expense.record?.is_paid ?? false;
-  const status = getBillStatus(expense.due_day, isPaid);
+  const isWaived = expense.record?.is_waived ?? false;
+  const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
   const config = STATUS_ACCENT[status] ?? STATUS_ACCENT.upcoming;
   const categoryIcon = getCategoryIcon(expense.category);
   const amount = expense.record?.actual_amount ?? expense.amount;
+  const isResolved = isPaid || isWaived;
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
     Animated.sequence([
-      Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1, duration: 120, useNativeDriver: true }),
-    ]).start(() => onTogglePaid(expense, !isPaid));
+      Animated.timing(scaleAnim, { toValue: 0.97, duration: 70, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 140, useNativeDriver: true }),
+    ]).start(() => onTogglePaid(expense, !isResolved));
   };
 
   return (
     <Animated.View style={[rowStyles.wrapper, { transform: [{ scale: scaleAnim }] }]}>
-      {/* Left accent bar */}
-      <View style={[rowStyles.accentBar, { backgroundColor: config.accent }]} />
+      {/* Left accent strip */}
+      <View style={[rowStyles.accentStrip, { backgroundColor: config.accent }]} />
 
       <View style={rowStyles.body}>
-        {/* Category icon circle */}
+        {/* Category icon */}
         <View style={[rowStyles.iconCircle, { backgroundColor: config.bg }]}>
-          <Ionicons name={categoryIcon as any} size={18} color={config.accent} />
+          <Ionicons name={categoryIcon as any} size={19} color={config.accent} />
         </View>
 
-        {/* Name + due */}
+        {/* Info: name + status badge */}
         <View style={rowStyles.info}>
-          <Text style={rowStyles.name} numberOfLines={1}>{expense.name}</Text>
-          <View style={rowStyles.metaRow}>
-            <View style={[rowStyles.badge, { backgroundColor: config.bg }]}>
-              <Ionicons name={config.icon as any} size={10} color={config.accent} />
-              <Text style={[rowStyles.badgeText, { color: config.accent }]}>{config.label}</Text>
+          <Text style={[rowStyles.name, isResolved && { opacity: 0.6 }]} numberOfLines={1}>
+            {expense.name}
+          </Text>
+          <View style={rowStyles.badgeRow}>
+            <View style={[rowStyles.statusBadge, { backgroundColor: config.bg }]}>
+              <Ionicons name={config.icon as any} size={9} color={config.accent} />
+              <Text style={[rowStyles.statusText, { color: config.accent }]}>{config.label}</Text>
             </View>
             {expense.is_autopay && (
               <View style={rowStyles.autopayBadge}>
@@ -486,20 +579,27 @@ const CommitmentRow = ({
           </View>
         </View>
 
-        {/* Right: amount + check */}
+        {/* Amount + check — right panel */}
         <View style={rowStyles.right}>
-          <Text style={[rowStyles.amount, isPaid && { color: colors.success }]}>
+          <Text style={[
+            rowStyles.amount,
+            isResolved && { color: colors.success, opacity: 0.8 },
+          ]}>
             {formatCurrency(amount)}
           </Text>
           <TouchableOpacity
-            style={[rowStyles.checkBtn, isPaid ? rowStyles.checkBtnPaid : rowStyles.checkBtnUnpaid]}
+            style={[
+              rowStyles.checkBtn,
+              isResolved ? rowStyles.checkBtnDone : rowStyles.checkBtnPending,
+              isWaived && rowStyles.checkBtnWaived,
+            ]}
             onPress={handlePress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons
-              name="checkmark"
+              name={isWaived ? 'gift-outline' : 'checkmark'}
               size={13}
-              color={isPaid ? '#fff' : colors.textDisabled}
+              color={isResolved ? '#fff' : colors.textDisabled}
             />
           </TouchableOpacity>
         </View>
@@ -515,17 +615,10 @@ const rowStyles = StyleSheet.create({
     borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.sm,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 3,
+    ...shadows.card,
   },
-  accentBar: {
-    width: 4,
-    borderRadius: 4,
-    margin: 4,
-    marginRight: 0,
+  accentStrip: {
+    width: 5,
   },
   body: {
     flex: 1,
@@ -552,12 +645,12 @@ const rowStyles = StyleSheet.create({
     fontWeight: typography.semibold,
     color: colors.textPrimary,
   },
-  metaRow: {
+  badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  badge: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
@@ -565,9 +658,10 @@ const rowStyles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  badgeText: {
+  statusText: {
     fontSize: 10,
     fontWeight: typography.semibold,
+    letterSpacing: 0.1,
   },
   autopayBadge: {
     flexDirection: 'row',
@@ -587,13 +681,12 @@ const rowStyles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.xs,
     flexShrink: 0,
-    paddingRight: spacing.xs,
   },
   amount: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   checkBtn: {
     width: 30,
@@ -603,11 +696,15 @@ const rowStyles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
   },
-  checkBtnPaid: {
+  checkBtnDone: {
     backgroundColor: colors.success,
     borderColor: colors.success,
   },
-  checkBtnUnpaid: {
+  checkBtnWaived: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
+  },
+  checkBtnPending: {
     backgroundColor: 'transparent',
     borderColor: colors.border,
   },
@@ -624,14 +721,12 @@ export default function DashboardScreen() {
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
-  const isCurrentMonth = month === currentMonth && year === currentYear;
 
-  const { expenses, summary, loading, reload, markAsPaid, excludeFromMonth } = useExpenses(month, year);
-
+  const { expenses, summary, loading, reload, markAsPaid } = useExpenses(month, year);
   const [pendingPaid, setPendingPaid] = useState<{ expense: ExpenseWithRecord; isPaid: boolean } | null>(null);
 
   const upcomingCommitments = expenses
-    .filter((e) => !(e.record?.is_paid))
+    .filter((e) => !(e.record?.is_paid) && !(e.record?.is_waived))
     .sort((a, b) => a.due_day - b.due_day)
     .slice(0, 5);
 
@@ -645,7 +740,8 @@ export default function DashboardScreen() {
 
   const greetingHour = new Date().getHours();
   const greeting =
-    greetingHour < 12 ? 'Good morning' : greetingHour < 18 ? 'Good afternoon' : 'Good evening';
+    greetingHour < 12 ? 'Good morning' :
+    greetingHour < 18 ? 'Good afternoon' : 'Good evening';
 
   const userName = user?.email?.split('@')[0] ?? '';
 
@@ -655,7 +751,7 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.primary} />
+          <RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.teal} />
         }
       >
         {/* ── Top header ── */}
@@ -683,8 +779,8 @@ export default function DashboardScreen() {
         {summary.expenseCount === 0 && !loading ? (
           /* ── Empty state ── */
           <View style={styles.emptyCard}>
-            <View style={styles.emptyIconCircle}>
-              <Ionicons name="pulse-outline" size={32} color={colors.primary} />
+            <View style={styles.emptyIconRing}>
+              <Ionicons name="pulse-outline" size={30} color={colors.primary} />
             </View>
             <Text style={styles.emptyTitle}>No commitments yet</Text>
             <Text style={styles.emptySub}>
@@ -701,7 +797,7 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <>
-            {/* ── 1. HERO CARD ── */}
+            {/* ── 1. HERO ── */}
             <HeroCard
               greeting={greeting}
               userName={userName}
@@ -726,13 +822,13 @@ export default function DashboardScreen() {
             {upcomingCommitments.length > 0 ? (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Upcoming</Text>
+                  <Text style={styles.sectionLabel}>Upcoming</Text>
                   <TouchableOpacity
                     style={styles.seeAllBtn}
                     onPress={() => navigation.navigate('Commitments')}
                   >
                     <Text style={styles.seeAllText}>See all</Text>
-                    <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                    <Ionicons name="chevron-forward" size={13} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
                 {upcomingCommitments.map((expense) => (
@@ -745,9 +841,10 @@ export default function DashboardScreen() {
               </View>
             ) : (
               <View style={styles.allDoneCard}>
-                <View style={styles.allDoneGlow} />
-                <View style={styles.allDoneIcon}>
-                  <Ionicons name="checkmark-circle" size={32} color={colors.success} />
+                <View style={styles.allDoneGlowA} />
+                <View style={styles.allDoneGlowB} />
+                <View style={styles.allDoneIconRing}>
+                  <Ionicons name="checkmark-circle" size={30} color={colors.success} />
                 </View>
                 <Text style={styles.allDoneTitle}>Flow complete ✦</Text>
                 <Text style={styles.allDoneSub}>
@@ -779,7 +876,7 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F8' },
+  safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
@@ -797,6 +894,7 @@ const styles = StyleSheet.create({
     fontSize: typography.xl,
     fontWeight: typography.bold,
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
   screenSub: {
     fontSize: typography.sm,
@@ -812,25 +910,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.40,
+    shadowRadius: 12,
+    elevation: 5,
   },
 
   // ── Section ──
-  section: {
-    gap: 0,
-  },
+  section: { gap: 0 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: typography.md,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
+  sectionLabel: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    color: colors.textTertiary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   seeAllBtn: {
     flexDirection: 'row',
@@ -843,7 +941,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.semibold,
   },
 
-  // ── All done ──
+  // ── All done state ──
   allDoneCard: {
     backgroundColor: colors.successLight,
     borderRadius: radius.xl,
@@ -853,17 +951,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  allDoneGlow: {
+  allDoneGlowA: {
     position: 'absolute',
-    top: -50,
-    right: -50,
+    top: -40,
+    right: -40,
     width: 160,
     height: 160,
     borderRadius: 80,
     backgroundColor: colors.success,
     opacity: 0.08,
   },
-  allDoneIcon: {
+  allDoneGlowB: {
+    position: 'absolute',
+    bottom: -40,
+    left: -30,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: colors.teal,
+    opacity: 0.07,
+  },
+  allDoneIconRing: {
     width: 64,
     height: 64,
     borderRadius: 32,
@@ -872,7 +980,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: colors.success,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.20,
     shadowRadius: 12,
     elevation: 3,
   },
@@ -880,12 +988,14 @@ const styles = StyleSheet.create({
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: '#065F46',
+    letterSpacing: -0.3,
   },
   allDoneSub: {
     fontSize: typography.sm,
     color: '#047857',
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: 0.85,
+    lineHeight: 20,
   },
 
   // ── Empty state ──
@@ -896,9 +1006,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.md,
-    ...shadows.md,
+    ...shadows.card,
   },
-  emptyIconCircle: {
+  emptyIconRing: {
     width: 72,
     height: 72,
     borderRadius: 36,
@@ -911,6 +1021,7 @@ const styles = StyleSheet.create({
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
+    letterSpacing: -0.3,
   },
   emptySub: {
     fontSize: typography.sm,
@@ -929,9 +1040,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
   },
   emptyBtnText: {
     color: '#fff',
