@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,56 +14,101 @@ import { useAuth } from '../contexts/AuthContext';
 import { colors, typography, spacing, radius, shadows } from '../theme';
 
 // ─────────────────────────────────────────────
-// Settings row component
+// Row component — icon · label · right element
 // ─────────────────────────────────────────────
+
+type RowRight =
+  | { type: 'chevron' }
+  | { type: 'value'; text: string }
+  | { type: 'toggle'; value: boolean; onChange: (v: boolean) => void }
+  | { type: 'badge'; text: string; color: string };
 
 const SettingsRow = ({
   icon,
   iconColor,
   iconBg,
   label,
-  value,
-  chevron = false,
+  right,
   onPress,
   danger = false,
+  isFirst = false,
+  isLast = false,
 }: {
   icon: string;
   iconColor: string;
   iconBg: string;
   label: string;
-  value?: string;
-  chevron?: boolean;
+  right?: RowRight;
   onPress?: () => void;
   danger?: boolean;
-}) => (
-  <TouchableOpacity
-    style={rowStyles.row}
-    onPress={onPress}
-    activeOpacity={onPress ? 0.65 : 1}
-    disabled={!onPress}
-  >
-    <View style={[rowStyles.iconWrap, { backgroundColor: iconBg }]}>
-      <Ionicons name={icon as any} size={18} color={iconColor} />
-    </View>
-    <Text style={[rowStyles.label, danger && { color: colors.danger }]}>{label}</Text>
-    {value ? <Text style={rowStyles.value} numberOfLines={1}>{value}</Text> : null}
-    {chevron && (
-      <Ionicons
-        name="chevron-forward"
-        size={16}
-        color={danger ? colors.danger : colors.textDisabled}
-      />
-    )}
-  </TouchableOpacity>
-);
+  isFirst?: boolean;
+  isLast?: boolean;
+}) => {
+  const labelColor = danger ? colors.danger : colors.textPrimary;
 
-const rowStyles = StyleSheet.create({
+  const rightEl = () => {
+    if (!right) return null;
+    switch (right.type) {
+      case 'chevron':
+        return (
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={danger ? colors.danger : colors.textDisabled}
+          />
+        );
+      case 'value':
+        return <Text style={rowS.valueText} numberOfLines={1}>{right.text}</Text>;
+      case 'toggle':
+        return (
+          <Switch
+            value={right.value}
+            onValueChange={right.onChange}
+            trackColor={{ false: colors.border, true: colors.teal }}
+            thumbColor="#fff"
+            style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
+          />
+        );
+      case 'badge':
+        return (
+          <View style={[rowS.badge, { backgroundColor: right.color + '18' }]}>
+            <Text style={[rowS.badgeText, { color: right.color }]}>{right.text}</Text>
+          </View>
+        );
+    }
+  };
+
+  return (
+    <>
+      {!isFirst && <View style={rowS.divider} />}
+      <TouchableOpacity
+        style={rowS.row}
+        onPress={onPress}
+        activeOpacity={onPress ? 0.60 : 1}
+        disabled={!onPress}
+      >
+        <View style={[rowS.iconWrap, { backgroundColor: iconBg }]}>
+          <Ionicons name={icon as any} size={18} color={iconColor} />
+        </View>
+        <Text style={[rowS.label, { color: labelColor }]}>{label}</Text>
+        <View style={rowS.rightSlot}>{rightEl()}</View>
+      </TouchableOpacity>
+    </>
+  );
+};
+
+const rowS = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md + 2,
+    paddingVertical: 14,
     gap: spacing.md,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginLeft: spacing.base + 36 + spacing.md,
   },
   iconWrap: {
     width: 36,
@@ -78,36 +124,45 @@ const rowStyles = StyleSheet.create({
     fontWeight: typography.medium,
     color: colors.textPrimary,
   },
-  value: {
+  rightSlot: {
+    flexShrink: 0,
+    alignItems: 'flex-end',
+  },
+  valueText: {
     fontSize: typography.sm,
     color: colors.textSecondary,
-    maxWidth: 160,
+    maxWidth: 150,
+  },
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  badgeText: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
   },
 });
 
 // ─────────────────────────────────────────────
-// Section group — label + card wrapper
+// Section group — floating card with label
 // ─────────────────────────────────────────────
 
-const SectionCard = ({
+const Section = ({
   label,
   children,
 }: {
   label: string;
   children: React.ReactNode;
 }) => (
-  <View style={sectionStyles.group}>
-    <Text style={sectionStyles.label}>{label}</Text>
-    <View style={sectionStyles.card}>
-      {children}
-    </View>
+  <View style={secS.wrapper}>
+    <Text style={secS.label}>{label}</Text>
+    <View style={secS.card}>{children}</View>
   </View>
 );
 
-const sectionStyles = StyleSheet.create({
-  group: {
-    gap: spacing.xs,
-  },
+const secS = StyleSheet.create({
+  wrapper: { gap: spacing.xs },
   label: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
@@ -115,6 +170,7 @@ const sectionStyles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     paddingHorizontal: spacing.xs,
+    marginBottom: 2,
   },
   card: {
     backgroundColor: colors.surface,
@@ -123,8 +179,6 @@ const sectionStyles = StyleSheet.create({
     ...shadows.card,
   },
 });
-
-const Divider = () => <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />;
 
 // ─────────────────────────────────────────────
 // SettingsScreen
@@ -135,6 +189,7 @@ export default function SettingsScreen() {
   const [loading, setLoading] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signOutError, setSignOutError] = useState('');
+  const [notificationsOn, setNotificationsOn] = useState(true);
 
   const handleSignOut = async () => {
     setSignOutError('');
@@ -151,137 +206,214 @@ export default function SettingsScreen() {
   const displayName = emailDisplay.split('@')[0] ?? 'User';
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={s.safe}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Header ── */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Settings</Text>
+        {/* ── Screen title ── */}
+        <View style={s.header}>
+          <Text style={s.title}>Settings</Text>
         </View>
 
-        {/* ── Premium Profile Card — dark navy ── */}
-        <View style={styles.profileCard}>
-          {/* Ambient glow */}
-          <View style={styles.profileGlowA} />
-          <View style={styles.profileGlowB} />
-          {/* Decorative ring */}
-          <View style={styles.profileRing} />
+        {/* ── Premium Profile Card ── */}
+        <View style={s.profileCard}>
+          <View style={s.profileGlowA} />
+          <View style={s.profileGlowB} />
+          <View style={s.profileRing} />
 
-          <View style={styles.profileContent}>
-            {/* Avatar */}
-            <View style={styles.avatarRing}>
-              <View style={styles.avatarInner}>
-                <Text style={styles.avatarInitial}>
+          <View style={s.profileContent}>
+            {/* Avatar with ring */}
+            <View style={s.avatarRing}>
+              <View style={s.avatarInner}>
+                <Text style={s.avatarInitial}>
                   {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{displayName}</Text>
-              <Text style={styles.profileEmail} numberOfLines={1}>{emailDisplay}</Text>
-              <View style={styles.profileBadge}>
-                <View style={styles.profileBadgeDot} />
-                <Text style={styles.profileBadgeText}>Personal & Business</Text>
+            <View style={s.profileText}>
+              <Text style={s.profileName}>{displayName}</Text>
+              <Text style={s.profileEmail} numberOfLines={1}>{emailDisplay}</Text>
+              <View style={s.profileBadgeRow}>
+                <View style={s.profileBadgeDot} />
+                <Text style={s.profileBadgeLabel}>Personal &amp; Business</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* ── Account section ── */}
-        <SectionCard label="Account">
+        {/* ── Account ── */}
+        <Section label="Account">
           <SettingsRow
-            icon="person-circle-outline"
+            icon="person-outline"
+            iconColor={colors.primary}
+            iconBg={colors.primaryLight}
+            label="Personal Details"
+            right={{ type: 'chevron' }}
+            onPress={() => {}}
+            isFirst
+          />
+          <SettingsRow
+            icon="mail-outline"
             iconColor={colors.primary}
             iconBg={colors.primaryLight}
             label="Email"
-            value={emailDisplay}
+            right={{ type: 'value', text: emailDisplay }}
           />
-        </SectionCard>
-
-        {/* ── App section ── */}
-        <SectionCard label="App">
           <SettingsRow
-            icon="shield-checkmark-outline"
+            icon="shield-outline"
+            iconColor={colors.personal}
+            iconBg={colors.personalLight}
+            label="Security"
+            right={{ type: 'chevron' }}
+            onPress={() => {}}
+            isLast
+          />
+        </Section>
+
+        {/* ── Preferences ── */}
+        <Section label="Preferences">
+          <SettingsRow
+            icon="notifications-outline"
+            iconColor={colors.warning}
+            iconBg={colors.warningLight}
+            label="Notifications"
+            right={{
+              type: 'toggle',
+              value: notificationsOn,
+              onChange: setNotificationsOn,
+            }}
+            isFirst
+          />
+          <SettingsRow
+            icon="cash-outline"
+            iconColor={colors.success}
+            iconBg={colors.successLight}
+            label="Currency"
+            right={{ type: 'value', text: 'USD' }}
+            onPress={() => {}}
+          />
+          <SettingsRow
+            icon="language-outline"
             iconColor={colors.teal}
             iconBg={colors.tealLight}
-            label="Privacy"
-            value="Your data stays private"
+            label="Language"
+            right={{ type: 'value', text: 'English' }}
+            onPress={() => {}}
+            isLast
           />
-          <Divider />
+        </Section>
+
+        {/* ── Support ── */}
+        <Section label="Support">
+          <SettingsRow
+            icon="help-circle-outline"
+            iconColor={colors.business}
+            iconBg={colors.businessLight}
+            label="Help &amp; FAQ"
+            right={{ type: 'chevron' }}
+            onPress={() => {}}
+            isFirst
+          />
+          <SettingsRow
+            icon="lock-closed-outline"
+            iconColor={colors.textSecondary}
+            iconBg={colors.surfaceAlt}
+            label="Privacy Policy"
+            right={{ type: 'chevron' }}
+            onPress={() => {}}
+          />
+          <SettingsRow
+            icon="star-outline"
+            iconColor="#F59E0B"
+            iconBg="#FFFBEB"
+            label="Rate Fluxua"
+            right={{ type: 'badge', text: 'NEW', color: colors.teal }}
+            onPress={() => {}}
+            isLast
+          />
+        </Section>
+
+        {/* ── App ── */}
+        <Section label="App">
           <SettingsRow
             icon="information-circle-outline"
             iconColor={colors.textSecondary}
             iconBg={colors.surfaceAlt}
             label="App Version"
-            value="1.0.0"
+            right={{ type: 'value', text: '1.0.0' }}
+            isFirst
+            isLast
           />
-        </SectionCard>
+        </Section>
 
-        {/* ── Account actions ── */}
-        <SectionCard label="Actions">
+        {/* ── Sign Out ── */}
+        <View style={s.signOutSection}>
           {!confirmSignOut ? (
-            <SettingsRow
-              icon="log-out-outline"
-              iconColor={colors.danger}
-              iconBg={colors.dangerLight}
-              label="Sign Out"
-              danger
-              chevron
+            <TouchableOpacity
+              style={s.signOutRow}
               onPress={() => setConfirmSignOut(true)}
-            />
+              activeOpacity={0.7}
+            >
+              <View style={[s.signOutIcon]}>
+                <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+              </View>
+              <Text style={s.signOutLabel}>Log Out</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.danger} />
+            </TouchableOpacity>
           ) : (
-            <View style={styles.confirmBox}>
-              <View style={styles.confirmHeader}>
-                <View style={[styles.confirmIconWrap, { backgroundColor: colors.dangerLight }]}>
+            <View style={s.confirmBox}>
+              <View style={s.confirmTop}>
+                <View style={[s.signOutIcon]}>
                   <Ionicons name="log-out-outline" size={18} color={colors.danger} />
                 </View>
                 <View>
-                  <Text style={styles.confirmTitle}>Sign out of Fluxua?</Text>
-                  <Text style={styles.confirmSub}>You can sign back in anytime.</Text>
+                  <Text style={s.confirmTitle}>Sign out of Fluxua?</Text>
+                  <Text style={s.confirmSub}>You can sign back in anytime.</Text>
                 </View>
               </View>
               {signOutError ? (
-                <Text style={styles.confirmError}>{signOutError}</Text>
+                <Text style={s.confirmError}>{signOutError}</Text>
               ) : null}
-              <View style={styles.confirmActions}>
+              <View style={s.confirmBtns}>
                 <TouchableOpacity
-                  style={styles.cancelBtn}
+                  style={s.cancelBtn}
                   onPress={() => { setConfirmSignOut(false); setSignOutError(''); }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                  <Text style={s.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.signOutBtn, loading && { opacity: 0.6 }]}
+                  style={[s.logOutBtn, loading && { opacity: 0.6 }]}
                   onPress={handleSignOut}
                   disabled={loading}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="log-out-outline" size={14} color="#fff" />
-                  <Text style={styles.signOutBtnText}>{loading ? 'Signing out…' : 'Sign Out'}</Text>
+                  <Text style={s.logOutBtnText}>
+                    {loading ? 'Signing out…' : 'Sign Out'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
-        </SectionCard>
+        </View>
 
-        {/* ── Footer ── */}
-        <View style={styles.footer}>
-          <View style={styles.footerBrand}>
-            <View style={styles.footerDot} />
+        {/* Footer */}
+        <View style={s.footer}>
+          <View style={s.footerDotRow}>
+            <View style={s.footerDot} />
           </View>
-          <Text style={styles.footerText}>Fluxua · Track every commitment</Text>
-          <Text style={styles.footerSub}>Made with calm intelligence.</Text>
+          <Text style={s.footerText}>Fluxua · Track every commitment</Text>
+          <Text style={s.footerSub}>Made with calm intelligence.</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,
@@ -298,7 +430,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
 
-  // ── Premium profile card ──
+  // ── Profile card (dark navy) ──
   profileCard: {
     backgroundColor: colors.navy,
     borderRadius: radius.xxl,
@@ -366,10 +498,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.5,
   },
-  profileInfo: {
-    flex: 1,
-    gap: 4,
-  },
+  profileText: { flex: 1, gap: 4 },
   profileName: {
     fontSize: typography.md,
     fontWeight: typography.bold,
@@ -380,9 +509,8 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontSize: typography.sm,
     color: 'rgba(255,255,255,0.55)',
-    fontWeight: typography.regular,
   },
-  profileBadge: {
+  profileBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -394,30 +522,54 @@ const styles = StyleSheet.create({
     borderRadius: 2.5,
     backgroundColor: colors.teal,
   },
-  profileBadgeText: {
+  profileBadgeLabel: {
     fontSize: typography.xs,
     color: colors.teal,
     fontWeight: typography.semibold,
     letterSpacing: 0.2,
   },
 
-  // ── Sign-out confirm ──
-  confirmBox: {
-    padding: spacing.base,
-    gap: spacing.md,
+  // ── Sign out section ──
+  signOutSection: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    ...shadows.card,
   },
-  confirmHeader: {
+  signOutRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: 14,
     gap: spacing.md,
+    backgroundColor: colors.dangerLight,
   },
-  confirmIconWrap: {
+  signOutIcon: {
     width: 36,
     height: 36,
     borderRadius: 11,
+    backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
+  },
+  signOutLabel: {
+    flex: 1,
+    fontSize: typography.base,
+    fontWeight: typography.semibold,
+    color: colors.danger,
+  },
+
+  // ── Confirm sign-out ──
+  confirmBox: {
+    padding: spacing.base,
+    gap: spacing.md,
+    backgroundColor: colors.dangerLight,
+  },
+  confirmTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   confirmTitle: {
     fontSize: typography.base,
@@ -432,9 +584,8 @@ const styles = StyleSheet.create({
   confirmError: {
     fontSize: typography.sm,
     color: colors.danger,
-    paddingHorizontal: spacing.xs,
   },
-  confirmActions: {
+  confirmBtns: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
@@ -452,7 +603,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.semibold,
     color: colors.textSecondary,
   },
-  signOutBtn: {
+  logOutBtn: {
     flex: 1,
     backgroundColor: colors.danger,
     borderRadius: radius.md,
@@ -463,11 +614,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     shadowColor: colors.danger,
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.30,
+    shadowOpacity: 0.28,
     shadowRadius: 8,
     elevation: 3,
   },
-  signOutBtnText: {
+  logOutBtnText: {
     fontSize: typography.sm,
     fontWeight: typography.semibold,
     color: '#fff',
@@ -477,12 +628,10 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     gap: 4,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
   },
-  footerBrand: {
+  footerDotRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
     marginBottom: 2,
   },
   footerDot: {
@@ -490,16 +639,14 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.teal,
-    opacity: 0.6,
+    opacity: 0.55,
   },
   footerText: {
-    textAlign: 'center',
     fontSize: typography.xs,
     color: colors.textDisabled,
-    fontWeight: '500',
+    fontWeight: typography.medium,
   },
   footerSub: {
-    textAlign: 'center',
     fontSize: 10,
     color: colors.textDisabled,
     opacity: 0.7,
