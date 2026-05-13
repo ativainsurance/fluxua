@@ -1,23 +1,18 @@
-import React from 'react';
-import {
-  View,
+import React, { useMemo } from 'react';
+import { View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Alert,
-} from 'react-native';
+  Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../theme';
-import {
-  ExpenseWithRecord,
+import { typography, spacing, radius, shadows } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
+import { ExpenseWithRecord,
   getCategoryLabel,
-  getCategoryIcon,
-} from '../types';
-import {
-  formatCurrency,
+  getCategoryIcon } from '../types';
+import { formatCurrency,
   formatDueDay,
-  getBillStatus,
-} from '../utils/dateUtils';
+  getBillStatus } from '../utils/dateUtils';
 
 interface Props {
   expense: ExpenseWithRecord;
@@ -32,36 +27,30 @@ interface Props {
 // ── Status configuration — semantic, not decorative ──
 const STATUS_CONFIG = {
   paid: {
-    color: colors.success,
-    bg: colors.successLight,
+    color: '#10B981',
+    bg: '#D1FAE5',
     label: 'Completed',
-    icon: 'checkmark-circle',
-  },
+    icon: 'checkmark-circle' },
   waived: {
     color: '#8B5CF6',
     bg: '#EDE9FE',
     label: 'Waived',
-    icon: 'gift-outline',
-  },
+    icon: 'gift-outline' },
   overdue: {
-    color: colors.danger,
-    bg: colors.dangerLight,
+    color: '#EF4444',
+    bg: '#FEE2E2',
     label: 'Overdue',
-    icon: 'alert-circle',
-  },
+    icon: 'alert-circle' },
   'due-soon': {
-    color: colors.warning,
-    bg: colors.warningLight,
+    color: '#F59E0B',
+    bg: '#FEF3C7',
     label: 'Due Soon',
-    icon: 'time',
-  },
+    icon: 'time' },
   upcoming: {
-    color: colors.textTertiary,
-    bg: colors.surfaceAlt,
+    color: '#64748B',
+    bg: '#F8FAFC',
     label: 'Upcoming',
-    icon: 'calendar-outline',
-  },
-} as const;
+    icon: 'calendar-outline' } } as const;
 
 const formatShortDate = (iso: string): string => {
   const [y, m, d] = iso.split('-').map(Number);
@@ -76,8 +65,10 @@ export const ExpenseCard = ({
   onDelete,
   onExcludeFromMonth,
   onWaive,
-  weeklyAllocation,
-}: Props) => {
+  weeklyAllocation }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
   const isResolved = isPaid || isWaived;
@@ -114,8 +105,7 @@ export const ExpenseCard = ({
               { text: 'Cancel', style: 'cancel' },
               { text: 'Mark as Waived', onPress: () => onWaive?.(expense) },
             ]
-          ),
-      },
+          ) },
       {
         text: 'Remove from this month',
         onPress: () =>
@@ -127,11 +117,9 @@ export const ExpenseCard = ({
               {
                 text: 'Remove',
                 style: 'destructive',
-                onPress: () => onExcludeFromMonth?.(expense),
-              },
+                onPress: () => onExcludeFromMonth?.(expense) },
             ]
-          ),
-      },
+          ) },
       {
         text: 'Delete permanently',
         style: 'destructive',
@@ -143,8 +131,7 @@ export const ExpenseCard = ({
               { text: 'Cancel', style: 'cancel' },
               { text: 'Delete', style: 'destructive', onPress: () => onDelete?.(expense) },
             ]
-          ),
-      },
+          ) },
       { text: 'Cancel', style: 'cancel' },
     ]);
   };
@@ -181,8 +168,7 @@ export const ExpenseCard = ({
                 borderWidth: 1,
                 borderColor: expense.type === 'personal'
                   ? colors.personal + '50'
-                  : colors.business + '50',
-              },
+                  : colors.business + '50' },
             ]}
           >
             <Text
@@ -191,8 +177,7 @@ export const ExpenseCard = ({
                 {
                   color: expense.type === 'personal'
                     ? colors.personal
-                    : colors.business,
-                },
+                    : colors.business },
               ]}
             >
               {expense.type === 'personal' ? 'Personal' : 'Business'}
@@ -305,7 +290,7 @@ export const ExpenseCard = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -316,101 +301,82 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     ...shadows.card,
     gap: spacing.md,
-    overflow: 'hidden',
-  },
+    overflow: 'hidden' },
   accentStrip: {
     width: 5,
     alignSelf: 'stretch',
-    borderRadius: 0,
-  },
+    borderRadius: 0 },
   iconWrapper: {
     width: 44,
     height: 44,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    flexShrink: 0,
-  },
+    flexShrink: 0 },
   info: {
     flex: 1,
-    gap: 4,
-  },
+    gap: 4 },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-  },
+    gap: spacing.xs },
   name: {
     fontSize: typography.base,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
-    flex: 1,
-  },
+    flex: 1 },
   typeBadge: {
     borderRadius: radius.full,
     paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
+    paddingVertical: 2 },
   typeText: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
-    letterSpacing: 0.1,
-  },
+    letterSpacing: 0.1 },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
+    gap: 4 },
   category: {
     fontSize: typography.xs,
-    color: colors.textSecondary,
-  },
+    color: colors.textSecondary },
   metaDot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: colors.textDisabled,
-  },
+    backgroundColor: colors.textDisabled },
   dueDay: {
     fontSize: typography.xs,
-    color: colors.textSecondary,
-  },
+    color: colors.textSecondary },
   dateRangeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-  },
+    gap: 3 },
   dateRangeText: {
     fontSize: typography.xs,
-    color: colors.textDisabled,
-  },
+    color: colors.textDisabled },
   weeklyAlloc: {
     fontSize: typography.xs,
-    color: colors.textSecondary,
-  },
+    color: colors.textSecondary },
   weeklyAllocAmt: {
     fontWeight: typography.semibold,
-    color: colors.primary,
-  },
+    color: colors.primary },
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     borderRadius: radius.full,
     paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
+    paddingVertical: 2 },
   statusText: {
     fontSize: typography.xs,
     fontWeight: typography.medium,
-    letterSpacing: 0.1,
-  },
+    letterSpacing: 0.1 },
   autopayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -418,70 +384,56 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: 7,
     paddingVertical: 2,
-    backgroundColor: colors.primaryLight,
-  },
+    backgroundColor: colors.primaryLight },
   autopayText: {
     fontSize: typography.xs,
     fontWeight: typography.medium,
-    color: colors.primary,
-  },
+    color: colors.primary },
   right: {
     alignItems: 'flex-end',
     gap: spacing.sm,
     flexShrink: 0,
-    paddingRight: spacing.xs,
-  },
+    paddingRight: spacing.xs },
   amount: {
     fontSize: typography.xl,     // 24px — dominant financial number
     fontWeight: typography.bold,
-    letterSpacing: -0.5,
-  },
+    letterSpacing: -0.5 },
   amountStack: {
     alignItems: 'flex-end',
-    gap: 2,
-  },
+    gap: 2 },
   plannedAmount: {
     fontSize: typography.xs,
     color: colors.textDisabled,
-    textDecorationLine: 'line-through',
-  },
+    textDecorationLine: 'line-through' },
   creditAmt: {
     fontSize: typography.xs,
     color: '#8B5CF6',
-    fontWeight: typography.medium,
-  },
+    fontWeight: typography.medium },
   lateFee: {
     fontSize: typography.xs,
     color: colors.warning,
-    fontWeight: typography.medium,
-  },
+    fontWeight: typography.medium },
   editBtn: {
     width: 24,
     height: 24,
     borderRadius: radius.full,
     backgroundColor: colors.surfaceAlt,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   checkBtn: {
     width: 28,
     height: 28,
     borderRadius: radius.full,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-  },
+    borderWidth: 2 },
   checkBtnPaid: {
     backgroundColor: colors.success,
-    borderColor: colors.success,
-  },
+    borderColor: colors.success },
   checkBtnWaived: {
     backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
-  },
+    borderColor: '#8B5CF6' },
   checkBtnUnpaid: {
     backgroundColor: 'transparent',
-    borderColor: colors.border,
-  },
-});
+    borderColor: colors.border } });
   

@@ -1,13 +1,12 @@
-import React from 'react';
-import {
-  TouchableOpacity,
+import React, { useMemo } from 'react';
+import { TouchableOpacity,
   Text,
   StyleSheet,
   ActivityIndicator,
-  ViewStyle,
-} from 'react-native';
+  ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { gradient, typography, spacing, radius } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface Props {
   title: string;
@@ -17,7 +16,10 @@ interface Props {
   style?: ViewStyle;
 }
 
-export const GradientButton = ({ title, onPress, loading, disabled, style }: Props) => (
+export const GradientButton = ({ title, onPress, loading, disabled, style }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+  return (
   <TouchableOpacity
     onPress={onPress}
     disabled={loading || disabled}
@@ -38,8 +40,9 @@ export const GradientButton = ({ title, onPress, loading, disabled, style }: Pro
     </LinearGradient>
   </TouchableOpacity>
 );
+};
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   wrapper: {
     borderRadius: radius.md,
     overflow: 'hidden',
@@ -47,22 +50,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 4,
-  },
+    elevation: 4 },
   wrapperDisabled: {
     opacity: 0.6,
     shadowOpacity: 0,
-    elevation: 0,
-  },
+    elevation: 0 },
   gradient: {
     paddingVertical: spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
+    justifyContent: 'center' },
   label: {
     color: '#fff',
     fontSize: typography.base,
     fontWeight: typography.semibold,
-    letterSpacing: 0.2,
-  },
-});
+    letterSpacing: 0.2 } });

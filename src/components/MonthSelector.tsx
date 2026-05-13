@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '../theme';
+import { typography, spacing, radius } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { getMonthName, navigateMonth } from '../utils/dateUtils';
 
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export const MonthSelector = ({ month, year, onChange }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const goBack = () => {
     const { month: m, year: y } = navigateMonth(month, year, 'prev');
     onChange(m, y);
@@ -38,27 +41,23 @@ export const MonthSelector = ({ month, year, onChange }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.sm,
-    gap: spacing.md,
-  },
+    gap: spacing.md },
   arrow: {
     width: 32,
     height: 32,
     borderRadius: radius.md,
     backgroundColor: colors.surfaceAlt,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   label: {
     fontSize: typography.md,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
     minWidth: 150,
-    textAlign: 'center',
-  },
-});
+    textAlign: 'center' } });

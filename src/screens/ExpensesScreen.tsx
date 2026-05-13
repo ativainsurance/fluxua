@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
@@ -19,7 +20,7 @@ import {
   getWeeklyBreakdown,
   getCurrentWeekIndex,
 } from '../utils/dateUtils';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import {typography, spacing, radius, shadows } from '../theme';
 import { ExpenseCard } from '../components/ExpenseCard';
 import { PaidAmountModal } from '../components/PaidAmountModal';
 import { MonthSelector } from '../components/MonthSelector';
@@ -33,6 +34,8 @@ interface PendingPaid {
 }
 
 export default function ExpensesScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
 
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
@@ -206,7 +209,7 @@ export default function ExpensesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#EEF2F8' },
   header: {
     flexDirection: 'row',

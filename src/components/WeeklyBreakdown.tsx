@@ -1,16 +1,15 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import { typography, spacing, radius, shadows } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { ExpenseWithRecord } from '../types';
-import {
-  getWeeklyBreakdown,
+import { getWeeklyBreakdown,
   formatCurrency,
   getShortMonthName,
   getDayOrdinal,
   getCurrentWeekIndex,
-  getBillStatus,
-} from '../utils/dateUtils';
+  getBillStatus } from '../utils/dateUtils';
 
 interface Props {
   expense: ExpenseWithRecord;
@@ -24,16 +23,18 @@ const getPressureBarColor = (
   currentWeekIdx: number
 ): string => {
   const isPaid = expense.record?.is_paid ?? false;
-  if (isPaid) return colors.success;
+  if (isPaid) return '#10B981';
 
   const status = getBillStatus(expense.due_day, isPaid);
-  if (status === 'overdue' && weekIndex <= currentWeekIdx) return colors.danger;
-  if (status === 'due-soon' && weekIndex === currentWeekIdx) return colors.warning;
-  if (expense.type === 'personal') return colors.personal;
-  return colors.business;
+  if (status === 'overdue' && weekIndex <= currentWeekIdx) return '#EF4444';
+  if (status === 'due-soon' && weekIndex === currentWeekIdx) return '#F59E0B';
+  if (expense.type === 'personal') return '#8B5CF6';
+  return '#6366F1';
 };
 
 export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const weeks = getWeeklyBreakdown(expense.amount, month, year, getShortMonthName(month));
   const maxAmount = Math.max(...weeks.map((w) => w.amount));
   const currentWeekIdx = getCurrentWeekIndex(month, year);
@@ -48,8 +49,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
         toValue: pct,
         duration: 550,
         delay: i * 100,
-        useNativeDriver: false,
-      });
+        useNativeDriver: false });
     });
     Animated.parallel(animations).start();
   }, [expense.id, expense.amount]);
@@ -86,8 +86,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
           const barWidth = barAnims[i].interpolate({
             inputRange: [0, 1],
             outputRange: ['0%', '100%'],
-            extrapolate: 'clamp',
-          });
+            extrapolate: 'clamp' });
 
           return (
             <View key={week.week} style={styles.weekRow}>
@@ -101,8 +100,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
                     {
                       width: barWidth,
                       backgroundColor: barColor,
-                      opacity: isCurrent ? 1 : 0.6,
-                    },
+                      opacity: isCurrent ? 1 : 0.6 },
                   ]}
                 />
               </View>
@@ -135,28 +133,24 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.base,
     ...shadows.sm,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   header: {
-    marginBottom: spacing.sm,
-  },
+    marginBottom: spacing.sm },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
+    gap: spacing.sm },
   title: {
     fontSize: typography.base,
     fontWeight: typography.semibold,
     color: colors.textPrimary,
-    flex: 1,
-  },
+    flex: 1 },
   completedChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -164,18 +158,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.successLight,
     borderRadius: radius.full,
     paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
+    paddingVertical: 2 },
   completedChipText: {
     fontSize: typography.xs,
     color: colors.success,
-    fontWeight: typography.semibold,
-  },
+    fontWeight: typography.semibold },
   subtitle: {
     fontSize: typography.xs,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
+    marginTop: 2 },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -184,62 +175,50 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: colors.divider,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   totalLabel: {
     fontSize: typography.sm,
-    color: colors.textSecondary,
-  },
+    color: colors.textSecondary },
   totalAmount: {
     fontSize: typography.md,
     fontWeight: typography.bold,
-    color: colors.textPrimary,
-  },
+    color: colors.textPrimary },
   bars: {
-    gap: spacing.sm,
-  },
+    gap: spacing.sm },
   weekRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
+    gap: spacing.sm },
   weekLabel: {
     fontSize: typography.xs,
     color: colors.textSecondary,
-    width: 24,
-  },
+    width: 24 },
   weekLabelActive: {
     color: colors.primary,
-    fontWeight: typography.semibold,
-  },
+    fontWeight: typography.semibold },
   barTrack: {
     flex: 1,
     height: 10,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full,
-    overflow: 'hidden',
-  },
+    overflow: 'hidden' },
   barFill: {
     height: '100%',
-    borderRadius: radius.full,
-  },
+    borderRadius: radius.full },
   weekAmount: {
     fontSize: typography.xs,
     fontWeight: typography.medium,
     color: colors.textSecondary,
     textAlign: 'right',
-    width: 56,
-  },
+    width: 56 },
   weekAmountActive: {
     color: colors.textPrimary,
-    fontWeight: typography.semibold,
-  },
+    fontWeight: typography.semibold },
   nowDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.primary,
-  },
+    backgroundColor: colors.primary },
   dueRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,14 +226,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     backgroundColor: colors.primaryLight,
     borderRadius: radius.md,
-    padding: spacing.sm,
-  },
+    padding: spacing.sm },
   dueRowPaid: {
-    backgroundColor: colors.successLight,
-  },
+    backgroundColor: colors.successLight },
   dueText: {
     fontSize: typography.xs,
     color: colors.primary,
-    flex: 1,
-  },
-});
+    flex: 1 } });

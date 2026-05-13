@@ -2,7 +2,6 @@ import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,9 +9,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { colors, typography, spacing, radius, shadows } from '../../theme';
+import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'PrivacyPolicy'>;
 
@@ -88,13 +88,13 @@ const SECTIONS: PolicySection[] = [
     title: '7. Third-Party Services',
     icon: 'share-outline',
     content: [
-      'Supabase (supabase.com): Our backend provider for authentication and database. Subject to Supabase\'s privacy policy.',
+      "Supabase (supabase.com): Our backend provider for authentication and database. Subject to Supabase's privacy policy.",
       'Expo (expo.dev): Our application framework, used for app distribution and updates.',
       'We do not integrate with advertising networks, data brokers, or analytics services that have access to personally identifiable information.',
     ],
   },
   {
-    title: '8. Children\'s Privacy',
+    title: "8. Children's Privacy",
     icon: 'happy-outline',
     content: [
       'Fluxua is not intended for use by individuals under the age of 18. We do not knowingly collect personal information from children.',
@@ -112,144 +112,64 @@ const SECTIONS: PolicySection[] = [
   },
 ];
 
-const PolicySection = ({ section }: { section: PolicySection }) => (
-  <View style={ps.wrapper}>
-    <View style={ps.titleRow}>
-      <View style={ps.iconWrap}>
-        <Ionicons name={section.icon as any} size={16} color={colors.primary} />
+const PolicySectionCard = ({ section }: { section: PolicySection }) => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+        <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+          <Ionicons name={section.icon as any} size={16} color={colors.primary} />
+        </View>
+        <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, flex: 1 }}>{section.title}</Text>
       </View>
-      <Text style={ps.title}>{section.title}</Text>
+      <View style={{ paddingLeft: 28 + spacing.sm, gap: 8 }}>
+        {section.content.map((para, i) => (
+          <Text key={i} style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 22 }}>{para}</Text>
+        ))}
+      </View>
     </View>
-    <View style={ps.content}>
-      {section.content.map((para, i) => (
-        <Text key={i} style={ps.para}>{para}</Text>
-      ))}
-    </View>
-  </View>
-);
-
-const ps = StyleSheet.create({
-  wrapper: { gap: spacing.sm },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  iconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: colors.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  title: { fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, flex: 1 },
-  content: { paddingLeft: 28 + spacing.sm, gap: 8 },
-  para: { fontSize: typography.sm, color: colors.textSecondary, lineHeight: 22 },
-});
+  );
+};
 
 export default function PrivacyPolicyScreen() {
   const navigation = useNavigation<Nav>();
+  const { colors } = useTheme();
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <SubScreenHeader title="Privacy Policy" onBack={() => navigation.goBack()} />
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl, gap: spacing.base }} showsVerticalScrollIndicator={false}>
+
         {/* ── Header card ── */}
-        <View style={s.headerCard}>
-          <View style={s.headerIcon}>
+        <View style={{ backgroundColor: colors.navy, borderRadius: radius.xxl, padding: spacing.xl, alignItems: 'center', gap: spacing.sm, ...shadows.hero }}>
+          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: 'rgba(59, 130, 246, 0.18)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xs }}>
             <Ionicons name="lock-closed" size={24} color={colors.primary} />
           </View>
-          <Text style={s.headerTitle}>Privacy Policy</Text>
-          <Text style={s.headerSub}>Last updated: {LAST_UPDATED}</Text>
-          <Text style={s.headerNote}>
+          <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: '#fff', letterSpacing: -0.4 }}>Privacy Policy</Text>
+          <Text style={{ fontSize: typography.xs, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>Last updated: {LAST_UPDATED}</Text>
+          <Text style={{ fontSize: typography.sm, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 20, marginTop: spacing.xs, paddingHorizontal: spacing.sm }}>
             Your data belongs to you. We built Fluxua with privacy as a core value, not an afterthought.
           </Text>
         </View>
 
-        {/* ── Sections ── */}
-        <View style={s.sectionsCard}>
+        {/* ── Sections card ── */}
+        <View style={{ backgroundColor: colors.surface, borderRadius: radius.xxl, padding: spacing.lg, gap: spacing.lg, ...shadows.card }}>
           {SECTIONS.map((section, i) => (
             <React.Fragment key={section.title}>
-              {i > 0 && <View style={s.sectionDivider} />}
-              <PolicySection section={section} />
+              {i > 0 && <View style={{ height: 1, backgroundColor: colors.divider }} />}
+              <PolicySectionCard section={section} />
             </React.Fragment>
           ))}
         </View>
 
         {/* ── Footer ── */}
-        <View style={s.footer}>
-          <Text style={s.footerText}>
+        <View style={{ alignItems: 'center', gap: 3, paddingTop: spacing.xs }}>
+          <Text style={{ fontSize: typography.xs, color: colors.textDisabled }}>
             © {new Date().getFullYear()} Fluxua · All rights reserved.
           </Text>
-          <Text style={s.footerSub}>privacy@fluxua.app</Text>
+          <Text style={{ fontSize: 10, color: colors.textDisabled, opacity: 0.7 }}>privacy@fluxua.app</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  scroll: {
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.base,
-  },
-
-  // ── Header card ──
-  headerCard: {
-    backgroundColor: colors.navy,
-    borderRadius: radius.xxl,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.sm,
-    ...shadows.hero,
-  },
-  headerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: 'rgba(59, 130, 246, 0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: '#fff',
-    letterSpacing: -0.4,
-  },
-  headerSub: {
-    fontSize: typography.xs,
-    color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 0.3,
-  },
-  headerNote: {
-    fontSize: typography.sm,
-    color: 'rgba(255,255,255,0.65)',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-
-  // ── Sections card ──
-  sectionsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xxl,
-    padding: spacing.lg,
-    gap: spacing.lg,
-    ...shadows.card,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: colors.divider,
-  },
-
-  // ── Footer ──
-  footer: { alignItems: 'center', gap: 3, paddingTop: spacing.xs },
-  footerText: { fontSize: typography.xs, color: colors.textDisabled },
-  footerSub: { fontSize: 10, color: colors.textDisabled, opacity: 0.7 },
-});

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
@@ -23,7 +24,7 @@ import {
   getCurrentWeekIndex,
   getBillStatus,
 } from '../utils/dateUtils';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import {typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
 import { PaidAmountModal } from '../components/PaidAmountModal';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
@@ -55,6 +56,9 @@ const HeroCard = ({
   year: number;
   expenses: ExpenseWithRecord[];
 }) => {
+  const { colors } = useTheme();
+  const heroStyles = useMemo(() => makeHeroStyles(colors), [colors]);
+
   const pct = total > 0 ? paid / total : 0;
   const coveragePct = Math.round(pct * 100);
 
@@ -185,7 +189,7 @@ const HeroCard = ({
   );
 };
 
-const heroStyles = StyleSheet.create({
+const makeHeroStyles = (colors: any) => StyleSheet.create({
   card: {
     backgroundColor: colors.navy,
     borderRadius: radius.xxl,
@@ -384,7 +388,10 @@ const StatCards = ({
   unpaidCount: number;
   totalCount: number;
   totalPaid: number;
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const statStyles = useMemo(() => makeStatStyles(colors), [colors]);
+  return (
   <View style={statStyles.container}>
     {/* Primary card — full width, Completed as dominant signal */}
     <View style={[statStyles.primaryCard, { backgroundColor: colors.successLight }]}>
@@ -427,9 +434,10 @@ const StatCards = ({
       </View>
     </View>
   </View>
-);
+  );
+}
 
-const statStyles = StyleSheet.create({
+const makeStatStyles = (colors: any) => StyleSheet.create({
   container: { gap: spacing.sm },
   primaryCard: {
     flexDirection: 'row',
@@ -518,11 +526,11 @@ const statStyles = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 const STATUS_ACCENT: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
-  paid:       { accent: colors.success,  bg: colors.successLight,  label: 'Completed', icon: 'checkmark-circle' },
+  paid:       { accent: '#10B981',  bg: '#D1FAE5',  label: 'Completed', icon: 'checkmark-circle' },
   waived:     { accent: '#8B5CF6',       bg: '#EDE9FE',            label: 'Waived',    icon: 'gift-outline' },
-  overdue:    { accent: colors.danger,   bg: colors.dangerLight,   label: 'Overdue',   icon: 'alert-circle' },
-  'due-soon': { accent: colors.warning,  bg: colors.warningLight,  label: 'Due Soon',  icon: 'time' },
-  upcoming:   { accent: colors.primary,  bg: colors.primaryLight,  label: 'Upcoming',  icon: 'calendar-outline' },
+  overdue:    { accent: '#EF4444',   bg: '#FEE2E2',   label: 'Overdue',   icon: 'alert-circle' },
+  'due-soon': { accent: '#F59E0B',  bg: '#FEF3C7',  label: 'Due Soon',  icon: 'time' },
+  upcoming:   { accent: '#3B82F6',  bg: '#EFF6FF',  label: 'Upcoming',  icon: 'calendar-outline' },
 };
 
 const CommitmentRow = ({
@@ -532,6 +540,9 @@ const CommitmentRow = ({
   expense: ExpenseWithRecord;
   onTogglePaid: (expense: ExpenseWithRecord, isPaid: boolean) => void;
 }) => {
+  const { colors } = useTheme();
+  const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
+
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
   const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
@@ -608,7 +619,7 @@ const CommitmentRow = ({
   );
 };
 
-const rowStyles = StyleSheet.create({
+const makeRowStyles = (colors: any) => StyleSheet.create({
   wrapper: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
@@ -715,6 +726,8 @@ const rowStyles = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 export default function DashboardScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const navigation = useNavigation<any>();
 
@@ -875,7 +888,7 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,

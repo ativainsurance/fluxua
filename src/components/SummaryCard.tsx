@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
+import { gradient, typography, spacing, radius, shadows } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { MonthlySummary } from '../types';
 import { formatCurrency } from '../utils/dateUtils';
 
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export const SummaryCard = ({ summary }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const progressPct =
     summary.total > 0 ? (summary.totalPaid / summary.total) * 100 : 0;
 
@@ -90,92 +93,73 @@ export const SummaryCard = ({ summary }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    ...shadows.md,
-  },
+    ...shadows.md },
   totalRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   totalLabel: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     fontWeight: typography.medium,
-    marginBottom: 2,
-  },
+    marginBottom: 2 },
   totalAmount: {
     fontSize: typography.xxl,
     fontWeight: typography.bold,
-    color: colors.textPrimary,
-  },
+    color: colors.textPrimary },
   countBadge: {
     backgroundColor: colors.primaryLight,
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-  },
+    paddingVertical: 4 },
   countText: {
     fontSize: typography.xs,
     color: colors.primary,
-    fontWeight: typography.semibold,
-  },
+    fontWeight: typography.semibold },
   progressTrack: {
     height: 8,
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full,
     overflow: 'hidden',
-    marginBottom: spacing.xs,
-  },
+    marginBottom: spacing.xs },
   progressFill: {
     height: '100%',
-    borderRadius: radius.full,
-  },
+    borderRadius: radius.full },
   progressLabel: {
     fontSize: typography.xs,
     color: colors.textSecondary,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   row: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
+    gap: spacing.sm },
   pill: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     borderRadius: radius.md,
-    padding: spacing.sm,
-  },
+    padding: spacing.sm },
   paidPill: {
-    backgroundColor: colors.successLight,
-  },
+    backgroundColor: colors.successLight },
   unpaidPill: {
-    backgroundColor: colors.dangerLight,
-  },
+    backgroundColor: colors.dangerLight },
   personalPill: {
-    backgroundColor: colors.personalLight,
-  },
+    backgroundColor: colors.personalLight },
   businessPill: {
-    backgroundColor: colors.businessLight,
-  },
+    backgroundColor: colors.businessLight },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-  },
+    borderRadius: 4 },
   pillLabel: {
     fontSize: typography.xs,
-    color: colors.textSecondary,
-  },
+    color: colors.textSecondary },
   pillAmount: {
     fontSize: typography.sm,
-    fontWeight: typography.semibold,
-  },
-});
+    fontWeight: typography.semibold } });

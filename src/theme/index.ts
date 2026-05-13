@@ -175,3 +175,64 @@ export const commonStyles = {
     textTransform: 'uppercase' as const,
   },
 } as const;
+
+// ─────────────────────────────────────────────
+// Dark mode color palette
+// Philosophy: Deep navy base, same brand accent, calm dark intelligence.
+// ─────────────────────────────────────────────
+
+export const darkColors = {
+  // ── Backgrounds ──
+  background: '#0B1120',       // near-black navy — app bg
+  surface: '#141E30',          // deep card surface
+  surfaceAlt: '#1A2640',       // subtle alt surface (icon bgs, tracks)
+  surfaceRaised: '#1E2D4A',    // secondary panels within cards
+
+  // ── Brand (unchanged — consistent identity) ──
+  primary: '#3B82F6',
+  primaryLight: 'rgba(59,130,246,0.15)',
+  primaryDark: '#2563EB',
+  teal: '#14B8A6',
+  tealLight: 'rgba(20,184,166,0.15)',
+  tealDark: '#0D9488',
+  navy: '#0F172A',
+  navyMid: '#1E293B',
+
+  // ── Semantic (same hue, adjusted light for dark bg) ──
+  success: '#10B981',
+  successLight: 'rgba(16,185,129,0.15)',
+  successDark: '#059669',
+  danger: '#EF4444',
+  dangerLight: 'rgba(239,68,68,0.15)',
+  warning: '#F59E0B',
+  warningLight: 'rgba(245,158,11,0.15)',
+
+  // ── Type tabs ──
+  personal: '#818CF8',
+  personalLight: 'rgba(99,102,241,0.15)',
+  business: '#38BDF8',
+  businessLight: 'rgba(14,165,233,0.15)',
+
+  // ── Text hierarchy ──
+  textPrimary: '#F1F5F9',      // near-white — maximum contrast on dark
+  textSecondary: '#94A3B8',   // muted slate
+  textTertiary: '#64748B',    // dim — metadata
+  textDisabled: '#334155',
+  textInverse: '#0F172A',
+
+  // ── Borders & dividers ──
+  border: '#1E2D40',
+  borderFocus: '#3B82F6',
+  divider: '#141E30',
+
+  // ── Overlays ──
+  overlay: 'rgba(0, 0, 0, 0.65)',
+  overlayLight: 'rgba(0, 0, 0, 0.35)',
+} as const;
+
+// Unified type for both palettes
+export type ColorScheme = typeof colors;
+
+// Returns the right palette for the current mode
+export const getColors = (isDark: boolean): ColorScheme =>
+  isDark ? (darkColors as unknown as ColorScheme) : colors;

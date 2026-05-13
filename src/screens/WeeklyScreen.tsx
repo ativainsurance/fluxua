@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useExpenses } from '../hooks/useExpenses';
 import { getCurrentMonthYear, formatCurrency, getWeeklyBreakdown, getShortMonthName } from '../utils/dateUtils';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import {  typography, spacing, radius, shadows } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { MonthSelector } from '../components/MonthSelector';
 import { WeeklyBreakdown } from '../components/WeeklyBreakdown';
 
 export default function WeeklyScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
@@ -112,7 +115,7 @@ export default function WeeklyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,

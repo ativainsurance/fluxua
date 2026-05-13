@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
@@ -21,7 +22,7 @@ import {
   getCurrentWeekIndex,
   getDayOrdinal,
 } from '../utils/dateUtils';
-import { colors, gradient, typography, spacing, radius, shadows } from '../theme';
+import {gradient, typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
 
@@ -30,19 +31,19 @@ import { ExpenseWithRecord, getCategoryIcon } from '../types';
 // ─────────────────────────────────────────────
 
 const getPressureColor = (ratio: number, isPast: boolean): string => {
-  if (!isPast) return colors.textDisabled;
-  if (ratio >= 0.9) return colors.success;
-  if (ratio >= 0.5) return colors.teal;
-  if (ratio >= 0.2) return colors.warning;
-  return colors.danger;
+  if (!isPast) return '#94A3B8';
+  if (ratio >= 0.9) return '#10B981';
+  if (ratio >= 0.5) return '#14B8A6';
+  if (ratio >= 0.2) return '#F59E0B';
+  return '#EF4444';
 };
 
 const getPressureBg = (ratio: number, isPast: boolean): string => {
-  if (!isPast) return colors.surfaceAlt;
-  if (ratio >= 0.9) return colors.successLight;
-  if (ratio >= 0.5) return colors.tealLight;
-  if (ratio >= 0.2) return colors.warningLight;
-  return colors.dangerLight;
+  if (!isPast) return '#F8FAFC';
+  if (ratio >= 0.9) return '#D1FAE5';
+  if (ratio >= 0.5) return '#CCFBF1';
+  if (ratio >= 0.2) return '#FEF3C7';
+  return '#FEE2E2';
 };
 
 const getWeekCoverage = (
@@ -84,6 +85,9 @@ const WeekBar = ({
   isPast: boolean;
   delay: number;
 }) => {
+  const { colors } = useTheme();
+  const weekStyles = useMemo(() => makeWeekStyles(colors), [colors]);
+
   const barAnim = useRef(new Animated.Value(0)).current;
   const color = isCurrent ? colors.teal : getPressureColor(coverage, isPast);
   const bg = isCurrent ? colors.tealLight : getPressureBg(coverage, isPast);
@@ -141,7 +145,7 @@ const WeekBar = ({
   );
 };
 
-const weekStyles = StyleSheet.create({
+const makeWeekStyles = (colors: any) => StyleSheet.create({
   card: {
     borderRadius: radius.xl,
     padding: spacing.md,
@@ -232,6 +236,9 @@ const CommitmentFlowRow = ({
   year: number;
   delay: number;
 }) => {
+  const { colors } = useTheme();
+  const flowRowStyles = useMemo(() => makeFlowRowStyles(colors), [colors]);
+
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
   const thisWeek = weeks[weekIndex];
   const isPaid = expense.record?.is_paid ?? false;
@@ -321,7 +328,7 @@ const CommitmentFlowRow = ({
   );
 };
 
-const flowRowStyles = StyleSheet.create({
+const makeFlowRowStyles = (colors: any) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
@@ -423,6 +430,8 @@ const flowRowStyles = StyleSheet.create({
 // ─────────────────────────────────────────────
 
 export default function FlowScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
@@ -629,7 +638,7 @@ export default function FlowScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: {
     paddingHorizontal: spacing.base,

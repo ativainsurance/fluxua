@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,10 +16,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { useCustomCategories } from '../hooks/useCustomCategories';
 import { getCurrentMonthYear } from '../utils/dateUtils';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import {typography, spacing, radius, shadows } from '../theme';
 import { DateInput } from '../components/DateInput';
 import {
   ExpenseFormData,
@@ -66,6 +67,8 @@ const defaultForm: ExpenseFormData = {
 // ─────────────────────────────────────────────
 
 export default function AddExpenseScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const existingExpense = route.params?.expense;
@@ -540,7 +543,7 @@ export default function AddExpenseScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   header: {
@@ -757,7 +760,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  flex: { flex: 1 },
   toggleLabel: {
     fontSize: typography.base,
     fontWeight: typography.medium,

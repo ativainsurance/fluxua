@@ -3,11 +3,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { isSupabaseConfigured } from '../services/supabase';
-import { colors, typography, spacing, radius } from '../theme';
+import { typography, spacing, radius } from '../theme';
 
 // Auth Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -75,91 +76,88 @@ const SettingsNavigator = () => (
   </SettingsStack.Navigator>
 );
 
-const MainNavigator = () => (
-  <MainTab.Navigator
-    initialRouteName="Flow"
-    screenOptions={({ route }) => ({
-      headerShown: false,
-      tabBarActiveTintColor: colors.teal,
-      tabBarInactiveTintColor: colors.textSecondary,
-      tabBarStyle: {
-        backgroundColor: colors.surface,
-        borderTopColor: colors.border,
-        borderTopWidth: 1,
-        paddingBottom: 6,
-        paddingTop: 6,
-        height: 64,
-        shadowColor: colors.navy,
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 12,
-        elevation: 8,
-      },
-      tabBarLabelStyle: {
-        fontSize: 11,
-        fontWeight: '600',
-        marginBottom: 2,
-      },
-      tabBarIcon: ({ focused, color, size }) => {
-        const icons: Record<string, { active: string; inactive: string }> = {
-          Flow: { active: 'pulse', inactive: 'pulse-outline' },
-          Commitments: { active: 'receipt', inactive: 'receipt-outline' },
-          Overview: { active: 'grid', inactive: 'grid-outline' },
-          Settings: { active: 'settings', inactive: 'settings-outline' },
-        };
-        const icon = icons[route.name];
-        const name = (focused ? icon?.active : icon?.inactive) ?? 'ellipse';
-        return <Ionicons name={name as any} size={focused ? size + 1 : size} color={color} />;
-      },
-    })}
-  >
-    <MainTab.Screen
-      name="Flow"
-      component={FlowScreen}
-      options={{ tabBarLabel: 'Flow' }}
-    />
-    <MainTab.Screen
-      name="Commitments"
-      component={ExpensesScreen}
-      options={{ tabBarLabel: 'Commitments' }}
-    />
-    <MainTab.Screen
-      name="Overview"
-      component={DashboardScreen}
-      options={{ tabBarLabel: 'Overview' }}
-    />
-    <MainTab.Screen
-      name="Settings"
-      component={SettingsNavigator}
-      options={{ tabBarLabel: 'Settings' }}
-    />
-  </MainTab.Navigator>
-);
+const MainNavigator = () => {
+  const { colors } = useTheme();
+  return (
+    <MainTab.Navigator
+      initialRouteName="Flow"
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.teal,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          paddingBottom: 6,
+          paddingTop: 6,
+          height: 64,
+          shadowColor: colors.navy,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 12,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginBottom: 2,
+        },
+        tabBarIcon: ({ focused, color, size }) => {
+          const icons: Record<string, { active: string; inactive: string }> = {
+            Flow: { active: 'pulse', inactive: 'pulse-outline' },
+            Commitments: { active: 'receipt', inactive: 'receipt-outline' },
+            Overview: { active: 'grid', inactive: 'grid-outline' },
+            Settings: { active: 'settings', inactive: 'settings-outline' },
+          };
+          const icon = icons[route.name];
+          const name = (focused ? icon?.active : icon?.inactive) ?? 'ellipse';
+          return <Ionicons name={name as any} size={focused ? size + 1 : size} color={color} />;
+        },
+      })}
+    >
+      <MainTab.Screen name="Flow" component={FlowScreen} options={{ tabBarLabel: 'Flow' }} />
+      <MainTab.Screen name="Commitments" component={ExpensesScreen} options={{ tabBarLabel: 'Commitments' }} />
+      <MainTab.Screen name="Overview" component={DashboardScreen} options={{ tabBarLabel: 'Overview' }} />
+      <MainTab.Screen name="Settings" component={SettingsNavigator} options={{ tabBarLabel: 'Settings' }} />
+    </MainTab.Navigator>
+  );
+};
 
 // ─────────────────────────────────────────────
 // Root Navigator — decides Auth vs Main
 // ─────────────────────────────────────────────
 
-const LoadingScreen = () => (
-  <View style={styles.loading}>
-    <ActivityIndicator size="large" color={colors.primary} />
-  </View>
-);
-
-const SetupScreen = () => (
-  <View style={styles.setup}>
-    <Ionicons name="warning-outline" size={48} color={colors.warning} />
-    <Text style={styles.setupTitle}>Supabase Not Configured</Text>
-    <Text style={styles.setupText}>
-      Create a <Text style={styles.setupCode}>.env</Text> file in the project root with your Supabase credentials:
-    </Text>
-    <View style={styles.setupBox}>
-      <Text style={styles.setupCode}>EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co{'\n'}EXPO_PUBLIC_SUPABASE_ANON_KEY=your-key</Text>
+const LoadingScreen = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
-    <Text style={styles.setupText}>Then restart the dev server with <Text style={styles.setupCode}>npx expo start</Text></Text>
-    <Text style={styles.setupSub}>See SETUP.md for full instructions.</Text>
-  </View>
-);
+  );
+};
+
+const SetupScreen = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, paddingHorizontal: spacing.xl, gap: spacing.md }}>
+      <Ionicons name="warning-outline" size={48} color={colors.warning} />
+      <Text style={{ fontSize: typography.lg, fontWeight: typography.bold, color: colors.textPrimary, textAlign: 'center' }}>Supabase Not Configured</Text>
+      <Text style={{ fontSize: typography.sm, color: colors.textSecondary, textAlign: 'center' }}>
+        Create a <Text style={{ fontFamily: 'monospace', color: colors.primary }}>.env</Text> file in the project root with your Supabase credentials:
+      </Text>
+      <View style={{ backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.md, width: '100%' }}>
+        <Text style={{ fontFamily: 'monospace', fontSize: typography.sm, color: colors.primary }}>
+          EXPO_PUBLIC_SUPABASE_URL=https://xxx.supabase.co{'\n'}EXPO_PUBLIC_SUPABASE_ANON_KEY=your-key
+        </Text>
+      </View>
+      <Text style={{ fontSize: typography.sm, color: colors.textSecondary, textAlign: 'center' }}>
+        Then restart the dev server with <Text style={{ fontFamily: 'monospace', color: colors.primary }}>npx expo start</Text>
+      </Text>
+      <Text style={{ fontSize: typography.xs, color: colors.textDisabled, textAlign: 'center' }}>See SETUP.md for full instructions.</Text>
+    </View>
+  );
+};
 
 export const AppNavigator = () => {
   const { session, loading } = useAuth();
@@ -187,55 +185,3 @@ export const AppNavigator = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-  },
-  setup: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    paddingHorizontal: spacing.xl,
-    gap: spacing.md,
-  },
-  setupTitle: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  setupText: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  setupBox: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    width: '100%',
-  },
-  setupCode: {
-    fontFamily: 'monospace',
-    fontSize: typography.sm,
-    color: colors.primary,
-  },
-  setupSub: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
-    textAlign: 'center',
-  },
-});
-
-// Extend RootStackParamList to include modal
-declare global {
-  namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {
-      AddExpense: { expense?: import('../types').Expense } | undefined;
-    }
-  }
-}

@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -17,9 +16,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
+import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Email'>;
 
@@ -28,6 +28,7 @@ type Step = 'overview' | 'change' | 'success';
 export default function EmailScreen() {
   const navigation = useNavigation<Nav>();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   const currentEmail = user?.email ?? '';
   const isVerified = user?.email_confirmed_at != null;
@@ -66,7 +67,6 @@ export default function EmailScreen() {
     }
     setLoading(true);
     try {
-      // Re-auth first
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: currentEmail,
         password,
@@ -84,7 +84,7 @@ export default function EmailScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <SubScreenHeader title="Email Address" onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -92,48 +92,46 @@ export default function EmailScreen() {
         keyboardVerticalOffset={80}
       >
         <ScrollView
-          contentContainerStyle={s.scroll}
+          contentContainerStyle={{ paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl, gap: spacing.base }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {step === 'success' ? (
-            /* ── Success state ── */
-            <View style={s.successCard}>
-              <View style={s.successIconWrap}>
+            <View style={{ backgroundColor: colors.surface, borderRadius: radius.xxl, padding: spacing.xl, alignItems: 'center', gap: spacing.md, ...shadows.card, marginTop: spacing.xxl }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.successLight, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm }}>
                 <Ionicons name="checkmark-circle" size={48} color={colors.success} />
               </View>
-              <Text style={s.successTitle}>Verification Sent</Text>
-              <Text style={s.successBody}>
+              <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.4 }}>Verification Sent</Text>
+              <Text style={{ fontSize: typography.sm, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 }}>
                 We've sent a verification link to{'\n'}
-                <Text style={s.successEmail}>{newEmail}</Text>.{'\n\n'}
+                <Text style={{ fontWeight: typography.bold, color: colors.textPrimary }}>{newEmail}</Text>.{'\n\n'}
                 Open the email and click the link to confirm your new address.
               </Text>
               <TouchableOpacity
-                style={s.doneBtn}
+                style={{ marginTop: spacing.sm, paddingHorizontal: spacing.xl, paddingVertical: 13, backgroundColor: colors.primary, borderRadius: radius.lg }}
                 onPress={() => navigation.goBack()}
                 activeOpacity={0.8}
               >
-                <Text style={s.doneBtnText}>Back to Settings</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Back to Settings</Text>
               </TouchableOpacity>
             </View>
           ) : step === 'overview' ? (
             <>
-              {/* ── Current email card ── */}
-              <View style={s.card}>
-                <Text style={s.sectionLabel}>Current Email</Text>
-                <View style={s.currentEmailRow}>
-                  <View style={[s.emailIconWrap, { backgroundColor: colors.primaryLight }]}>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Current Email</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                     <Ionicons name="mail" size={20} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.emailAddr} numberOfLines={1}>{currentEmail}</Text>
-                    <View style={s.verifyRow}>
+                    <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }} numberOfLines={1}>{currentEmail}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                       <Ionicons
                         name={isVerified ? 'checkmark-circle' : 'alert-circle-outline'}
                         size={13}
                         color={isVerified ? colors.success : colors.warning}
                       />
-                      <Text style={[s.verifyLabel, { color: isVerified ? colors.success : colors.warning }]}>
+                      <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: isVerified ? colors.success : colors.warning }}>
                         {isVerified ? 'Verified' : 'Not verified'}
                       </Text>
                     </View>
@@ -142,7 +140,7 @@ export default function EmailScreen() {
 
                 {!isVerified && (
                   <TouchableOpacity
-                    style={s.resendBtn}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 10, paddingHorizontal: spacing.md, backgroundColor: colors.primaryLight, borderRadius: radius.md, alignSelf: 'flex-start' }}
                     onPress={handleResendVerification}
                     disabled={resendLoading || resendDone}
                     activeOpacity={0.75}
@@ -156,7 +154,7 @@ export default function EmailScreen() {
                           size={14}
                           color={resendDone ? colors.success : colors.primary}
                         />
-                        <Text style={[s.resendLabel, resendDone && { color: colors.success }]}>
+                        <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: resendDone ? colors.success : colors.primary }}>
                           {resendDone ? 'Verification email sent' : 'Resend verification email'}
                         </Text>
                       </>
@@ -165,27 +163,25 @@ export default function EmailScreen() {
                 )}
               </View>
 
-              {/* ── Change email CTA ── */}
               <TouchableOpacity
-                style={s.changeBtn}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 15, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 4 }}
                 onPress={() => setStep('change')}
                 activeOpacity={0.8}
               >
                 <Ionicons name="pencil-outline" size={18} color="#fff" />
-                <Text style={s.changeBtnText}>Change Email Address</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Change Email Address</Text>
               </TouchableOpacity>
 
-              <Text style={s.footNote}>
+              <Text style={{ fontSize: typography.xs, color: colors.textTertiary, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.sm }}>
                 Changing your email requires password confirmation and will send a verification link to your new address.
               </Text>
             </>
           ) : (
-            /* ── Change form ── */
             <>
-              <View style={s.card}>
-                <Text style={s.sectionLabel}>New Email Address</Text>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>New Email Address</Text>
                 <TextInput
-                  style={[s.input, newFocused && s.inputFocused]}
+                  style={{ backgroundColor: newFocused ? colors.surface : colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: newFocused ? colors.primary : colors.border, paddingHorizontal: spacing.base, paddingVertical: 13, fontSize: typography.base, color: colors.textPrimary }}
                   value={newEmail}
                   onChangeText={setNewEmail}
                   placeholder="Enter new email"
@@ -198,11 +194,11 @@ export default function EmailScreen() {
                 />
               </View>
 
-              <View style={s.card}>
-                <Text style={s.sectionLabel}>Confirm with Password</Text>
-                <View style={s.passRow}>
+              <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Confirm with Password</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                   <TextInput
-                    style={[s.input, passFocused && s.inputFocused, { flex: 1 }]}
+                    style={{ flex: 1, backgroundColor: passFocused ? colors.surface : colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: passFocused ? colors.primary : colors.border, paddingHorizontal: spacing.base, paddingVertical: 13, fontSize: typography.base, color: colors.textPrimary }}
                     value={password}
                     onChangeText={setPassword}
                     placeholder="Current password"
@@ -214,7 +210,7 @@ export default function EmailScreen() {
                     onBlur={() => setPassFocused(false)}
                   />
                   <TouchableOpacity
-                    style={s.eyeBtn}
+                    style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border }}
                     onPress={() => setShowPassword(v => !v)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
@@ -225,20 +221,20 @@ export default function EmailScreen() {
                     />
                   </TouchableOpacity>
                 </View>
-                <Text style={s.passNote}>
+                <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18 }}>
                   Required to confirm your identity before changing the email.
                 </Text>
               </View>
 
               {error ? (
-                <View style={s.errorBox}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.dangerLight, borderRadius: radius.md, paddingHorizontal: spacing.base, paddingVertical: 10 }}>
                   <Ionicons name="alert-circle-outline" size={15} color={colors.danger} />
-                  <Text style={s.errorText}>{error}</Text>
+                  <Text style={{ flex: 1, fontSize: typography.sm, color: colors.danger }}>{error}</Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
-                style={[s.changeBtn, loading && { opacity: 0.65 }]}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 15, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 4, opacity: loading ? 0.65 : 1 }}
                 onPress={handleChangeEmail}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -248,17 +244,17 @@ export default function EmailScreen() {
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
-                    <Text style={s.changeBtnText}>Update Email</Text>
+                    <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Update Email</Text>
                   </>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={s.cancelLink}
+                style={{ alignItems: 'center', paddingVertical: spacing.sm }}
                 onPress={() => { setStep('overview'); setError(''); setPassword(''); setNewEmail(''); }}
                 activeOpacity={0.7}
               >
-                <Text style={s.cancelLinkText}>Cancel</Text>
+                <Text style={{ fontSize: typography.sm, color: colors.textSecondary, fontWeight: typography.medium }}>Cancel</Text>
               </TouchableOpacity>
             </>
           )}
@@ -267,165 +263,3 @@ export default function EmailScreen() {
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  scroll: {
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.base,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.base,
-    gap: spacing.md,
-    ...shadows.card,
-  },
-  sectionLabel: {
-    fontSize: typography.xs,
-    fontWeight: typography.semibold,
-    color: colors.textTertiary,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-
-  // ── Current email ──
-  currentEmailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  emailIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  emailAddr: {
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-  },
-  verifyRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  verifyLabel: { fontSize: typography.xs, fontWeight: typography.semibold },
-
-  // ── Resend ──
-  resendBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.md,
-    alignSelf: 'flex-start',
-  },
-  resendLabel: { fontSize: typography.sm, fontWeight: typography.semibold, color: colors.primary },
-
-  // ── Inputs ──
-  input: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.base,
-    paddingVertical: 13,
-    fontSize: typography.base,
-    color: colors.textPrimary,
-  },
-  inputFocused: { borderColor: colors.primary, backgroundColor: colors.surface },
-  passRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  eyeBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  passNote: { fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18 },
-
-  // ── Error ──
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.dangerLight,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.base,
-    paddingVertical: 10,
-  },
-  errorText: { flex: 1, fontSize: typography.sm, color: colors.danger },
-
-  // ── Buttons ──
-  changeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-    paddingVertical: 15,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  changeBtnText: { fontSize: typography.base, fontWeight: typography.bold, color: '#fff' },
-  cancelLink: { alignItems: 'center', paddingVertical: spacing.sm },
-  cancelLinkText: { fontSize: typography.sm, color: colors.textSecondary, fontWeight: typography.medium },
-  footNote: {
-    fontSize: typography.xs,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: spacing.sm,
-  },
-
-  // ── Success ──
-  successCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xxl,
-    padding: spacing.xl,
-    alignItems: 'center',
-    gap: spacing.md,
-    ...shadows.card,
-    marginTop: spacing.xxl,
-  },
-  successIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.successLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  successTitle: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    letterSpacing: -0.4,
-  },
-  successBody: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  successEmail: { fontWeight: typography.bold, color: colors.textPrimary },
-  doneBtn: {
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: 13,
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-  },
-  doneBtnText: { fontSize: typography.base, fontWeight: typography.bold, color: '#fff' },
-});

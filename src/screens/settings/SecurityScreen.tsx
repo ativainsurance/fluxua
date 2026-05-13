@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -18,52 +17,48 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
+import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Security'>;
 
 // ── Password strength ──
-const calcStrength = (pass: string): { score: number; label: string; color: string } => {
-  if (pass.length === 0) return { score: 0, label: '', color: colors.border };
+const calcStrength = (pass: string): { score: number; label: string; colorKey: 'danger' | 'warning' | 'primary' | 'success' | 'border' } => {
+  if (pass.length === 0) return { score: 0, label: '', colorKey: 'border' };
   let score = 0;
   if (pass.length >= 8) score++;
   if (pass.length >= 12) score++;
   if (/[A-Z]/.test(pass)) score++;
   if (/[0-9]/.test(pass)) score++;
   if (/[^A-Za-z0-9]/.test(pass)) score++;
-  if (score <= 1) return { score: 1, label: 'Weak', color: colors.danger };
-  if (score <= 2) return { score: 2, label: 'Fair', color: colors.warning };
-  if (score <= 3) return { score: 3, label: 'Good', color: colors.primary };
-  return { score: 4, label: 'Strong', color: colors.success };
+  if (score <= 1) return { score: 1, label: 'Weak', colorKey: 'danger' };
+  if (score <= 2) return { score: 2, label: 'Fair', colorKey: 'warning' };
+  if (score <= 3) return { score: 3, label: 'Good', colorKey: 'primary' };
+  return { score: 4, label: 'Strong', colorKey: 'success' };
 };
 
 const StrengthBar = ({ password }: { password: string }) => {
-  const { score, label, color } = calcStrength(password);
+  const { colors } = useTheme();
+  const { score, label, colorKey } = calcStrength(password);
+  const color = colors[colorKey];
   if (!password) return null;
   return (
-    <View style={str.wrapper}>
-      <View style={str.barRow}>
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', gap: 4 }}>
         {[1, 2, 3, 4].map(i => (
           <View
             key={i}
-            style={[str.segment, { backgroundColor: i <= score ? color : colors.border }]}
+            style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= score ? color : colors.border }}
           />
         ))}
       </View>
-      <Text style={[str.label, { color }]}>{label}</Text>
+      <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, alignSelf: 'flex-end', color }}>{label}</Text>
     </View>
   );
 };
-const str = StyleSheet.create({
-  wrapper: { gap: 6 },
-  barRow: { flexDirection: 'row', gap: 4 },
-  segment: { flex: 1, height: 4, borderRadius: 2 },
-  label: { fontSize: typography.xs, fontWeight: typography.semibold, alignSelf: 'flex-end' },
-});
 
-// ── Password input ──
 const PassInput = ({
   label,
   value,
@@ -75,14 +70,15 @@ const PassInput = ({
   onChange: (v: string) => void;
   placeholder: string;
 }) => {
+  const { colors } = useTheme();
   const [show, setShow] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
-    <View style={pi.wrapper}>
-      <Text style={pi.label}>{label}</Text>
-      <View style={pi.row}>
+    <View style={{ gap: spacing.xs }}>
+      <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textSecondary, letterSpacing: 0.5, textTransform: 'uppercase', paddingHorizontal: spacing.xs }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
         <TextInput
-          style={[pi.input, focused && pi.inputFocused]}
+          style={{ flex: 1, backgroundColor: focused ? colors.surface : colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: focused ? colors.primary : colors.border, paddingHorizontal: spacing.base, paddingVertical: 13, fontSize: typography.base, color: colors.textPrimary, ...shadows.sm }}
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
@@ -94,7 +90,7 @@ const PassInput = ({
           onBlur={() => setFocused(false)}
         />
         <TouchableOpacity
-          style={pi.eyeBtn}
+          style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border }}
           onPress={() => setShow(v => !v)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -104,50 +100,15 @@ const PassInput = ({
     </View>
   );
 };
-const pi = StyleSheet.create({
-  wrapper: { gap: spacing.xs },
-  label: {
-    fontSize: typography.xs,
-    fontWeight: typography.semibold,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    paddingHorizontal: spacing.xs,
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  input: {
-    flex: 1,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.base,
-    paddingVertical: 13,
-    fontSize: typography.base,
-    color: colors.textPrimary,
-    ...shadows.sm,
-  },
-  inputFocused: { borderColor: colors.primary, backgroundColor: colors.surface },
-  eyeBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-});
 
 export default function SecurityScreen() {
   const navigation = useNavigation<Nav>();
   const { user } = useAuth();
+  const { colors } = useTheme();
 
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
-
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -169,7 +130,6 @@ export default function SecurityScreen() {
     setError('');
     setLoading(true);
     try {
-      // Re-authenticate
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: user?.email ?? '',
         password: current,
@@ -190,7 +150,7 @@ export default function SecurityScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <SubScreenHeader title="Security" onBack={() => navigation.goBack()} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -198,60 +158,45 @@ export default function SecurityScreen() {
         keyboardVerticalOffset={80}
       >
         <ScrollView
-          contentContainerStyle={s.scroll}
+          contentContainerStyle={{ paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl, gap: spacing.base }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           {/* ── Change password ── */}
-          <View style={s.card}>
-            <View style={s.cardHeader}>
-              <View style={[s.cardIcon, { backgroundColor: colors.personalLight }]}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.personalLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                 <Ionicons name="lock-closed-outline" size={20} color={colors.personal} />
               </View>
               <View>
-                <Text style={s.cardTitle}>Change Password</Text>
-                <Text style={s.cardSub}>Keep your account secure</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>Change Password</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Keep your account secure</Text>
               </View>
             </View>
 
-            <View style={s.fieldGroup}>
-              <PassInput
-                label="Current Password"
-                value={current}
-                onChange={setCurrent}
-                placeholder="Enter current password"
-              />
-              <PassInput
-                label="New Password"
-                value={next}
-                onChange={setNext}
-                placeholder="At least 8 characters"
-              />
+            <View style={{ gap: spacing.md }}>
+              <PassInput label="Current Password" value={current} onChange={setCurrent} placeholder="Enter current password" />
+              <PassInput label="New Password" value={next} onChange={setNext} placeholder="At least 8 characters" />
               <StrengthBar password={next} />
-              <PassInput
-                label="Confirm New Password"
-                value={confirm}
-                onChange={setConfirm}
-                placeholder="Re-enter new password"
-              />
+              <PassInput label="Confirm New Password" value={confirm} onChange={setConfirm} placeholder="Re-enter new password" />
             </View>
 
             {error ? (
-              <View style={s.errorBox}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.dangerLight, borderRadius: radius.md, paddingHorizontal: spacing.base, paddingVertical: 10 }}>
                 <Ionicons name="alert-circle-outline" size={15} color={colors.danger} />
-                <Text style={s.errorText}>{error}</Text>
+                <Text style={{ flex: 1, fontSize: typography.sm, color: colors.danger }}>{error}</Text>
               </View>
             ) : null}
 
             {success ? (
-              <View style={s.successBox}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.successLight, borderRadius: radius.md, paddingHorizontal: spacing.base, paddingVertical: 10 }}>
                 <Ionicons name="checkmark-circle" size={15} color={colors.success} />
-                <Text style={s.successText}>Password updated successfully</Text>
+                <Text style={{ flex: 1, fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>Password updated successfully</Text>
               </View>
             ) : null}
 
             <TouchableOpacity
-              style={[s.saveBtn, loading && s.saveBtnDim]}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.personal, borderRadius: radius.lg, paddingVertical: 15, shadowColor: colors.personal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4, opacity: loading ? 0.65 : 1 }}
               onPress={handleChange}
               disabled={loading}
               activeOpacity={0.8}
@@ -261,22 +206,22 @@ export default function SecurityScreen() {
               ) : (
                 <>
                   <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
-                  <Text style={s.saveBtnText}>Update Password</Text>
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Update Password</Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
 
           {/* ── Biometrics ── */}
-          <View style={s.card}>
-            <View style={s.rowBetween}>
-              <View style={s.rowLeft}>
-                <View style={[s.cardIcon, { backgroundColor: colors.tealLight }]}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.tealLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                   <Ionicons name="finger-print-outline" size={20} color={colors.teal} />
                 </View>
                 <View>
-                  <Text style={s.rowTitle}>Face ID / Biometrics</Text>
-                  <Text style={s.rowSub}>Unlock app with biometrics</Text>
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }}>Face ID / Biometrics</Text>
+                  <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Unlock app with biometrics</Text>
                 </View>
               </View>
               <Switch
@@ -287,35 +232,35 @@ export default function SecurityScreen() {
                 style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
               />
             </View>
-            <Text style={s.noteText}>
+            <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18, paddingHorizontal: spacing.xs }}>
               Biometric authentication will be available in a future update.
             </Text>
           </View>
 
           {/* ── Active sessions ── */}
-          <View style={s.card}>
-            <View style={s.cardHeader}>
-              <View style={[s.cardIcon, { backgroundColor: colors.businessLight }]}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.businessLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                 <Ionicons name="phone-portrait-outline" size={20} color={colors.business} />
               </View>
               <View>
-                <Text style={s.cardTitle}>Active Sessions</Text>
-                <Text style={s.cardSub}>Devices logged into your account</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>Active Sessions</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Devices logged into your account</Text>
               </View>
             </View>
 
-            <View style={s.sessionRow}>
-              <View style={[s.sessionIcon, { backgroundColor: colors.successLight }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.successLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                 <Ionicons name="phone-portrait" size={16} color={colors.success} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.sessionDevice}>This Device</Text>
-                <Text style={s.sessionMeta}>Current session · Active now</Text>
+                <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary }}>This Device</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Current session · Active now</Text>
               </View>
-              <View style={s.sessionDot} />
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success, flexShrink: 0 }} />
             </View>
 
-            <Text style={s.noteText}>
+            <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18, paddingHorizontal: spacing.xs }}>
               Full session management will be available in a future update.
             </Text>
           </View>
@@ -324,105 +269,3 @@ export default function SecurityScreen() {
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  scroll: {
-    paddingHorizontal: spacing.base,
-    paddingBottom: spacing.xxxl,
-    gap: spacing.base,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: spacing.base,
-    gap: spacing.md,
-    ...shadows.card,
-  },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  cardTitle: { fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary },
-  cardSub: { fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 },
-
-  fieldGroup: { gap: spacing.md },
-
-  // ── Row with toggle ──
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
-  rowTitle: { fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary },
-  rowSub: { fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 },
-
-  // ── Error / Success ──
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.dangerLight,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.base,
-    paddingVertical: 10,
-  },
-  errorText: { flex: 1, fontSize: typography.sm, color: colors.danger },
-  successBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.successLight,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.base,
-    paddingVertical: 10,
-  },
-  successText: { flex: 1, fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold },
-
-  // ── Save button ──
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.personal,
-    borderRadius: radius.lg,
-    paddingVertical: 15,
-    shadowColor: colors.personal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  saveBtnDim: { opacity: 0.65 },
-  saveBtnText: { fontSize: typography.base, fontWeight: typography.bold, color: '#fff' },
-
-  // ── Sessions ──
-  sessionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  sessionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  sessionDevice: { fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary },
-  sessionMeta: { fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 },
-  sessionDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
-    flexShrink: 0,
-  },
-
-  noteText: {
-    fontSize: typography.xs,
-    color: colors.textTertiary,
-    lineHeight: 18,
-    paddingHorizontal: spacing.xs,
-  },
-});

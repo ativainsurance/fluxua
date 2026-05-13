@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { colors, typography, spacing, radius } from '../theme';
+import { typography, spacing, radius } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -80,8 +79,10 @@ export const DateInput = ({
   placeholder = 'MM/DD/YYYY',
   minimumDate,
   optional = false,
-  error,
-}: Props) => {
+  error }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [displayText, setDisplayText] = useState(isoToDisplay(value));
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -223,7 +224,7 @@ export const DateInput = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -232,28 +233,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.sm,
     paddingVertical: Platform.OS === 'ios' ? spacing.sm + 2 : spacing.xs + 2,
-    gap: spacing.xs,
-  },
+    gap: spacing.xs },
   calendarBtn: {
-    padding: 2,
-  },
+    padding: 2 },
   input: {
     flex: 1,
     fontSize: typography.base,
     color: colors.textPrimary,
-    paddingVertical: 0,
-  },
+    paddingVertical: 0 },
   validIcon: {
-    marginLeft: 2,
-  },
+    marginLeft: 2 },
   errorText: {
     fontSize: typography.xs,
     color: colors.danger,
-    marginTop: spacing.xs,
-  },
+    marginTop: spacing.xs },
   hint: {
     fontSize: typography.xs,
     color: colors.textDisabled,
-    marginTop: 4,
-  },
-});
+    marginTop: 4 } });

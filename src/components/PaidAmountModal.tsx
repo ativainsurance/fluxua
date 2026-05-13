@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Modal,
+import React, { useMemo, useState, useEffect } from 'react';
+import { Modal,
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+  Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../theme';
+import { typography, spacing, radius, shadows } from '../theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { formatCurrency } from '../utils/dateUtils';
 
 interface Props {
@@ -30,8 +29,10 @@ export const PaidAmountModal = ({
   monthLabel,
   onConfirm,
   onSkip,
-  onCancel,
-}: Props) => {
+  onCancel }: Props) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [value, setValue] = useState('');
   const [lateFeeValue, setLateFeeValue] = useState('');
   const [creditValue, setCreditValue] = useState('');
@@ -193,68 +194,58 @@ export const PaidAmountModal = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
+    justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     padding: spacing.lg,
     paddingBottom: spacing.xxxl,
-    ...shadows.lg,
-  },
+    ...shadows.lg },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   iconBadge: {
     width: 40,
     height: 40,
     borderRadius: radius.full,
     backgroundColor: colors.successLight,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   title: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
+    marginBottom: spacing.xs },
   subtitle: {
     fontSize: typography.sm,
     color: colors.textSecondary,
     lineHeight: 20,
-    marginBottom: spacing.xs,
-  },
+    marginBottom: spacing.xs },
   bold: {
     fontWeight: typography.semibold,
-    color: colors.textPrimary,
-  },
+    color: colors.textPrimary },
   hint: {
     fontSize: typography.xs,
     color: colors.textDisabled,
-    marginBottom: spacing.md,
-  },
+    marginBottom: spacing.md },
   fieldLabel: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    letterSpacing: 0.5 },
   optional: {
     fontWeight: typography.regular,
     color: colors.textDisabled,
-    textTransform: 'none',
-  },
+    textTransform: 'none' },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,71 +255,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.background,
-    marginBottom: spacing.sm,
-  },
+    marginBottom: spacing.sm },
   creditWrapper: {
     borderColor: colors.primary,
-    borderStyle: 'dashed',
-  },
+    borderStyle: 'dashed' },
   lateFeeWrapper: {
-    borderColor: colors.warning,
-  },
+    borderColor: colors.warning },
   lateFeeIcon: {
-    marginRight: 4,
-  },
+    marginRight: 4 },
   currencySymbol: {
     fontSize: typography.xxl,
     fontWeight: typography.medium,
     color: colors.textSecondary,
-    marginRight: spacing.xs,
-  },
+    marginRight: spacing.xs },
   input: {
     flex: 1,
     fontSize: typography.xxl,
     fontWeight: typography.bold,
-    color: colors.textPrimary,
-  },
+    color: colors.textPrimary },
   diffRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: spacing.sm,
-  },
+    marginBottom: spacing.sm },
   diffText: {
     fontSize: typography.xs,
-    fontWeight: typography.medium,
-  },
+    fontWeight: typography.medium },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
+    marginTop: spacing.sm },
   skipBtn: {
     flex: 1,
     paddingVertical: spacing.sm + 2,
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   skipText: {
     fontSize: typography.sm,
     color: colors.textSecondary,
-    fontWeight: typography.medium,
-  },
+    fontWeight: typography.medium },
   confirmBtn: {
     flex: 1,
     paddingVertical: spacing.sm + 2,
     borderRadius: radius.md,
     backgroundColor: colors.success,
-    alignItems: 'center',
-  },
+    alignItems: 'center' },
   confirmBtnDisabled: {
-    opacity: 0.5,
-  },
+    opacity: 0.5 },
   confirmText: {
     fontSize: typography.sm,
     color: '#fff',
-    fontWeight: typography.semibold,
-  },
-});
+    fontWeight: typography.semibold } });
