@@ -197,7 +197,7 @@ export const PaidAmountModal = ({
 const makeStyles = (colors: any) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.surface,
@@ -306,5 +306,5 @@ const makeStyles = (colors: any) => StyleSheet.create({
     opacity: 0.5 },
   confirmText: {
     fontSize: typography.sm,
-    color: '#fff',
+    color: colors.textInverse,
     fontWeight: typography.semibold } });

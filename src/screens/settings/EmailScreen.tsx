@@ -112,7 +112,7 @@ export default function EmailScreen() {
                 onPress={() => navigation.goBack()}
                 activeOpacity={0.8}
               >
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Back to Settings</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Back to Settings</Text>
               </TouchableOpacity>
             </View>
           ) : step === 'overview' ? (
@@ -168,8 +168,8 @@ export default function EmailScreen() {
                 onPress={() => setStep('change')}
                 activeOpacity={0.8}
               >
-                <Ionicons name="pencil-outline" size={18} color="#fff" />
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Change Email Address</Text>
+                <Ionicons name="pencil-outline" size={18} color={colors.textInverse} />
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Change Email Address</Text>
               </TouchableOpacity>
 
               <Text style={{ fontSize: typography.xs, color: colors.textTertiary, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.sm }}>
@@ -240,11 +240,11 @@ export default function EmailScreen() {
                 activeOpacity={0.8}
               >
                 {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color={colors.textInverse} />
                 ) : (
                   <>
-                    <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
-                    <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Update Email</Text>
+                    <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
+                    <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Update Email</Text>
                   </>
                 )}
               </TouchableOpacity>

@@ -26,22 +26,21 @@ interface ToggleItem {
   iconBg: string;
 }
 
-// Static color values (brand palette – not theme-dependent for icons)
-const PUSH_ITEMS: ToggleItem[] = [
-  { key: 'paymentReminders', label: 'Payment Reminders', description: 'Remind me before a commitment is due', icon: 'alarm-outline', iconColor: '#F59E0B', iconBg: '#FEF3C7' },
-  { key: 'dueSoon', label: 'Due Soon Alerts', description: 'Alert me when bills are within 3 days of due date', icon: 'time-outline', iconColor: '#EF4444', iconBg: '#FEE2E2' },
-  { key: 'overdue', label: 'Overdue Notifications', description: 'Notify me when a commitment is past due', icon: 'alert-circle-outline', iconColor: '#EF4444', iconBg: '#FEF2F2' },
-];
-
-const SUMMARY_ITEMS: ToggleItem[] = [
-  { key: 'weeklySummary', label: 'Weekly Summary', description: 'A snapshot of your week every Monday morning', icon: 'stats-chart-outline', iconColor: '#3B82F6', iconBg: '#EFF6FF' },
-  { key: 'monthlySummary', label: 'Monthly Summary', description: 'Full monthly report on the 1st of each month', icon: 'calendar-outline', iconColor: '#8B5CF6', iconBg: '#F5F3FF' },
-];
-
-const EMAIL_ITEMS: ToggleItem[] = [
-  { key: 'emailDigests', label: 'Email Digests', description: 'Receive summaries via email instead of push', icon: 'mail-outline', iconColor: '#14B8A6', iconBg: '#F0FDFA' },
-  { key: 'productUpdates', label: 'Product Updates', description: 'New features, tips, and Fluxua news', icon: 'megaphone-outline', iconColor: '#6366F1', iconBg: '#EEF2FF' },
-];
+const getNotifItems = (colors: any) => ({
+  push: [
+    { key: 'paymentReminders', label: 'Payment Reminders', description: 'Remind me before a commitment is due', icon: 'alarm-outline', iconColor: colors.warning, iconBg: colors.warningLight },
+    { key: 'dueSoon', label: 'Due Soon Alerts', description: 'Alert me when bills are within 3 days of due date', icon: 'time-outline', iconColor: colors.danger, iconBg: colors.dangerLight },
+    { key: 'overdue', label: 'Overdue Notifications', description: 'Notify me when a commitment is past due', icon: 'alert-circle-outline', iconColor: colors.danger, iconBg: colors.dangerLight },
+  ] as ToggleItem[],
+  summary: [
+    { key: 'weeklySummary', label: 'Weekly Summary', description: 'A snapshot of your week every Monday morning', icon: 'stats-chart-outline', iconColor: colors.primary, iconBg: colors.primaryLight },
+    { key: 'monthlySummary', label: 'Monthly Summary', description: 'Full monthly report on the 1st of each month', icon: 'calendar-outline', iconColor: colors.accentMuted, iconBg: colors.surfaceAlt },
+  ] as ToggleItem[],
+  email: [
+    { key: 'emailDigests', label: 'Email Digests', description: 'Receive summaries via email instead of push', icon: 'mail-outline', iconColor: colors.teal, iconBg: colors.tealLight },
+    { key: 'productUpdates', label: 'Product Updates', description: 'New features, tips, and Fluxua news', icon: 'megaphone-outline', iconColor: colors.personal, iconBg: colors.personalLight },
+  ] as ToggleItem[],
+});
 
 type PrefsState = Record<string, boolean>;
 
@@ -69,7 +68,7 @@ const ToggleRow = ({ item, value, onChange, isFirst }: {
           value={value}
           onValueChange={onChange}
           trackColor={{ false: colors.border, true: colors.teal }}
-          thumbColor="#fff"
+          thumbColor={colors.textInverse}
           style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }], flexShrink: 0 }}
         />
       </View>
@@ -103,6 +102,7 @@ export default function NotificationsScreen() {
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
   const [prefs, setPrefs] = useState<PrefsState>(DEFAULT);
+  const { push: PUSH_ITEMS, summary: SUMMARY_ITEMS, email: EMAIL_ITEMS } = React.useMemo(() => getNotifItems(colors), [colors]);
 
   const toggle = (key: string) => setPrefs(prev => ({ ...prev, [key]: !prev[key] }));
   const activeCount = Object.values(prefs).filter(Boolean).length;

@@ -178,7 +178,7 @@ export default function AddExpenseScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={colors.textInverse} />
             ) : (
               <Text style={styles.saveBtnText}>Save</Text>
             )}
@@ -267,12 +267,12 @@ export default function AddExpenseScreen() {
                   <Ionicons
                     name={t === 'personal' ? 'person' : 'briefcase'}
                     size={16}
-                    color={form.type === t ? '#fff' : colors.textSecondary}
+                    color={form.type === t ? colors.textInverse : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.typeBtnText,
-                      form.type === t && { color: '#fff' },
+                      form.type === t && { color: colors.textInverse },
                     ]}
                   >
                     {t === 'personal' ? 'Personal' : 'Business'}
@@ -356,7 +356,7 @@ export default function AddExpenseScreen() {
                       style={styles.addCategoryConfirm}
                       onPress={handleAddCustomCategory}
                     >
-                      <Ionicons name="checkmark" size={18} color="#fff" />
+                      <Ionicons name="checkmark" size={18} color={colors.textInverse} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
@@ -487,12 +487,12 @@ export default function AddExpenseScreen() {
                       <Ionicons
                         name={method === 'card' ? 'card' : 'git-merge'}
                         size={16}
-                        color={form.autopay_method === method ? '#fff' : colors.textSecondary}
+                        color={form.autopay_method === method ? colors.textInverse : colors.textSecondary}
                       />
                       <Text
                         style={[
                           styles.typeBtnText,
-                          form.autopay_method === method && { color: '#fff' },
+                          form.autopay_method === method && { color: colors.textInverse },
                         ]}
                       >
                         {method === 'card' ? 'Credit / Debit Card' : 'ACH / Bank Transfer'}
@@ -571,7 +571,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: {
-    color: '#fff',
+    color: colors.textInverse,
     fontSize: typography.sm,
     fontWeight: typography.semibold,
   },

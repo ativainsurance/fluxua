@@ -30,20 +30,20 @@ import { ExpenseWithRecord, getCategoryIcon } from '../types';
 // Pressure color helpers
 // ─────────────────────────────────────────────
 
-const getPressureColor = (ratio: number, isPast: boolean): string => {
-  if (!isPast) return '#94A3B8';
-  if (ratio >= 0.9) return '#10B981';
-  if (ratio >= 0.5) return '#14B8A6';
-  if (ratio >= 0.2) return '#F59E0B';
-  return '#EF4444';
+const getPressureColor = (ratio: number, isPast: boolean, colors: any): string => {
+  if (!isPast) return colors.textTertiary;
+  if (ratio >= 0.9) return colors.success;
+  if (ratio >= 0.5) return colors.teal;
+  if (ratio >= 0.2) return colors.warning;
+  return colors.danger;
 };
 
-const getPressureBg = (ratio: number, isPast: boolean): string => {
-  if (!isPast) return '#F8FAFC';
-  if (ratio >= 0.9) return '#D1FAE5';
-  if (ratio >= 0.5) return '#CCFBF1';
-  if (ratio >= 0.2) return '#FEF3C7';
-  return '#FEE2E2';
+const getPressureBg = (ratio: number, isPast: boolean, colors: any): string => {
+  if (!isPast) return colors.surfaceAlt;
+  if (ratio >= 0.9) return colors.successLight;
+  if (ratio >= 0.5) return colors.tealLight;
+  if (ratio >= 0.2) return colors.warningLight;
+  return colors.dangerLight;
 };
 
 const getWeekCoverage = (
@@ -89,8 +89,8 @@ const WeekBar = ({
   const weekStyles = useMemo(() => makeWeekStyles(colors), [colors]);
 
   const barAnim = useRef(new Animated.Value(0)).current;
-  const color = isCurrent ? colors.teal : getPressureColor(coverage, isPast);
-  const bg = isCurrent ? colors.tealLight : getPressureBg(coverage, isPast);
+  const color = isCurrent ? colors.teal : getPressureColor(coverage, isPast, colors);
+  const bg = isCurrent ? colors.tealLight : getPressureBg(coverage, isPast, colors);
 
   useEffect(() => {
     Animated.timing(barAnim, {
@@ -186,7 +186,7 @@ const makeWeekStyles = (colors: any) => StyleSheet.create({
   nowText: {
     fontSize: 9,
     fontWeight: typography.bold,
-    color: '#fff',
+    color: colors.textInverse,
     letterSpacing: 0.5,
   },
   amount: {
@@ -568,7 +568,7 @@ export default function FlowScreen() {
                   {/* Stats row */}
                   <View style={styles.heroStats}>
                     <View style={styles.heroStat}>
-                      <Text style={[styles.heroStatValue, { color: '#34D399' }]}>
+                      <Text style={[styles.heroStatValue, { color: colors.success }]}>
                         {formatCurrency(weekCovered)}
                       </Text>
                       <Text style={styles.heroStatLabel}>COVERED</Text>
@@ -577,7 +577,7 @@ export default function FlowScreen() {
                     <View style={styles.heroStat}>
                       <Text style={[
                         styles.heroStatValue,
-                        { color: weekUnallocated > 0 ? '#FBBF24' : '#34D399' }
+                        { color: weekUnallocated > 0 ? colors.warning : colors.success }
                       ]}>
                         {formatCurrency(weekUnallocated)}
                       </Text>
@@ -752,7 +752,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heroTitle: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     marginTop: 3,
     letterSpacing: -0.3,
   },
@@ -776,7 +776,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heroAmount: {
     fontSize: typography.display,
     fontWeight: typography.extrabold,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     letterSpacing: -2,
     lineHeight: 54,
   },
@@ -819,7 +819,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heroStatValue: {
     fontSize: typography.base,
     fontWeight: typography.bold,
-    color: '#FFFFFF',
+    color: colors.textInverse,
     letterSpacing: -0.3,
   },
   heroStatLabel: {

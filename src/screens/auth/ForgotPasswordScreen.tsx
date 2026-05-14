@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { colors, typography, spacing, radius } from '../../theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { typography, spacing, radius } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { GradientButton } from '../../components/GradientButton';
 
@@ -23,6 +24,9 @@ type Props = {
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const { resetPassword } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -30,7 +34,6 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const handleSubmit = async () => {
     if (!email.trim()) return;
     setLoading(true);
-    // Always show success — never reveal if email exists (enumeration prevention)
     await resetPassword(email.trim().toLowerCase()).catch(() => {});
     setLoading(false);
     setSubmitted(true);
@@ -53,10 +56,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           <Text style={styles.successSub}>
             The link expires in 15 minutes. Check your spam folder if you don't see it.
           </Text>
-          <GradientButton
-            title="Back to Sign In"
-            onPress={() => navigation.navigate('Login')}
-          />
+          <GradientButton title="Back to Sign In" onPress={() => navigation.navigate('Login')} />
         </View>
       </SafeAreaView>
     );
@@ -64,10 +64,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <TouchableOpacity style={styles.back} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -93,13 +90,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               autoCorrect={false}
               autoFocus
             />
-
-            <GradientButton
-              title="Send reset link"
-              onPress={handleSubmit}
-              loading={loading}
-              disabled={!email.trim()}
-            />
+            <GradientButton title="Send reset link" onPress={handleSubmit} loading={loading} disabled={!email.trim()} />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -107,7 +98,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   back: {
@@ -117,11 +108,7 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.base,
     marginTop: spacing.sm,
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-  },
+  container: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xl },
   header: { marginBottom: spacing.xxxl },
   title: {
     fontSize: typography.xxl,
@@ -129,17 +116,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
-  subtitle: {
-    fontSize: typography.sm,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
+  subtitle: { fontSize: typography.sm, color: colors.textSecondary, lineHeight: 22 },
   form: { gap: spacing.md },
-  label: {
-    fontSize: typography.sm,
-    fontWeight: typography.medium,
-    color: colors.textSecondary,
-  },
+  label: { fontSize: typography.sm, fontWeight: typography.medium, color: colors.textSecondary },
   input: {
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -150,13 +129,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     backgroundColor: colors.background,
   },
-  // Success state
-  successContainer: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxxl,
-    gap: spacing.md,
-  },
+  successContainer: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xxxl, gap: spacing.md },
   successIcon: {
     width: 80,
     height: 80,
@@ -166,23 +139,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  successTitle: {
-    fontSize: typography.xl,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-  },
-  successText: {
-    fontSize: typography.base,
-    color: colors.textSecondary,
-    lineHeight: 24,
-  },
-  bold: {
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-  },
-  successSub: {
-    fontSize: typography.sm,
-    color: colors.textDisabled,
-    lineHeight: 20,
-  },
+  successTitle: { fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary },
+  successText: { fontSize: typography.base, color: colors.textSecondary, lineHeight: 24 },
+  bold: { fontWeight: typography.semibold, color: colors.textPrimary },
+  successSub: { fontSize: typography.sm, color: colors.textDisabled, lineHeight: 20 },
 });

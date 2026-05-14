@@ -25,32 +25,13 @@ interface Props {
 }
 
 // ── Status configuration — semantic, not decorative ──
-const STATUS_CONFIG = {
-  paid: {
-    color: '#10B981',
-    bg: '#D1FAE5',
-    label: 'Completed',
-    icon: 'checkmark-circle' },
-  waived: {
-    color: '#8B5CF6',
-    bg: '#EDE9FE',
-    label: 'Waived',
-    icon: 'gift-outline' },
-  overdue: {
-    color: '#EF4444',
-    bg: '#FEE2E2',
-    label: 'Overdue',
-    icon: 'alert-circle' },
-  'due-soon': {
-    color: '#F59E0B',
-    bg: '#FEF3C7',
-    label: 'Due Soon',
-    icon: 'time' },
-  upcoming: {
-    color: '#64748B',
-    bg: '#F8FAFC',
-    label: 'Upcoming',
-    icon: 'calendar-outline' } } as const;
+const getStatusConfig = (colors: any) => ({
+  paid:      { color: colors.success,       bg: colors.successLight, label: 'Completed', icon: 'checkmark-circle' },
+  waived:    { color: colors.accentMuted,   bg: colors.primaryLight, label: 'Waived',    icon: 'gift-outline' },
+  overdue:   { color: colors.danger,        bg: colors.dangerLight,  label: 'Overdue',   icon: 'alert-circle' },
+  'due-soon':{ color: colors.warning,       bg: colors.warningLight, label: 'Due Soon',  icon: 'time' },
+  upcoming:  { color: colors.textSecondary, bg: colors.surfaceAlt,   label: 'Upcoming',  icon: 'calendar-outline' },
+});
 
 const formatShortDate = (iso: string): string => {
   const [y, m, d] = iso.split('-').map(Number);
@@ -68,6 +49,7 @@ export const ExpenseCard = ({
   weeklyAllocation }: Props) => {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const STATUS_CONFIG = useMemo(() => getStatusConfig(colors), [colors]);
 
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
@@ -141,7 +123,7 @@ export const ExpenseCard = ({
       style={[
         styles.card,
         // Very subtle status tint on entire card for overdue/due-soon
-        status === 'overdue' && { backgroundColor: '#FFFAFA' },
+        status === 'overdue' && { backgroundColor: colors.dangerLight },
         isResolved && { opacity: 0.88 },
       ]}
       onLongPress={handleLongPress}
@@ -282,7 +264,7 @@ export const ExpenseCard = ({
           <Ionicons
             name={isWaived ? 'gift-outline' : 'checkmark'}
             size={13}
-            color={isResolved ? '#fff' : colors.textDisabled}
+            color={isResolved ? colors.textInverse : colors.textDisabled}
           />
         </TouchableOpacity>
       </View>
@@ -407,7 +389,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     textDecorationLine: 'line-through' },
   creditAmt: {
     fontSize: typography.xs,
-    color: '#8B5CF6',
+    color: colors.accentMuted,
     fontWeight: typography.medium },
   lateFee: {
     fontSize: typography.xs,
@@ -431,8 +413,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.success,
     borderColor: colors.success },
   checkBtnWaived: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6' },
+    backgroundColor: colors.accentMuted,
+    borderColor: colors.accentMuted },
   checkBtnUnpaid: {
     backgroundColor: 'transparent',
     borderColor: colors.border } });

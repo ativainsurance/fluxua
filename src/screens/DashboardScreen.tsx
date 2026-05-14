@@ -52,13 +52,25 @@ const CATEGORY_COLORS: Record<string, { accent: string; bg: string; darkBg: stri
 const getCategoryColor = (category: string) =>
   CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
 
-const STATUS_ACCENT: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
-  paid:       { accent: '#10B981', bg: '#D1FAE5', label: 'Completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#8B5CF6', bg: '#EDE9FE', label: 'Waived',    icon: 'gift-outline'      },
-  overdue:    { accent: '#EF4444', bg: '#FEE2E2', label: 'Overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#F59E0B', bg: '#FEF3C7', label: 'Due Soon',  icon: 'time'              },
-  upcoming:   { accent: '#3B82F6', bg: '#EFF6FF', label: 'Upcoming',  icon: 'calendar-outline'  },
+// STATUS_ACCENT uses warm editorial semantic colors
+// NOTE: these are light-mode hardcodes; dark mode derives from the ThemeContext per-component
+const STATUS_ACCENT_LIGHT: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
+  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)', label: 'Completed', icon: 'checkmark-circle'  },
+  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', label: 'Waived',   icon: 'gift-outline'      },
+  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)', label: 'Overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)', label: 'Due Soon',  icon: 'time'              },
+  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', label: 'Upcoming', icon: 'calendar-outline' },
 };
+
+const STATUS_ACCENT_DARK: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
+  paid:       { accent: '#7FA582', bg: 'rgba(127,165,130,0.15)', label: 'Completed', icon: 'checkmark-circle'  },
+  waived:     { accent: '#A78BFA', bg: 'rgba(167,139,250,0.15)', label: 'Waived',    icon: 'gift-outline'      },
+  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',  label: 'Overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)', label: 'Due Soon',  icon: 'time'              },
+  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',   label: 'Upcoming',  icon: 'calendar-outline'  },
+};
+
+const getStatusAccent = (isDark: boolean) => isDark ? STATUS_ACCENT_DARK : STATUS_ACCENT_LIGHT;
 
 // ─────────────────────────────────────────────
 // MetricCard — premium KPI tile
@@ -192,12 +204,12 @@ const SplitCard = ({
       <View style={{
         position: 'absolute', top: -60, left: -40,
         width: 200, height: 200, borderRadius: 100,
-        backgroundColor: '#818CF8', opacity: 0.10,
+        backgroundColor: colors.personal, opacity: 0.10,
       }} />
       <View style={{
         position: 'absolute', bottom: -50, right: -30,
         width: 180, height: 180, borderRadius: 90,
-        backgroundColor: '#0EA5E9', opacity: 0.10,
+        backgroundColor: colors.business, opacity: 0.10,
       }} />
 
       {/* Header */}
@@ -205,16 +217,16 @@ const SplitCard = ({
         <Text style={{
           fontSize: typography.sm,
           fontWeight: typography.bold,
-          color: '#fff',
+          color: colors.textInverse,
           letterSpacing: -0.1,
         }}>Commitment Split</Text>
         <View style={{
-          backgroundColor: 'rgba(255,255,255,0.08)',
+          backgroundColor: 'rgba(250,250,247,0.08)',
           borderRadius: radius.full,
           paddingHorizontal: 10,
           paddingVertical: 4,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.10)',
+          borderColor: 'rgba(250,250,247,0.10)',
         }}>
           <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: typography.semibold }}>
             {formatCurrency(total)} total
@@ -247,25 +259,25 @@ const SplitCard = ({
         {/* Personal */}
         <View style={{
           flex: 1,
-          backgroundColor: 'rgba(129,140,248,0.12)',
+          backgroundColor: colors.personalLight,
           borderRadius: radius.lg,
           padding: spacing.md,
           borderWidth: 1,
-          borderColor: 'rgba(129,140,248,0.20)',
+          borderColor: colors.personal + '30',
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#818CF8' }} />
-            <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.personal }} />
+            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
               PERSONAL
             </Text>
           </View>
           <Text style={{
             fontSize: typography.lg,
             fontWeight: typography.extrabold,
-            color: '#E0E7FF',
+            color: colors.textInverse,
             letterSpacing: -0.5,
           }}>{formatCurrency(personalTotal)}</Text>
-          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.40)', marginTop: 2 }}>
+          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
             {Math.round(personalPct * 100)}% of total
           </Text>
         </View>
@@ -273,25 +285,25 @@ const SplitCard = ({
         {/* Business */}
         <View style={{
           flex: 1,
-          backgroundColor: 'rgba(14,165,233,0.12)',
+          backgroundColor: colors.businessLight,
           borderRadius: radius.lg,
           padding: spacing.md,
           borderWidth: 1,
-          borderColor: 'rgba(14,165,233,0.20)',
+          borderColor: colors.business + '30',
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#38BDF8' }} />
-            <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.business }} />
+            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
               BUSINESS
             </Text>
           </View>
           <Text style={{
             fontSize: typography.lg,
             fontWeight: typography.extrabold,
-            color: '#BAE6FD',
+            color: colors.textInverse,
             letterSpacing: -0.5,
           }}>{formatCurrency(businessTotal)}</Text>
-          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.40)', marginTop: 2 }}>
+          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
             {Math.round(businessPct * 100)}% of total
           </Text>
         </View>
@@ -427,7 +439,7 @@ const WeeklyFlowChart = ({
   const maxAmount = Math.max(...weekBuckets.map(b => b.total), 1);
   const totalFlow = weekBuckets.reduce((s, b) => s + b.total, 0);
 
-  const BAR_ACCENTS = ['#3B82F6', '#14B8A6', '#8B5CF6', '#F59E0B'];
+  const BAR_ACCENTS = [colors.primary, colors.teal, colors.accentMuted, colors.warning];
 
   return (
     <View style={{
@@ -780,8 +792,9 @@ const CommitmentRow = ({
   expense: ExpenseWithRecord;
   onTogglePaid: (expense: ExpenseWithRecord, isPaid: boolean) => void;
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
+  const STATUS_ACCENT = useMemo(() => getStatusAccent(isDark), [isDark]);
 
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
@@ -855,7 +868,7 @@ const CommitmentRow = ({
             <Ionicons
               name={isWaived ? 'gift-outline' : 'checkmark'}
               size={13}
-              color={isResolved ? '#fff' : colors.textDisabled}
+              color={isResolved ? colors.textInverse : colors.textDisabled}
             />
           </TouchableOpacity>
         </View>
@@ -958,8 +971,8 @@ const makeRowStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.success,
   },
   checkBtnWaived: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: colors.textTertiary,
+    borderColor: colors.textTertiary,
   },
   checkBtnPending: {
     backgroundColor: 'transparent',
@@ -1008,8 +1021,8 @@ const HeroCard = ({
   });
 
   const barColor =
-    pct >= 0.9 ? '#34D399' : pct >= 0.6 ? colors.teal : pct >= 0.3 ? '#FBBF24' : '#F87171';
-  const trendColor = pct >= 0.5 ? '#34D399' : '#F87171';
+    pct >= 0.9 ? colors.success : pct >= 0.6 ? colors.teal : pct >= 0.3 ? colors.warning : colors.danger;
+  const trendColor = pct >= 0.5 ? colors.success : colors.danger;
 
   const dueSoonCount = expenses.filter(e => {
     const s = getBillStatus(e.due_day, e.record?.is_paid ?? false);
@@ -1058,7 +1071,7 @@ const HeroCard = ({
           </View>
           <View style={heroStyles.statDivider} />
           <View style={heroStyles.stat}>
-            <Text style={[heroStyles.statValue, { color: total - paid > 0 ? '#FBBF24' : '#34D399' }]}>
+            <Text style={[heroStyles.statValue, { color: total - paid > 0 ? colors.warning : colors.success }]}>
               {formatCurrency(total - paid)}
             </Text>
             <Text style={heroStyles.statLabel}>REMAINING</Text>
@@ -1067,7 +1080,7 @@ const HeroCard = ({
             <>
               <View style={heroStyles.statDivider} />
               <View style={heroStyles.stat}>
-                <Text style={[heroStyles.statValue, { color: '#F87171' }]}>{dueSoonCount}</Text>
+                <Text style={[heroStyles.statValue, { color: colors.danger }]}>{dueSoonCount}</Text>
                 <Text style={heroStyles.statLabel}>DUE SOON</Text>
               </View>
             </>
@@ -1093,7 +1106,7 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   },
   glowCenter: {
     position: 'absolute', top: '15%', right: '20%',
-    width: 200, height: 200, borderRadius: 100, backgroundColor: '#7C3AED', opacity: 0.07,
+    width: 200, height: 200, borderRadius: 100, backgroundColor: colors.accentMuted, opacity: 0.07,
   },
   ringOuter: {
     position: 'absolute', top: -50, right: -50, width: 280, height: 280,
@@ -1107,10 +1120,10 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   eyebrow: {
     fontSize: typography.xs, fontWeight: typography.semibold,
-    color: 'rgba(255,255,255,0.45)', letterSpacing: 1.2, textTransform: 'uppercase',
+    color: 'rgba(244,241,234,0.45)', letterSpacing: 1.2, textTransform: 'uppercase',
   },
   userName: {
-    fontSize: typography.sm, color: 'rgba(255,255,255,0.65)',
+    fontSize: typography.sm, color: 'rgba(244,241,234,0.65)',
     marginTop: 3, fontWeight: typography.medium,
   },
   coverageBadge: {
@@ -1121,12 +1134,12 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   coverageText: { fontSize: typography.xs, fontWeight: typography.bold },
   amountBlock: { gap: 4 },
   amountLabel: {
-    fontSize: typography.xs, color: 'rgba(255,255,255,0.35)',
+    fontSize: typography.xs, color: 'rgba(244,241,234,0.35)',
     letterSpacing: 0.5, textTransform: 'uppercase',
   },
   amount: {
     fontSize: typography.display, fontWeight: typography.extrabold,
-    color: '#FFFFFF', letterSpacing: -2, lineHeight: 54,
+    color: colors.textInverse, letterSpacing: -2, lineHeight: 54,
   },
   progressSection: { gap: spacing.xs },
   progressTrack: {
@@ -1136,22 +1149,22 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   progressFill: { height: '100%', borderRadius: radius.full },
   progressLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   progressLabelLeft: {
-    fontSize: typography.xs, color: 'rgba(255,255,255,0.40)', fontWeight: typography.medium,
+    fontSize: typography.xs, color: 'rgba(244,241,234,0.40)', fontWeight: typography.medium,
   },
   progressLabelRight: {
-    fontSize: typography.xs, color: 'rgba(255,255,255,0.40)', fontWeight: typography.medium,
+    fontSize: typography.xs, color: 'rgba(244,241,234,0.40)', fontWeight: typography.medium,
   },
   statsRow: {
     flexDirection: 'row', alignItems: 'center', paddingTop: spacing.md,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.07)', marginTop: -spacing.xs,
+    borderTopWidth: 1, borderTopColor: 'rgba(244,241,234,0.07)', marginTop: -spacing.xs,
   },
   stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.08)' },
+  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(244,241,234,0.08)' },
   statValue: {
-    fontSize: typography.base, fontWeight: typography.bold, color: '#FFFFFF', letterSpacing: -0.3,
+    fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 9, color: 'rgba(255,255,255,0.35)', fontWeight: typography.semibold, letterSpacing: 0.8,
+    fontSize: 9, color: 'rgba(244,241,234,0.35)', fontWeight: typography.semibold, letterSpacing: 0.8,
   },
 });
 
@@ -1235,7 +1248,7 @@ export default function DashboardScreen() {
             <Text style={styles.screenSub}>{getMonthName(month)} {year}</Text>
           </View>
           <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.8}>
-            <Ionicons name="add" size={22} color="#fff" />
+            <Ionicons name="add" size={22} color={colors.textInverse} />
           </TouchableOpacity>
         </View>
 
@@ -1249,7 +1262,7 @@ export default function DashboardScreen() {
             <Text style={styles.emptyTitle}>No commitments yet</Text>
             <Text style={styles.emptySub}>Add your recurring bills and subscriptions to start tracking your flow.</Text>
             <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.85}>
-              <Ionicons name="add" size={16} color="#fff" />
+              <Ionicons name="add" size={16} color={colors.textInverse} />
               <Text style={styles.emptyBtnText}>Add first commitment</Text>
             </TouchableOpacity>
           </View>
@@ -1422,16 +1435,16 @@ const makeStyles = (colors: any) => StyleSheet.create({
     borderRadius: 70, backgroundColor: colors.teal, opacity: 0.07,
   },
   allDoneIconRing: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: '#fff',
+    width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surfaceRaised,
     justifyContent: 'center', alignItems: 'center',
     shadowColor: colors.success, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.20, shadowRadius: 12, elevation: 3,
   },
   allDoneTitle: {
-    fontSize: typography.lg, fontWeight: typography.bold, color: '#065F46', letterSpacing: -0.3,
+    fontSize: typography.lg, fontWeight: typography.bold, color: colors.success, letterSpacing: -0.3,
   },
   allDoneSub: {
-    fontSize: typography.sm, color: '#047857', textAlign: 'center', opacity: 0.85, lineHeight: 20,
+    fontSize: typography.sm, color: colors.success, textAlign: 'center', opacity: 0.85, lineHeight: 20,
   },
   emptyCard: {
     backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.xxl,
@@ -1452,5 +1465,5 @@ const makeStyles = (colors: any) => StyleSheet.create({
     shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 4,
   },
-  emptyBtnText: { color: '#fff', fontSize: typography.sm, fontWeight: typography.semibold },
+  emptyBtnText: { color: colors.textInverse, fontSize: typography.sm, fontWeight: typography.semibold },
 });

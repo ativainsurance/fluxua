@@ -49,11 +49,11 @@ export default function LanguageScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Text style={{ fontSize: 32, lineHeight: 38 }}>{current.flag}</Text>
             <View>
-              <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: '#fff', letterSpacing: -0.2 }}>{current.name}</Text>
-              <Text style={{ fontSize: typography.xs, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{current.nativeName}</Text>
+              <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.2 }}>{current.name}</Text>
+              <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.5)', marginTop: 2 }}>{current.nativeName}</Text>
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, backgroundColor: 'rgba(20, 184, 166, 0.20)', borderWidth: 1, borderColor: 'rgba(20, 184, 166, 0.35)' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, backgroundColor: colors.teal + '33', borderWidth: 1, borderColor: colors.teal + '55' }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.teal }} />
             <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.teal }}>Active</Text>
           </View>
@@ -88,7 +88,7 @@ export default function LanguageScreen() {
 
                     {isSelected ? (
                       <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.teal, justifyContent: 'center', alignItems: 'center' }}>
-                        <Ionicons name="checkmark" size={14} color="#fff" />
+                        <Ionicons name="checkmark" size={14} color={colors.textInverse} />
                       </View>
                     ) : lang.available ? (
                       <Ionicons name="chevron-forward" size={16} color={colors.textDisabled} />

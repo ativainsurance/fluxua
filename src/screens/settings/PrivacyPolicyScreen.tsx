@@ -142,12 +142,12 @@ export default function PrivacyPolicyScreen() {
 
         {/* ── Header card ── */}
         <View style={{ backgroundColor: colors.navy, borderRadius: radius.xxl, padding: spacing.xl, alignItems: 'center', gap: spacing.sm, ...shadows.hero }}>
-          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: 'rgba(59, 130, 246, 0.18)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xs }}>
+          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: colors.primary + '30', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xs }}>
             <Ionicons name="lock-closed" size={24} color={colors.primary} />
           </View>
-          <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: '#fff', letterSpacing: -0.4 }}>Privacy Policy</Text>
-          <Text style={{ fontSize: typography.xs, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 }}>Last updated: {LAST_UPDATED}</Text>
-          <Text style={{ fontSize: typography.sm, color: 'rgba(255,255,255,0.65)', textAlign: 'center', lineHeight: 20, marginTop: spacing.xs, paddingHorizontal: spacing.sm }}>
+          <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.4 }}>Privacy Policy</Text>
+          <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.4)', letterSpacing: 0.3 }}>Last updated: {LAST_UPDATED}</Text>
+          <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.65)', textAlign: 'center', lineHeight: 20, marginTop: spacing.xs, paddingHorizontal: spacing.sm }}>
             Your data belongs to you. We built Fluxua with privacy as a core value, not an afterthought.
           </Text>
         </View>

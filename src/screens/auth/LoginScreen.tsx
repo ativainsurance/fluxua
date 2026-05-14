@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-
 import { LinearGradient } from 'expo-linear-gradient';
+
 import { useAuth } from '../../contexts/AuthContext';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
+import { useTheme } from '../../contexts/ThemeContext';
+import { gradient, typography, spacing, radius, shadows } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { GradientButton } from '../../components/GradientButton';
 
@@ -25,6 +26,9 @@ type Props = {
 
 export default function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -53,12 +57,14 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
+  const bgColors = isDark ? gradient.authBgDark : gradient.authBg;
+
   return (
     <View style={styles.outer}>
       <LinearGradient
-        colors={['#F8FAFC', '#EEF2F7']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={bgColors}
+        start={gradient.authBgStart}
+        end={gradient.authBgEnd}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safe}>
@@ -71,98 +77,96 @@ export default function LoginScreen({ navigation }: Props) {
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.content}>
-          {/* Logo / Branding */}
-          <View style={styles.brand}>
-            <LinearGradient
-              colors={['#3B82F6', '#14B8A6']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.logoCircle}
-            >
-              <Ionicons name="wallet" size={30} color="#fff" />
-            </LinearGradient>
-            <Text style={styles.appName}>Fluxua</Text>
-            <Text style={styles.tagline}>Stay ahead of every commitment</Text>
-          </View>
-
-          {/* Form */}
-          <View style={styles.form}>
-            <Text style={styles.formTitle}>Welcome back</Text>
-
-            {error ? (
-              <View style={styles.errorBox}>
-                <Ionicons name="alert-circle" size={16} color={colors.danger} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor={colors.textDisabled}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordWrapper}>
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textDisabled}
-                  secureTextEntry={!showPw}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPw(!showPw)}
-                  style={styles.eyeBtn}
+              {/* Logo / Branding */}
+              <View style={styles.brand}>
+                <LinearGradient
+                  colors={gradient.brand}
+                  start={gradient.brandStart}
+                  end={gradient.brandEnd}
+                  style={styles.logoCircle}
                 >
-                  <Ionicons
-                    name={showPw ? 'eye-off' : 'eye'}
-                    size={20}
-                    color={colors.textSecondary}
+                  <Ionicons name="wallet" size={30} color={colors.textInverse} />
+                </LinearGradient>
+                <Text style={styles.appName}>Fluxua</Text>
+                <Text style={styles.tagline}>Stay ahead of every commitment</Text>
+              </View>
+
+              {/* Form */}
+              <View style={styles.form}>
+                <Text style={styles.formTitle}>Welcome back</Text>
+
+                {error ? (
+                  <View style={styles.errorBox}>
+                    <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : null}
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="you@example.com"
+                    placeholderTextColor={colors.textDisabled}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
                   />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>Password</Text>
+                  <View style={styles.passwordWrapper}>
+                    <TextInput
+                      style={[styles.input, styles.passwordInput]}
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="••••••••"
+                      placeholderTextColor={colors.textDisabled}
+                      secureTextEntry={!showPw}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPw(!showPw)}
+                      style={styles.eyeBtn}
+                    >
+                      <Ionicons
+                        name={showPw ? 'eye-off' : 'eye'}
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('ForgotPassword')}
+                    style={styles.forgotRow}
+                  >
+                    <Text style={styles.forgotLink}>Forgot password?</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <GradientButton
+                  title="Sign In"
+                  onPress={handleLogin}
+                  loading={loading}
+                  style={styles.btn}
+                />
+
+                <View style={styles.trustRow}>
+                  <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
+                  <Text style={styles.trustText}>Your financial data stays private and protected</Text>
+                </View>
+              </View>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don't have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                  <Text style={styles.footerLink}>Create one</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ForgotPassword')}
-                style={styles.forgotRow}
-              >
-                <Text style={styles.forgotLink}>Forgot password?</Text>
-              </TouchableOpacity>
             </View>
-
-            <GradientButton
-              title="Sign In"
-              onPress={handleLogin}
-              loading={loading}
-              style={styles.btn}
-            />
-
-            {/* Trust signal */}
-            <View style={styles.trustRow}>
-              <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
-              <Text style={styles.trustText}>Your financial data stays private and protected</Text>
-            </View>
-          </View>
-
-          {/* Sign up link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-              <Text style={styles.footerLink}>Create one</Text>
-            </TouchableOpacity>
-          </View>
-            </View>{/* /content */}
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -170,14 +174,11 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: any) => StyleSheet.create({
   outer: { flex: 1 },
   safe: { flex: 1, backgroundColor: 'transparent' },
   flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    alignItems: 'center',
-  },
+  scroll: { flexGrow: 1, alignItems: 'center' },
   content: {
     maxWidth: 480,
     width: '100%',
@@ -186,10 +187,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexGrow: 1,
   },
-  brand: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
+  brand: { alignItems: 'center', marginBottom: spacing.xl },
   logoCircle: {
     width: 68,
     height: 68,
@@ -209,7 +207,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   form: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceRaised,
     borderRadius: radius.xl,
     padding: spacing.xl,
     marginBottom: spacing.lg,
@@ -230,18 +228,9 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  errorText: {
-    flex: 1,
-    fontSize: typography.sm,
-    color: colors.danger,
-  },
-  field: {
-    marginBottom: spacing.base,
-  },
-  forgotRow: {
-    alignItems: 'flex-end',
-    marginTop: 6,
-  },
+  errorText: { flex: 1, fontSize: typography.sm, color: colors.danger },
+  field: { marginBottom: spacing.base },
+  forgotRow: { alignItems: 'flex-end', marginTop: 6 },
   label: {
     fontSize: typography.sm,
     fontWeight: typography.medium,
@@ -263,12 +252,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     backgroundColor: colors.background,
   },
-  passwordWrapper: {
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 48,
-  },
+  passwordWrapper: { position: 'relative' },
+  passwordInput: { paddingRight: 48 },
   eyeBtn: {
     position: 'absolute',
     right: spacing.md,
@@ -276,9 +261,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
   },
-  btn: {
-    marginTop: spacing.sm,
-  },
+  btn: { marginTop: spacing.sm },
   trustRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,18 +269,9 @@ const styles = StyleSheet.create({
     gap: 5,
     marginTop: spacing.md,
   },
-  trustText: {
-    fontSize: typography.xs,
-    color: colors.textDisabled,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  footerText: {
-    color: colors.textSecondary,
-    fontSize: typography.sm,
-  },
+  trustText: { fontSize: typography.xs, color: colors.textDisabled },
+  footer: { flexDirection: 'row', justifyContent: 'center' },
+  footerText: { color: colors.textSecondary, fontSize: typography.sm },
   footerLink: {
     color: colors.primary,
     fontSize: typography.sm,

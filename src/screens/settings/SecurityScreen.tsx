@@ -202,11 +202,11 @@ export default function SecurityScreen() {
               activeOpacity={0.8}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.textInverse} />
               ) : (
                 <>
-                  <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
-                  <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Update Password</Text>
+                  <Ionicons name="shield-checkmark-outline" size={18} color={colors.textInverse} />
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Update Password</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -228,7 +228,7 @@ export default function SecurityScreen() {
                 value={biometric}
                 onValueChange={setBiometric}
                 trackColor={{ false: colors.border, true: colors.teal }}
-                thumbColor="#fff"
+                thumbColor={colors.textInverse}
                 style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
               />
             </View>

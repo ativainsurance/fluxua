@@ -92,7 +92,7 @@ export default function ExpensesScreen() {
           style={styles.addBtn}
           onPress={() => navigation.navigate('AddExpense')}
         >
-          <Ionicons name="add" size={22} color="#fff" />
+          <Ionicons name="add" size={22} color={colors.textInverse} />
         </TouchableOpacity>
       </View>
 
@@ -210,7 +210,7 @@ export default function ExpensesScreen() {
 }
 
 const makeStyles = (colors: any) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F8' },
+  safe: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -269,7 +269,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontWeight: typography.medium,
   },
   tabTextActive: {
-    color: '#fff',
+    color: colors.textInverse,
     fontWeight: typography.semibold,
   },
   list: {
@@ -298,7 +298,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     marginTop: spacing.sm,
   },
   emptyBtnText: {
-    color: '#fff',
+    color: colors.textInverse,
     fontSize: typography.sm,
     fontWeight: typography.semibold,
   },

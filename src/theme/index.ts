@@ -1,70 +1,142 @@
 // ─────────────────────────────────────────────
-// Fluxua Design System — Phase 02
-// Brand identity: Deep Navy + Soft Blue + Teal gradient
-// Philosophy: Depth > Decoration. Calm Intelligence.
+// Fluxua Design System — Editorial Finance
+// Aesthetic: Mercury Bank × high-end print magazine
+// Philosophy: Warm, restrained, premium, confidence-inspiring
 // ─────────────────────────────────────────────
 
-export const colors = {
-  // ── Backgrounds (layered surface system) ──
-  background: '#EEF2F8',       // app bg — creates contrast against white cards
-  surface: '#FFFFFF',           // standard card surface
-  surfaceAlt: '#F1F5F9',       // subtle alt surface (icon bgs, tracks, dividers)
-  surfaceRaised: '#F8FAFC',    // slightly off-white — secondary panels within cards
+// ── Font families ──────────────────────────────────────────────────────────
+export const fonts = {
+  display: 'Fraunces',       // Editorial serif — headlines, hero numbers
+  body: 'Geist',             // Clean modern sans — body text, UI labels
+  mono: 'GeistMono',         // Monospaced — amounts, codes, data
+} as const;
 
-  // ── Brand ──
-  primary: '#3B82F6',          // Soft Blue — actions, links
-  primaryLight: '#EFF6FF',
-  primaryDark: '#2563EB',      // pressed / hover
-  teal: '#14B8A6',             // Teal Accent — Fluxua "flow" signature
-  tealLight: '#F0FDFA',
-  tealDark: '#0D9488',
-  navy: '#0F172A',             // Deep Navy — hero surfaces, trust base
-  navyMid: '#1E293B',          // mid-navy — hero stats, sub-elements
+// ── Light palette — warm parchment editorial ──────────────────────────────
+export const colors = {
+  // ── Backgrounds (warm paper layers) ──
+  background: '#FAFAF7',       // warm off-white — app canvas
+  surface: '#F2EFE9',          // warm parchment — standard card surface
+  surfaceAlt: '#EDE9E0',       // slightly deeper warm — tracks, icon bgs
+  surfaceRaised: '#FFFFFF',    // pure white — elevated elements, inputs
+
+  // ── Brand ── (amber accent, muted sage, warm charcoal)
+  primary: '#9C7142',          // amber — primary actions, links
+  primaryLight: 'rgba(156,113,66,0.10)',
+  primaryDark: '#7A5730',
+  teal: '#5A8260',             // sage green — flow/progress indicators
+  tealLight: 'rgba(90,130,96,0.12)',
+  tealDark: '#3D6347',
+  navy: '#1A1A18',             // warm charcoal — hero surfaces
+  navyMid: '#2A2A26',          // mid charcoal — sub-elements
 
   // ── Semantic ──
-  success: '#10B981',
-  successLight: '#ECFDF5',
-  successDark: '#059669',
-  danger: '#EF4444',
-  dangerLight: '#FEF2F2',
-  warning: '#F59E0B',
-  warningLight: '#FFFBEB',
+  success: '#5A8260',
+  successLight: 'rgba(90,130,96,0.12)',
+  successDark: '#3D6347',
+  danger: '#8E4530',
+  dangerLight: 'rgba(142,69,48,0.12)',
+  warning: '#A85F40',
+  warningLight: 'rgba(168,95,64,0.12)',
 
   // ── Type tabs ──
-  personal: '#6366F1',
-  personalLight: '#EEF2FF',
-  business: '#0EA5E9',
-  businessLight: '#F0F9FF',
+  personal: '#9C7142',         // amber = personal
+  personalLight: 'rgba(156,113,66,0.10)',
+  business: '#5C6E7A',         // muted blue-gray = business
+  businessLight: 'rgba(92,110,122,0.10)',
 
   // ── Text hierarchy ──
-  textPrimary: '#0F172A',      // deep navy — maximum contrast
-  textSecondary: '#64748B',    // slate — second level
-  textTertiary: '#94A3B8',     // lighter — metadata, labels
-  textDisabled: '#CBD5E1',
-  textInverse: '#FFFFFF',
+  textPrimary: '#1A1A18',      // warm charcoal — max contrast
+  textSecondary: '#6B655D',    // warm mid-tone — second level
+  textTertiary: '#9C968D',     // warm muted — metadata, labels
+  textDisabled: '#C4BDB5',     // warm light — disabled
+  textInverse: '#FAFAF7',      // on dark surfaces
 
   // ── Borders & dividers ──
-  border: '#E2E8F0',
-  borderFocus: '#3B82F6',
-  divider: '#F1F5F9',
+  border: '#E5E1D8',
+  borderFocus: '#9C7142',
+  divider: '#EDE9E0',
 
   // ── Overlays ──
-  overlay: 'rgba(15, 23, 42, 0.45)',
-  overlayLight: 'rgba(15, 23, 42, 0.20)',
+  overlay: 'rgba(26,26,24,0.45)',
+  overlayLight: 'rgba(26,26,24,0.20)',
+
+  // ── Editorial extras ──
+  accent: '#9C7142',           // alias for primary
+  accentMuted: '#C9A77A',      // lighter amber — secondary highlights
 } as const;
 
-// Brand gradient: Blue → Teal (the "flow" signature)
+// ── Dark palette — warm obsidian editorial ────────────────────────────────
+export const darkColors = {
+  // ── Backgrounds ──
+  background: '#0E0E0C',       // near-black warm — app canvas
+  surface: '#16161A',          // deep warm card surface
+  surfaceAlt: '#1E1E22',       // slightly lighter — tracks, icon bgs
+  surfaceRaised: '#26262A',    // raised elements, dropdowns
+
+  // ── Brand (warm amber brightened for dark) ──
+  primary: '#D4A574',
+  primaryLight: 'rgba(212,165,116,0.15)',
+  primaryDark: '#A8824E',
+  teal: '#7FA582',             // sage brightened for dark
+  tealLight: 'rgba(127,165,130,0.15)',
+  tealDark: '#5C8063',
+  navy: '#2A2A26',             // warm dark surface for hero cards
+  navyMid: '#1A1A18',
+
+  // ── Semantic (muted, warm for dark bg) ──
+  success: '#7FA582',
+  successLight: 'rgba(127,165,130,0.15)',
+  successDark: '#5C8063',
+  danger: '#B85C3F',
+  dangerLight: 'rgba(184,92,63,0.15)',
+  warning: '#C97B5A',
+  warningLight: 'rgba(201,123,90,0.15)',
+
+  // ── Type tabs ──
+  personal: '#D4A574',
+  personalLight: 'rgba(212,165,116,0.15)',
+  business: '#7A9BB5',
+  businessLight: 'rgba(122,155,181,0.15)',
+
+  // ── Text hierarchy ──
+  textPrimary: '#F4F1EA',      // warm near-white — max contrast on dark
+  textSecondary: '#8C8378',    // warm mid — second level
+  textTertiary: '#5C544C',     // warm dim — metadata
+  textDisabled: '#3C3630',     // warm darkest — disabled
+  textInverse: '#1A1A18',      // on light surfaces
+
+  // ── Borders & dividers ──
+  border: '#2A2A26',
+  borderFocus: '#D4A574',
+  divider: '#1E1E22',
+
+  // ── Overlays ──
+  overlay: 'rgba(0,0,0,0.65)',
+  overlayLight: 'rgba(0,0,0,0.35)',
+
+  // ── Editorial extras ──
+  accent: '#D4A574',
+  accentMuted: '#8A6F4C',
+} as const;
+
+// ── Brand gradient: warm amber → golden ──────────────────────────────────
 export const gradient = {
-  brand: ['#3B82F6', '#14B8A6'] as [string, string],
+  brand: ['#9C7142', '#C29055'] as [string, string],
   brandStart: { x: 0, y: 0 },
   brandEnd: { x: 1, y: 0 },
-  brandVertical: ['#3B82F6', '#14B8A6'] as [string, string],
+  brandVertical: ['#9C7142', '#C29055'] as [string, string],
   brandVerticalStart: { x: 0, y: 0 },
   brandVerticalEnd: { x: 0, y: 1 },
+  // Auth screen background gradient
+  authBg: ['#FAFAF7', '#F2EFE9'] as [string, string],
+  authBgStart: { x: 0, y: 0 },
+  authBgEnd: { x: 1, y: 1 },
+  authBgDark: ['#0E0E0C', '#16161A'] as [string, string],
 } as const;
 
+// ── Typography ────────────────────────────────────────────────────────────
 export const typography = {
-  // ── Font sizes ──
+  // Font sizes (px)
   xs: 11,
   sm: 13,
   base: 15,
@@ -73,10 +145,10 @@ export const typography = {
   xl: 24,
   xxl: 30,
   xxxl: 38,
-  display: 48,     // hero financial numbers
-  hero: 56,        // maximum display (future)
+  display: 48,
+  hero: 56,
 
-  // ── Font weights ──
+  // Font weights
   regular: '400' as const,
   medium: '500' as const,
   semibold: '600' as const,
@@ -84,6 +156,7 @@ export const typography = {
   extrabold: '800' as const,
 } as const;
 
+// ── Spacing ───────────────────────────────────────────────────────────────
 export const spacing = {
   xxs: 2,
   xs: 4,
@@ -96,73 +169,70 @@ export const spacing = {
   xxxl: 48,
 } as const;
 
+// ── Border radius ─────────────────────────────────────────────────────────
 export const radius = {
   xs: 6,
   sm: 8,
-  md: 12,
+  md: 10,
   lg: 16,
-  xl: 20,          // standard card — unified across all cards
-  xxl: 28,         // hero cards, large featured containers
+  xl: 20,
+  xxl: 28,
   full: 999,
 } as const;
 
-// ── Unified shadow system — 3 structural + 2 semantic ──
+// ── Shadow system ─────────────────────────────────────────────────────────
 export const shadows = {
   sm: {
-    shadowColor: '#0F172A',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 1,
   },
   md: {
-    shadowColor: '#0F172A',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
     elevation: 2,
   },
   lg: {
-    shadowColor: '#0F172A',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.10,
     shadowRadius: 24,
     elevation: 4,
   },
   card: {
-    shadowColor: '#0F172A',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.06,
     shadowRadius: 20,
     elevation: 3,
   },
   hero: {
-    shadowColor: '#14B8A6',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0.24,
     shadowRadius: 40,
     elevation: 14,
   },
 } as const;
 
+// ── Common styles ─────────────────────────────────────────────────────────
 export const commonStyles = {
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F2EFE9',
     borderRadius: 20,
     padding: 16,
-    shadowColor: '#0F172A',
+    shadowColor: '#1A1A18',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.06,
     shadowRadius: 20,
     elevation: 3,
   },
-  screenPadding: {
-    paddingHorizontal: 16,
-  },
-  row: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-  },
+  screenPadding: { paddingHorizontal: 16 },
+  row: { flexDirection: 'row' as const, alignItems: 'center' as const },
   spaceBetween: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
@@ -176,63 +246,7 @@ export const commonStyles = {
   },
 } as const;
 
-// ─────────────────────────────────────────────
-// Dark mode color palette
-// Philosophy: Deep navy base, same brand accent, calm dark intelligence.
-// ─────────────────────────────────────────────
-
-export const darkColors = {
-  // ── Backgrounds ──
-  background: '#0B1120',       // near-black navy — app bg
-  surface: '#141E30',          // deep card surface
-  surfaceAlt: '#1A2640',       // subtle alt surface (icon bgs, tracks)
-  surfaceRaised: '#1E2D4A',    // secondary panels within cards
-
-  // ── Brand (unchanged — consistent identity) ──
-  primary: '#3B82F6',
-  primaryLight: 'rgba(59,130,246,0.15)',
-  primaryDark: '#2563EB',
-  teal: '#14B8A6',
-  tealLight: 'rgba(20,184,166,0.15)',
-  tealDark: '#0D9488',
-  navy: '#0F172A',
-  navyMid: '#1E293B',
-
-  // ── Semantic (same hue, adjusted light for dark bg) ──
-  success: '#10B981',
-  successLight: 'rgba(16,185,129,0.15)',
-  successDark: '#059669',
-  danger: '#EF4444',
-  dangerLight: 'rgba(239,68,68,0.15)',
-  warning: '#F59E0B',
-  warningLight: 'rgba(245,158,11,0.15)',
-
-  // ── Type tabs ──
-  personal: '#818CF8',
-  personalLight: 'rgba(99,102,241,0.15)',
-  business: '#38BDF8',
-  businessLight: 'rgba(14,165,233,0.15)',
-
-  // ── Text hierarchy ──
-  textPrimary: '#F1F5F9',      // near-white — maximum contrast on dark
-  textSecondary: '#94A3B8',   // muted slate
-  textTertiary: '#64748B',    // dim — metadata
-  textDisabled: '#334155',
-  textInverse: '#0F172A',
-
-  // ── Borders & dividers ──
-  border: '#1E2D40',
-  borderFocus: '#3B82F6',
-  divider: '#141E30',
-
-  // ── Overlays ──
-  overlay: 'rgba(0, 0, 0, 0.65)',
-  overlayLight: 'rgba(0, 0, 0, 0.35)',
-} as const;
-
-// Unified type for both palettes
+// ── Type helpers ──────────────────────────────────────────────────────────
 export type ColorScheme = typeof colors;
-
-// Returns the right palette for the current mode
 export const getColors = (isDark: boolean): ColorScheme =>
   isDark ? (darkColors as unknown as ColorScheme) : colors;

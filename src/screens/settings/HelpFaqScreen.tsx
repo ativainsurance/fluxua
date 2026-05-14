@@ -17,13 +17,14 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 interface FaqItem { q: string; a: string; }
 interface FaqSection {
-  title: string; icon: string; iconColor: string;
+  title: string; icon: string;
+  iconColorKey: 'primary' | 'teal' | 'personal' | 'warning';
   iconBgKey: 'primary' | 'teal' | 'personal' | 'warning'; items: FaqItem[];
 }
 
 const FAQ_SECTIONS: FaqSection[] = [
   {
-    title: 'Getting Started', icon: 'rocket-outline', iconColor: '#3B82F6', iconBgKey: 'primary',
+    title: 'Getting Started', icon: 'rocket-outline', iconColorKey: 'primary', iconBgKey: 'primary',
     items: [
       { q: 'What is Fluxua?', a: 'Fluxua is a commitment tracker — not a traditional expense logger. It helps you track recurring bills, subscriptions, and financial obligations so nothing slips through the cracks.' },
       { q: "What's the difference between Flow and Commitments?", a: 'Commitments is where you manage your full list of bills and recurring obligations. Flow is your weekly view — it shows how your commitments break down into the current week so you can stay on top of cash flow in real time.' },
@@ -31,7 +32,7 @@ const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    title: 'Commitments & Bills', icon: 'receipt-outline', iconColor: '#14B8A6', iconBgKey: 'teal',
+    title: 'Commitments & Bills', icon: 'receipt-outline', iconColorKey: 'teal', iconBgKey: 'teal',
     items: [
       { q: 'What does "Waived" mean?', a: '"Waived" means a commitment is resolved at $0 for that month — perhaps a fee was forgiven, a subscription was comped, or someone else covered it. It counts as resolved without requiring payment.' },
       { q: 'Can I remove a commitment from just one month?', a: "Yes. Long-press any commitment card and select \"Remove from this month.\" The commitment will stay on your list for future months but won't appear in the current period." },
@@ -40,7 +41,7 @@ const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    title: 'Account & Security', icon: 'shield-checkmark-outline', iconColor: '#6366F1', iconBgKey: 'personal',
+    title: 'Account & Security', icon: 'shield-checkmark-outline', iconColorKey: 'personal', iconBgKey: 'personal',
     items: [
       { q: 'How do I change my email?', a: "Go to Settings → Email. You'll be asked to confirm your current password, then enter the new email. A verification link will be sent to your new address before the change takes effect." },
       { q: 'How do I reset my password?', a: "On the login screen, tap \"Forgot Password.\" Enter your email and we'll send a reset link. For security, the link expires after 15 minutes." },
@@ -48,7 +49,7 @@ const FAQ_SECTIONS: FaqSection[] = [
     ],
   },
   {
-    title: 'Troubleshooting', icon: 'construct-outline', iconColor: '#F59E0B', iconBgKey: 'warning',
+    title: 'Troubleshooting', icon: 'construct-outline', iconColorKey: 'warning', iconBgKey: 'warning',
     items: [
       { q: "My commitments aren't showing up for this month.", a: "Check that the commitment's start and end dates include the current month. Also verify it's marked as recurring. If it was excluded from this month, you'll need to re-add it." },
       { q: 'The app is showing the wrong currency format.', a: 'Go to Settings → Currency and select your preferred currency. The format will update across the entire app.' },
@@ -81,12 +82,13 @@ const AccordionItem = ({ item, isFirst, isLast }: { item: FaqItem; isFirst: bool
 
 const FaqSectionCard = ({ section }: { section: FaqSection }) => {
   const { colors } = useTheme();
+  const COLOR_MAP = { primary: colors.primary, teal: colors.teal, personal: colors.personal, warning: colors.warning };
   const BG_MAP = { primary: colors.primaryLight, teal: colors.tealLight, personal: colors.personalLight, warning: colors.warningLight };
   return (
     <View style={{ gap: spacing.xs }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xs }}>
         <View style={{ width: 28, height: 28, borderRadius: 9, backgroundColor: BG_MAP[section.iconBgKey], justifyContent: 'center', alignItems: 'center' }}>
-          <Ionicons name={section.icon as any} size={16} color={section.iconColor} />
+          <Ionicons name={section.icon as any} size={16} color={COLOR_MAP[section.iconColorKey]} />
         </View>
         <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{section.title}</Text>
       </View>
@@ -122,12 +124,12 @@ export default function HelpFaqScreen() {
         <View style={{ backgroundColor: colors.navy, borderRadius: radius.xl, padding: spacing.lg, gap: spacing.md, ...shadows.hero }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.teal} />
-            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Still need help?</Text>
+            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Still need help?</Text>
           </View>
-          <Text style={{ fontSize: typography.sm, color: 'rgba(255,255,255,0.6)', lineHeight: 20 }}>Can't find your answer? Send us a message and we'll get back to you within 24 hours.</Text>
+          <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.6)', lineHeight: 20 }}>Can't find your answer? Send us a message and we'll get back to you within 24 hours.</Text>
           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.teal, borderRadius: radius.md, paddingVertical: 12, shadowColor: colors.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }} activeOpacity={0.8}>
-            <Ionicons name="mail-outline" size={16} color="#fff" />
-            <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: '#fff' }}>Contact Support</Text>
+            <Ionicons name="mail-outline" size={16} color={colors.textInverse} />
+            <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textInverse }}>Contact Support</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -148,12 +148,12 @@ const makeStyles = (colors: any) => StyleSheet.create({
   overviewTitle: {
     fontSize: typography.md,
     fontWeight: typography.bold,
-    color: '#fff',
+    color: colors.textInverse,
     marginBottom: 4,
   },
   overviewSub: {
     fontSize: typography.sm,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(250,250,247,0.7)',
     marginBottom: spacing.md,
   },
   weekGrid: {
@@ -162,7 +162,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     gap: spacing.sm,
   },
   weekCell: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(250,250,247,0.15)',
     borderRadius: radius.md,
     padding: spacing.md,
     minWidth: '45%',
@@ -170,13 +170,13 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   weekCellLabel: {
     fontSize: typography.xs,
-    color: 'rgba(255,255,255,0.7)',
+    color: 'rgba(250,250,247,0.7)',
     fontWeight: typography.medium,
   },
   weekCellAmount: {
     fontSize: typography.lg,
     fontWeight: typography.bold,
-    color: '#fff',
+    color: colors.textInverse,
     marginVertical: 2,
   },
   weekCellDays: {

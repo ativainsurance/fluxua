@@ -95,7 +95,7 @@ export default function PersonalDetailsScreen() {
           <View style={{ alignItems: 'center', paddingVertical: spacing.base, gap: spacing.sm }}>
             <View style={{ width: 96, height: 96, borderRadius: 48, borderWidth: 2.5, borderColor: colors.teal + '55', justifyContent: 'center', alignItems: 'center' }}>
               <View style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.navy, justifyContent: 'center', alignItems: 'center', ...shadows.md }}>
-                <Text style={{ fontSize: typography.xxl, fontWeight: typography.bold, color: '#fff', letterSpacing: -1 }}>{initials}</Text>
+                <Text style={{ fontSize: typography.xxl, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -1 }}>{initials}</Text>
               </View>
             </View>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, borderWidth: 1, borderColor: colors.primary + '44', backgroundColor: colors.primaryLight }} activeOpacity={0.7}>
@@ -125,7 +125,7 @@ export default function PersonalDetailsScreen() {
                   <TouchableOpacity key={t.key} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.base, paddingVertical: 13, borderRadius: radius.md, borderWidth: 1.5, borderColor: active ? tc.color : colors.border, backgroundColor: active ? tc.bg : colors.surfaceAlt }} onPress={() => setAccountType(t.key as any)} activeOpacity={0.75}>
                     <Ionicons name={t.icon} size={18} color={active ? tc.color : colors.textTertiary} />
                     <Text style={{ flex: 1, fontSize: typography.sm, fontWeight: typography.semibold, color: active ? tc.color : colors.textSecondary }}>{t.label}</Text>
-                    {active && <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: tc.color, justifyContent: 'center', alignItems: 'center' }}><Ionicons name="checkmark" size={9} color="#fff" /></View>}
+                    {active && <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: tc.color, justifyContent: 'center', alignItems: 'center' }}><Ionicons name="checkmark" size={9} color={colors.textInverse} /></View>}
                   </TouchableOpacity>
                 );
               })}
@@ -140,7 +140,7 @@ export default function PersonalDetailsScreen() {
           </Animated.View>
 
           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 15, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 4, opacity: loading ? 0.65 : 1 }} onPress={handleSave} disabled={loading} activeOpacity={0.8}>
-            {loading ? <ActivityIndicator size="small" color="#fff" /> : <><Ionicons name="checkmark-circle-outline" size={18} color="#fff" /><Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: '#fff' }}>Save Changes</Text></>}
+            {loading ? <ActivityIndicator size="small" color={colors.textInverse} /> : <><Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} /><Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Save Changes</Text></>}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

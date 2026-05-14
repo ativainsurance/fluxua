@@ -29,7 +29,7 @@ const SettingsRow = ({ icon, iconColor, iconBg, label, right, onPress, danger = 
     switch (right.type) {
       case 'chevron': return <Ionicons name="chevron-forward" size={16} color={danger ? colors.danger : colors.textDisabled} />;
       case 'value': return <Text style={{ fontSize: typography.sm, color: colors.textSecondary, maxWidth: 150 }} numberOfLines={1}>{right.text}</Text>;
-      case 'toggle': return <Switch value={right.value} onValueChange={right.onChange} trackColor={{ false: colors.border, true: colors.teal }} thumbColor="#fff" style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }} />;
+      case 'toggle': return <Switch value={right.value} onValueChange={right.onChange} trackColor={{ false: colors.border, true: colors.teal }} thumbColor={colors.textInverse} style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }} />;
       case 'badge': return <View style={{ borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: right.color + '18' }}><Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: right.color }}>{right.text}</Text></View>;
     }
   };
@@ -91,22 +91,22 @@ export default function SettingsScreen() {
         <TouchableOpacity style={{ backgroundColor: colors.navy, borderRadius: radius.xxl, overflow: 'hidden', ...shadows.hero }} onPress={() => navigation.navigate('PersonalDetails')} activeOpacity={0.88}>
           <View style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: colors.teal, opacity: 0.14 }} />
           <View style={{ position: 'absolute', bottom: -50, left: -30, width: 180, height: 180, borderRadius: 90, backgroundColor: colors.primary, opacity: 0.11 }} />
-          <View style={{ position: 'absolute', top: -30, right: -30, width: 240, height: 240, borderRadius: 120, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }} />
+          <View style={{ position: 'absolute', top: -30, right: -30, width: 240, height: 240, borderRadius: 120, borderWidth: 1, borderColor: 'rgba(250,250,247,0.05)' }} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.base, padding: spacing.xl, paddingVertical: spacing.xxl }}>
-            <View style={{ width: 68, height: 68, borderRadius: 34, borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-              <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: '#FFFFFF', letterSpacing: -0.5 }}>{displayName.charAt(0).toUpperCase()}</Text>
+            <View style={{ width: 68, height: 68, borderRadius: 34, borderWidth: 2, borderColor: 'rgba(250,250,247,0.15)', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+              <View style={{ width: 58, height: 58, borderRadius: 29, backgroundColor: 'rgba(250,250,247,0.12)', justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.5 }}>{displayName.charAt(0).toUpperCase()}</Text>
               </View>
             </View>
             <View style={{ flex: 1, gap: 4 }}>
-              <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: '#FFFFFF', textTransform: 'capitalize', letterSpacing: -0.2 }}>{displayName}</Text>
-              <Text style={{ fontSize: typography.sm, color: 'rgba(255,255,255,0.55)' }} numberOfLines={1}>{emailDisplay}</Text>
+              <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.textInverse, textTransform: 'capitalize', letterSpacing: -0.2 }}>{displayName}</Text>
+              <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.55)' }} numberOfLines={1}>{emailDisplay}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
                 <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.teal }} />
                 <Text style={{ fontSize: typography.xs, color: colors.teal, fontWeight: typography.semibold, letterSpacing: 0.2 }}>Personal &amp; Business</Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.4)" />
+            <Ionicons name="chevron-forward" size={16} color="rgba(250,250,247,0.4)" />
           </View>
         </TouchableOpacity>
 
@@ -129,7 +129,7 @@ export default function SettingsScreen() {
         <Section label="Support">
           <SettingsRow icon="help-circle-outline" iconColor={colors.business} iconBg={colors.businessLight} label="Help &amp; FAQ" right={{ type: 'chevron' }} onPress={() => navigation.navigate('HelpFaq')} isFirst />
           <SettingsRow icon="lock-closed-outline" iconColor={colors.textSecondary} iconBg={colors.surfaceAlt} label="Privacy Policy" right={{ type: 'chevron' }} onPress={() => navigation.navigate('PrivacyPolicy')} />
-          <SettingsRow icon="star-outline" iconColor="#F59E0B" iconBg={colors.warningLight} label="Rate Fluxua" right={{ type: 'badge', text: 'NEW', color: colors.teal }} onPress={() => {}} />
+          <SettingsRow icon="star-outline" iconColor={colors.warning} iconBg={colors.warningLight} label="Rate Fluxua" right={{ type: 'badge', text: 'NEW', color: colors.teal }} onPress={() => {}} />
         </Section>
 
         {/* App */}
@@ -164,8 +164,8 @@ export default function SettingsScreen() {
                   <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textSecondary }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flex: 1, backgroundColor: colors.danger, borderRadius: radius.md, paddingVertical: spacing.sm + 2, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, opacity: loading ? 0.6 : 1, shadowColor: colors.danger, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.28, shadowRadius: 8, elevation: 3 }} onPress={handleSignOut} disabled={loading} activeOpacity={0.7}>
-                  <Ionicons name="log-out-outline" size={14} color="#fff" />
-                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: '#fff' }}>{loading ? 'Signing out…' : 'Sign Out'}</Text>
+                  <Ionicons name="log-out-outline" size={14} color={colors.textInverse} />
+                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textInverse }}>{loading ? 'Signing out…' : 'Sign Out'}</Text>
                 </TouchableOpacity>
               </View>
             </View>

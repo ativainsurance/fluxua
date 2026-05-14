@@ -68,7 +68,7 @@ const CurrencyItem = ({ item, selected, onSelect }: { item: Currency; selected: 
       </View>
       {selected ? (
         <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.teal, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
-          <Ionicons name="checkmark" size={14} color="#fff" />
+          <Ionicons name="checkmark" size={14} color={colors.textInverse} />
         </View>
       ) : (
         <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textDisabled, minWidth: 28, textAlign: 'right' }}>{item.symbol}</Text>
@@ -104,12 +104,12 @@ export default function CurrencyScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <Text style={{ fontSize: 32, lineHeight: 38 }}>{selectedCurrency.flag}</Text>
             <View>
-              <Text style={{ fontSize: typography.lg, fontWeight: typography.bold, color: '#fff', letterSpacing: -0.3 }}>{selectedCurrency.code}</Text>
-              <Text style={{ fontSize: typography.xs, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{selectedCurrency.name}</Text>
+              <Text style={{ fontSize: typography.lg, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.3 }}>{selectedCurrency.code}</Text>
+              <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.55)', marginTop: 1 }}>{selectedCurrency.name}</Text>
             </View>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 3 }}>
-            <Text style={{ fontSize: typography.xs, color: 'rgba(255,255,255,0.4)', letterSpacing: 0.4 }}>Example</Text>
+            <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.4)', letterSpacing: 0.4 }}>Example</Text>
             <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.teal, letterSpacing: -0.2 }}>{selectedCurrency.example}</Text>
           </View>
         </View>

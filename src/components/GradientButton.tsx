@@ -33,7 +33,7 @@ export const GradientButton = ({ title, onPress, loading, disabled, style }: Pro
       style={styles.gradient}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={colors.textInverse} />
       ) : (
         <Text style={styles.label}>{title}</Text>
       )}
@@ -46,7 +46,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   wrapper: {
     borderRadius: radius.md,
     overflow: 'hidden',
-    shadowColor: '#3B82F6',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -60,7 +60,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center' },
   label: {
-    color: '#fff',
+    color: colors.textInverse,
     fontSize: typography.base,
     fontWeight: typography.semibold,
     letterSpacing: 0.2 } });
