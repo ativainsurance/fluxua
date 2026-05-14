@@ -413,7 +413,7 @@ export default function AddExpenseScreen() {
               value={form.is_recurring}
               onValueChange={(v) => set('is_recurring', v)}
               trackColor={{ false: colors.border, true: colors.primaryLight }}
-              thumbColor={form.is_recurring ? colors.primary : '#fff'}
+              thumbColor={form.is_recurring ? colors.primary : colors.textInverse}
             />
           </View>
 
@@ -463,7 +463,7 @@ export default function AddExpenseScreen() {
                 value={form.is_autopay}
                 onValueChange={(v) => set('is_autopay', v)}
                 trackColor={{ false: colors.border, true: colors.primaryLight }}
-                thumbColor={form.is_autopay ? colors.primary : '#fff'}
+                thumbColor={form.is_autopay ? colors.primary : colors.textInverse}
               />
             </View>
 

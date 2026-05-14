@@ -20,16 +20,17 @@ interface Props {
 const getPressureBarColor = (
   expense: ExpenseWithRecord,
   weekIndex: number,
-  currentWeekIdx: number
+  currentWeekIdx: number,
+  colors: any
 ): string => {
   const isPaid = expense.record?.is_paid ?? false;
-  if (isPaid) return '#10B981';
+  if (isPaid) return colors.success;
 
   const status = getBillStatus(expense.due_day, isPaid);
-  if (status === 'overdue' && weekIndex <= currentWeekIdx) return '#EF4444';
-  if (status === 'due-soon' && weekIndex === currentWeekIdx) return '#F59E0B';
-  if (expense.type === 'personal') return '#8B5CF6';
-  return '#6366F1';
+  if (status === 'overdue' && weekIndex <= currentWeekIdx) return colors.danger;
+  if (status === 'due-soon' && weekIndex === currentWeekIdx) return colors.warning;
+  if (expense.type === 'personal') return colors.personal;
+  return colors.business;
 };
 
 export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
@@ -81,7 +82,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
         {weeks.map((week, i) => {
           const pct = maxAmount > 0 ? week.amount / maxAmount : 0;
           const isCurrent = i === currentWeekIdx;
-          const barColor = getPressureBarColor(expense, i, currentWeekIdx);
+          const barColor = getPressureBarColor(expense, i, currentWeekIdx, colors);
 
           const barWidth = barAnims[i].interpolate({
             inputRange: [0, 1],

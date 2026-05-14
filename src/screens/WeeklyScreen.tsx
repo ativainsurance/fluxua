@@ -181,7 +181,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   weekCellDays: {
     fontSize: typography.xs,
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(250,250,247,0.6)',
   },
   section: {
     gap: spacing.sm,

@@ -100,10 +100,10 @@ export const darkColors = {
 
   // ── Text hierarchy ──
   textPrimary: '#F4F1EA',      // warm near-white — max contrast on dark
-  textSecondary: '#8C8378',    // warm mid — second level
+  textSecondary: '#A39B8E',    // warm mid — second level (bumped for WCAG AA)
   textTertiary: '#5C544C',     // warm dim — metadata
   textDisabled: '#3C3630',     // warm darkest — disabled
-  textInverse: '#1A1A18',      // on light surfaces
+  textInverse: '#F4F1EA',      // on dark surfaces (navy, gradient btns — always light)
 
   // ── Borders & dividers ──
   border: '#2A2A26',

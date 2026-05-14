@@ -228,7 +228,7 @@ const SplitCard = ({
           borderWidth: 1,
           borderColor: 'rgba(250,250,247,0.10)',
         }}>
-          <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: typography.semibold }}>
+          <Text style={{ fontSize: 10, color: 'rgba(250,250,247,0.55)', fontWeight: typography.semibold }}>
             {formatCurrency(total)} total
           </Text>
         </View>
@@ -238,15 +238,15 @@ const SplitCard = ({
       <View style={{
         height: 10,
         borderRadius: radius.full,
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: 'rgba(250,250,247,0.08)',
         overflow: 'hidden',
         flexDirection: 'row',
       }}>
         <Animated.View style={{
           width: personalWidth,
           height: '100%',
-          backgroundColor: '#818CF8',
-          shadowColor: '#818CF8',
+          backgroundColor: colors.personal,
+          shadowColor: colors.personal,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.8,
           shadowRadius: 6,
@@ -1110,20 +1110,20 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   },
   ringOuter: {
     position: 'absolute', top: -50, right: -50, width: 280, height: 280,
-    borderRadius: 140, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 140, borderWidth: 1, borderColor: 'rgba(250,250,247,0.05)',
   },
   ringInner: {
     position: 'absolute', top: -20, right: -20, width: 200, height: 200,
-    borderRadius: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 100, borderWidth: 1, borderColor: 'rgba(250,250,247,0.04)',
   },
   content: { padding: spacing.xl, paddingBottom: spacing.xxl, gap: spacing.lg },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   eyebrow: {
     fontSize: typography.xs, fontWeight: typography.semibold,
-    color: 'rgba(244,241,234,0.45)', letterSpacing: 1.2, textTransform: 'uppercase',
+    color: 'rgba(244,241,234,0.70)', letterSpacing: 1.2, textTransform: 'uppercase',
   },
   userName: {
-    fontSize: typography.sm, color: 'rgba(244,241,234,0.65)',
+    fontSize: typography.sm, color: 'rgba(244,241,234,0.80)',
     marginTop: 3, fontWeight: typography.medium,
   },
   coverageBadge: {
@@ -1134,7 +1134,7 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   coverageText: { fontSize: typography.xs, fontWeight: typography.bold },
   amountBlock: { gap: 4 },
   amountLabel: {
-    fontSize: typography.xs, color: 'rgba(244,241,234,0.35)',
+    fontSize: typography.xs, color: 'rgba(244,241,234,0.60)',
     letterSpacing: 0.5, textTransform: 'uppercase',
   },
   amount: {
@@ -1143,7 +1143,7 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   },
   progressSection: { gap: spacing.xs },
   progressTrack: {
-    height: 8, backgroundColor: 'rgba(255,255,255,0.10)',
+    height: 8, backgroundColor: 'rgba(250,250,247,0.10)',
     borderRadius: radius.full, overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: radius.full },
@@ -1164,7 +1164,7 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
     fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 9, color: 'rgba(244,241,234,0.35)', fontWeight: typography.semibold, letterSpacing: 0.8,
+    fontSize: 9, color: 'rgba(244,241,234,0.55)', fontWeight: typography.semibold, letterSpacing: 0.8,
   },
 });
 

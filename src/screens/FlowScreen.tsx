@@ -201,7 +201,7 @@ const makeWeekStyles = (colors: any) => StyleSheet.create({
   },
   track: {
     height: 6,
-    backgroundColor: 'rgba(0,0,0,0.07)',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full,
     overflow: 'hidden',
     marginTop: spacing.xs,
@@ -731,7 +731,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     height: 260,
     borderRadius: 130,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(250,250,247,0.05)',
   },
   heroContent: {
     padding: spacing.xl,
@@ -746,7 +746,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heroEyebrow: {
     fontSize: typography.xs,
     fontWeight: typography.semibold,
-    color: 'rgba(255,255,255,0.40)',
+    color: 'rgba(244,241,234,0.70)',
     letterSpacing: 1.2,
   },
   heroTitle: {
@@ -782,14 +782,14 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   heroAmountLabel: {
     fontSize: typography.xs,
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(244,241,234,0.60)',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginTop: -8,
   },
   heroBarTrack: {
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(250,250,247,0.10)',
     borderRadius: radius.full,
     overflow: 'hidden',
     marginTop: spacing.xs,
@@ -803,7 +803,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.07)',
+    borderTopColor: 'rgba(250,250,247,0.07)',
     marginTop: spacing.xs,
   },
   heroStat: {
@@ -814,7 +814,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   heroStatDivider: {
     width: 1,
     height: 32,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(250,250,247,0.08)',
   },
   heroStatValue: {
     fontSize: typography.base,
@@ -824,7 +824,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   },
   heroStatLabel: {
     fontSize: 9,
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(244,241,234,0.55)',
     fontWeight: typography.semibold,
     letterSpacing: 0.8,
   },
