@@ -101,6 +101,7 @@
     "noPersonalCommitments": "No personal commitments",
     "noBusinessCommitments": "No business commitments",
     "addCommitment": "Add commitment",
+    "dueOnDay": "Due on the {{day}}",
     "thisWeek": "This week:",
     "whatToDo": "What would you like to do?",
     "markAsWaived": "Mark as Waived",

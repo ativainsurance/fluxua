@@ -11,7 +11,7 @@ import { ExpenseWithRecord,
   getCategoryLabel,
   getCategoryIcon } from '../types';
 import { useFormatCurrency,
-  formatDueDay,
+  useFormatDate,
   getBillStatus } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 
@@ -35,11 +35,6 @@ const getStatusConfig = (colors: any) => ({
   upcoming:   { color: colors.textSecondary, bg: colors.surfaceAlt,   labelKey: 'status.upcoming',  icon: 'calendar-outline' },
 });
 
-const formatShortDate = (iso: string): string => {
-  const [y, m, d] = iso.split('-').map(Number);
-  const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-};
 
 export const ExpenseCard = ({
   expense,
@@ -52,6 +47,7 @@ export const ExpenseCard = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { monthYear, ordinalDay } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_CONFIG = useMemo(() => getStatusConfig(colors), [colors]);
 
@@ -175,7 +171,7 @@ export const ExpenseCard = ({
         <View style={styles.metaRow}>
           <Text style={styles.category}>{categoryLabel}</Text>
           <View style={styles.metaDot} />
-          <Text style={styles.dueDay}>{formatDueDay(expense.due_day)}</Text>
+          <Text style={styles.dueDay}>{t('commitments.dueOnDay', { day: ordinalDay(expense.due_day) })}</Text>
           {expense.is_recurring && (
             <>
               <View style={styles.metaDot} />
@@ -189,8 +185,8 @@ export const ExpenseCard = ({
           <View style={styles.dateRangeRow}>
             <Ionicons name="calendar-outline" size={10} color={colors.textDisabled} />
             <Text style={styles.dateRangeText}>
-              {expense.start_date ? formatShortDate(expense.start_date) : ''}
-              {expense.end_date ? ` → ${formatShortDate(expense.end_date)}` : ''}
+              {expense.start_date ? monthYear(new Date(expense.start_date.replace(/-/g, '/'))) : ''}
+              {expense.end_date ? ` → ${monthYear(new Date(expense.end_date.replace(/-/g, '/')))}` : ''}
             </Text>
           </View>
         )}

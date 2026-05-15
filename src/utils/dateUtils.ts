@@ -1,77 +1,111 @@
 import { useSettings } from '../contexts/SettingsContext';
 import { WeeklyBreakdown } from '../types';
 
-/**
- * Returns month name from month number (1-12)
- */
-export const getMonthName = (month: number): string => {
-  const months = [
-    'January', 'February', 'March', 'April',
-    'May', 'June', 'July', 'August',
-    'September', 'October', 'November', 'December',
-  ];
-  return months[month - 1] ?? '';
+// ─────────────────────────────────────────────
+// Ordinal day helper
+// ─────────────────────────────────────────────
+
+const formatOrdinalDay = (day: number, language: string): string => {
+  if (language === 'en') {
+    if (day >= 11 && day <= 13) return `${day}th`;
+    switch (day % 10) {
+      case 1: return `${day}st`;
+      case 2: return `${day}nd`;
+      case 3: return `${day}rd`;
+      default: return `${day}th`;
+    }
+  }
+  if (language === 'pt') return `${day}º`;
+  if (language === 'es') return `${day}°`;
+  return String(day);
 };
 
-/**
- * Returns short month name (Jan, Feb, etc.)
- */
-export const getShortMonthName = (month: number): string =>
-  getMonthName(month).slice(0, 3);
+// ─────────────────────────────────────────────
+// Pure (non-hook) date formatters — for utility code outside components
+// ─────────────────────────────────────────────
 
-/**
- * Returns current month and year
- */
+export const formatMonthYearRaw = (date: Date, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date);
+
+export const formatMonthNameRaw = (date: Date, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { month: 'long' }).format(date);
+
+export const formatDateRangeRaw = (start: Date, end: Date, locale: string): string => {
+  const fmt = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
+  return 'formatRange' in fmt
+    ? (fmt as any).formatRange(start, end)
+    : `${fmt.format(start)}–${fmt.format(end)}`;
+};
+
+export const formatDayMonthRaw = (date: Date, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' }).format(date);
+
+export const formatOrdinalDayRaw = (day: number, locale: string): string =>
+  formatOrdinalDay(day, locale);
+
+// ─────────────────────────────────────────────
+// useFormatDate hook — locale-aware date formatters for components
+// ─────────────────────────────────────────────
+
+export const useFormatDate = () => {
+  const { language } = useSettings();
+  return {
+    /** "maio de 2026" / "May 2026" / "mayo de 2026" */
+    monthYear: (date: Date) =>
+      new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(date),
+
+    /** "maio" / "May" / "mayo" — long month name only */
+    monthName: (date: Date) =>
+      new Intl.DateTimeFormat(language, { month: 'long' }).format(date),
+
+    /** "mai" / "May" / "may" — short month name */
+    shortMonth: (date: Date) =>
+      new Intl.DateTimeFormat(language, { month: 'short' }).format(date),
+
+    /** "15–21 de mai" / "May 15–21" / "15–21 de may" */
+    dateRange: (start: Date, end: Date) => {
+      const fmt = new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' });
+      return 'formatRange' in fmt
+        ? (fmt as any).formatRange(start, end)
+        : `${fmt.format(start)}–${fmt.format(end)}`;
+    },
+
+    /** "20 de maio" / "May 20" / "20 de mayo" */
+    dayMonth: (date: Date) =>
+      new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' }).format(date),
+
+    /** "seg" / "Mon" / "lun" */
+    weekdayShort: (date: Date) =>
+      new Intl.DateTimeFormat(language, { weekday: 'short' }).format(date),
+
+    /** "1º" / "1st" / "1°" */
+    ordinalDay: (day: number) => formatOrdinalDay(day, language),
+  };
+};
+
+// ─────────────────────────────────────────────
+// Pure utilities (no locale dependency)
+// ─────────────────────────────────────────────
+
 export const getCurrentMonthYear = (): { month: number; year: number } => {
   const now = new Date();
   return { month: now.getMonth() + 1, year: now.getFullYear() };
 };
 
-/**
- * Returns the number of days in a given month/year
- */
 export const getDaysInMonth = (month: number, year: number): number =>
   new Date(year, month, 0).getDate();
 
-/**
- * Returns ordinal suffix for a day number (1st, 2nd, 3rd, etc.)
- */
-export const getDayOrdinal = (day: number): string => {
-  const suffix = ['th', 'st', 'nd', 'rd'];
-  const v = day % 100;
-  return day + (suffix[(v - 20) % 10] ?? suffix[v] ?? suffix[0]);
-};
-
-/**
- * Formats a due_day as a readable string
- * e.g., due_day=15 → "Due on the 15th"
- */
-export const formatDueDay = (dueDay: number): string =>
-  `Due on the ${getDayOrdinal(dueDay)}`;
-
-/**
- * Checks if a bill is overdue this month.
- * It's overdue if the due_day has passed and it's not paid.
- */
 export const isOverdue = (dueDay: number, isPaid: boolean): boolean => {
   if (isPaid) return false;
-  const today = new Date();
-  return today.getDate() > dueDay;
+  return new Date().getDate() > dueDay;
 };
 
-/**
- * Checks if a bill is due within the next 3 days.
- */
 export const isDueSoon = (dueDay: number, isPaid: boolean): boolean => {
   if (isPaid) return false;
-  const today = new Date();
-  const currentDay = today.getDate();
+  const currentDay = new Date().getDate();
   return dueDay >= currentDay && dueDay <= currentDay + 3;
 };
 
-/**
- * Returns the status of a bill for display purposes.
- */
 export const getBillStatus = (
   dueDay: number,
   isPaid: boolean
@@ -83,26 +117,17 @@ export const getBillStatus = (
 };
 
 /**
- * Splits a monthly amount into weekly breakdown chunks.
- *
- * Concept: If you have a $1,200/month bill due on the 28th,
- * this tells you to save $300/week so the money is ready.
- *
- * @param amount - Total monthly amount
- * @param month  - Month number (1-12)
- * @param year   - Year
- * @param monthName - Short month name for labels
+ * Splits a monthly amount into weekly chunks.
+ * Returns raw data — callers format date labels using useFormatDate().
  */
 export const getWeeklyBreakdown = (
   amount: number,
   month: number,
-  year: number,
-  monthName?: string
+  year: number
 ): WeeklyBreakdown[] => {
   const daysInMonth = getDaysInMonth(month, year);
-  const label = monthName ?? getShortMonthName(month);
+  const monthIndex = month - 1;
   const weeks: WeeklyBreakdown[] = [];
-
   let day = 1;
   let weekNum = 1;
 
@@ -112,13 +137,7 @@ export const getWeeklyBreakdown = (
     const daysInWeek = endDay - startDay + 1;
     const weeklyAmount = (amount / daysInMonth) * daysInWeek;
 
-    weeks.push({
-      week: weekNum,
-      startDay,
-      endDay,
-      amount: weeklyAmount,
-      label: `Week ${weekNum} · ${label} ${startDay}–${endDay}`,
-    });
+    weeks.push({ week: weekNum, startDay, endDay, amount: weeklyAmount, monthIndex, year });
 
     day = endDay + 1;
     weekNum++;
@@ -127,9 +146,10 @@ export const getWeeklyBreakdown = (
   return weeks;
 };
 
-/**
- * Pure formatter — use in non-component contexts (utilities, tests).
- */
+// ─────────────────────────────────────────────
+// Currency formatters
+// ─────────────────────────────────────────────
+
 export const formatCurrencyRaw = (
   amount: number,
   currency: string,
@@ -152,21 +172,16 @@ export const formatCurrencyRaw = (
   }).format(amount);
 };
 
-/**
- * Hook — reads currency and language from SettingsContext.
- * Returns a formatter function for use inside React components.
- */
 export const useFormatCurrency = (): ((amount: number, compact?: boolean) => string) => {
   const { currency, language } = useSettings();
   return (amount: number, compact = false) =>
     formatCurrencyRaw(amount, currency, language, compact);
 };
 
-/**
- * Returns the 0-based index of the week that contains `day` in a given month.
- * Returns -1 if the month/year is not the current calendar month.
- * Pass day=0 to use today's date.
- */
+// ─────────────────────────────────────────────
+// Week / month navigation utilities
+// ─────────────────────────────────────────────
+
 export const getCurrentWeekIndex = (month: number, year: number, day?: number): number => {
   const today = new Date();
   const targetDay = day ?? today.getDate();
@@ -185,9 +200,6 @@ export const getCurrentWeekIndex = (month: number, year: number, day?: number): 
   return 0;
 };
 
-/**
- * Returns previous/next month from a given month+year
- */
 export const navigateMonth = (
   month: number,
   year: number,

@@ -17,7 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
-  getMonthName,
+  useFormatDate,
   getWeeklyBreakdown,
   getCurrentWeekIndex,
 } from '../utils/dateUtils';
@@ -37,6 +37,7 @@ interface PendingPaid {
 export default function ExpensesScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { monthYear } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
 
@@ -198,7 +199,7 @@ export default function ExpensesScreen() {
         visible={pendingPaid !== null}
         expenseName={pendingPaid?.expense.name ?? ''}
         plannedAmount={pendingPaid?.expense.amount ?? 0}
-        monthLabel={`${getMonthName(month)} ${year}`}
+        monthLabel={monthYear(new Date(year, month - 1, 1))}
         onConfirm={(actualAmount, lateFee, creditAmount) => {
           if (pendingPaid) markAsPaid(pendingPaid.expense, true, actualAmount, lateFee, creditAmount);
           setPendingPaid(null);

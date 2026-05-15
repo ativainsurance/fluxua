@@ -7,8 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ExpenseWithRecord } from '../types';
 import { getWeeklyBreakdown,
   useFormatCurrency,
-  getShortMonthName,
-  getDayOrdinal,
+  useFormatDate,
   getCurrentWeekIndex,
   getBillStatus } from '../utils/dateUtils';
 
@@ -38,8 +37,9 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { ordinalDay } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const weeks = getWeeklyBreakdown(expense.amount, month, year, getShortMonthName(month));
+  const weeks = getWeeklyBreakdown(expense.amount, month, year);
   const maxAmount = Math.max(...weeks.map((w) => w.amount));
   const currentWeekIdx = getCurrentWeekIndex(month, year);
   const isPaid = expense.record?.is_paid ?? false;
@@ -129,7 +129,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
         <Text style={[styles.dueText, isPaid && { color: colors.success }]}>
           {isPaid
             ? `${t('status.completed')} — ${formatCurrency(expense.record?.actual_amount ?? expense.amount)} ${t('overview.settled').toLowerCase()}`
-            : t('flow.fullAmountDue', { amount: formatCurrency(expense.amount), day: getDayOrdinal(expense.due_day) })
+            : t('flow.fullAmountDue', { amount: formatCurrency(expense.amount), day: ordinalDay(expense.due_day) })
           }
         </Text>
       </View>

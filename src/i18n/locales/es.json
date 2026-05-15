@@ -101,6 +101,7 @@
     "noPersonalCommitments": "Sin compromisos personales",
     "noBusinessCommitments": "Sin compromisos de negocio",
     "addCommitment": "Agregar compromiso",
+    "dueOnDay": "Vence el {{day}}",
     "thisWeek": "Esta semana:",
     "whatToDo": "¿Qué deseas hacer?",
     "markAsWaived": "Marcar como exonerado",

@@ -15,17 +15,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
-  getMonthName,
   useFormatCurrency,
+  useFormatDate,
   getWeeklyBreakdown,
-  getShortMonthName,
   getCurrentWeekIndex,
   getBillStatus,
-  getDayOrdinal,
 } from '../utils/dateUtils';
 import { typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
@@ -258,6 +255,7 @@ const WeeklyFlowChart = ({ expenses, month, year }: { expenses: ExpenseWithRecor
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { monthName } = useFormatDate();
 
   const weekBuckets = useMemo(() => {
     const buckets = [
@@ -286,7 +284,7 @@ const WeeklyFlowChart = ({ expenses, month, year }: { expenses: ExpenseWithRecor
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View>
           <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.1 }}>{t('overview.weeklyFlow')}</Text>
-          <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>{t('overview.commitmentSchedule', { month: getMonthName(month) })}</Text>
+          <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>{t('overview.commitmentSchedule', { month: monthName(new Date(year, month - 1, 1)) })}</Text>
         </View>
         <View style={{ backgroundColor: colors.tealLight, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4 }}>
           <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>{formatCurrency(totalFlow)}</Text>
@@ -445,6 +443,7 @@ const CommitmentRow = ({
   const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { ordinalDay } = useFormatDate();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
   const STATUS_ACCENT = useMemo(() => getStatusAccent(isDark), [isDark]);
 
@@ -480,7 +479,7 @@ const CommitmentRow = ({
               <Text style={[rowStyles.statusText, { color: config.accent }]}>{t(config.labelKey)}</Text>
             </View>
             {expense.due_day > 0 && (
-              <Text style={rowStyles.dueDay}>{getDayOrdinal(expense.due_day)}</Text>
+              <Text style={rowStyles.dueDay}>{ordinalDay(expense.due_day)}</Text>
             )}
             {expense.is_autopay && (
               <View style={rowStyles.autopayBadge}>
@@ -556,6 +555,7 @@ const HeroCard = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { monthYear } = useFormatDate();
   const heroStyles = useMemo(() => makeHeroStyles(colors), [colors]);
 
   const pct = total > 0 ? paid / total : 0;
@@ -584,7 +584,7 @@ const HeroCard = ({
 
         {/* Amount */}
         <View style={heroStyles.amountBlock}>
-          <Text style={heroStyles.amountLabel}>{getMonthName(month)} {year} · {t('overview.totalFlow')}</Text>
+          <Text style={heroStyles.amountLabel}>{monthYear(new Date(year, month - 1, 1))} · {t('overview.totalFlow')}</Text>
           <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
         </View>
 
@@ -784,7 +784,7 @@ const UpcomingSection = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
-  const { language } = useSettings();
+  const { dayMonth } = useFormatDate();
 
   const today = useMemo(() => new Date(), []);
 
@@ -825,8 +825,7 @@ const UpcomingSection = ({
       return { label: t('overview.inDays', { count: daysUntil }), color: colors.textSecondary };
     } else {
       const dueDate = new Date(year, month - 1, dueDay);
-      const label = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' }).format(dueDate);
-      return { label, color: colors.textSecondary };
+      return { label: dayMonth(dueDate), color: colors.textSecondary };
     }
   };
 
@@ -895,6 +894,7 @@ const UpcomingSection = ({
 export default function DashboardScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const { monthYear } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const navigation = useNavigation<any>();
@@ -921,7 +921,7 @@ export default function DashboardScreen() {
         <View style={styles.topBar}>
           <View>
             <Text style={styles.screenTitle}>{t('overview.title')}</Text>
-            <Text style={styles.screenSub}>{getMonthName(month)} {year}</Text>
+            <Text style={styles.screenSub}>{monthYear(new Date(year, month - 1, 1))}</Text>
           </View>
           <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.8}>
             <Ionicons name="add" size={22} color={colors.textInverse} />

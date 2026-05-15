@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { useExpenses } from '../hooks/useExpenses';
-import { getCurrentMonthYear, useFormatCurrency, getWeeklyBreakdown, getShortMonthName } from '../utils/dateUtils';
+import { getCurrentMonthYear, useFormatCurrency, useFormatDate, getWeeklyBreakdown } from '../utils/dateUtils';
 import {  typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { MonthSelector } from '../components/MonthSelector';
@@ -21,6 +21,7 @@ export default function WeeklyScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { dateRange } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
@@ -29,12 +30,7 @@ export default function WeeklyScreen() {
   const { expenses, summary, loading, reload } = useExpenses(month, year);
 
   // Aggregate all expenses into a combined weekly breakdown
-  const totalWeeklyBreakdown = getWeeklyBreakdown(
-    summary.total,
-    month,
-    year,
-    getShortMonthName(month)
-  );
+  const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -74,10 +70,10 @@ export default function WeeklyScreen() {
                 <View style={styles.weekGrid}>
                   {totalWeeklyBreakdown.map((week) => (
                     <View key={week.week} style={styles.weekCell}>
-                      <Text style={styles.weekCellLabel}>{week.label.split('·')[0].trim()}</Text>
+                      <Text style={styles.weekCellLabel}>{t('flow.week', { n: week.week })}</Text>
                       <Text style={styles.weekCellAmount}>{formatCurrency(week.amount)}</Text>
                       <Text style={styles.weekCellDays}>
-                        {getShortMonthName(month)} {week.startDay}–{week.endDay}
+                        {dateRange(new Date(year, month - 1, week.startDay), new Date(year, month - 1, week.endDay))}
                       </Text>
                     </View>
                   ))}

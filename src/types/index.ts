@@ -134,7 +134,8 @@ export interface WeeklyBreakdown {
   startDay: number;
   endDay: number;
   amount: number;
-  label: string;        // e.g., "Week 1 · May 1–7"
+  monthIndex: number;   // 0-based (for Date construction)
+  year: number;
 }
 
 /**

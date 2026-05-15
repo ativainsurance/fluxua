@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { typography, spacing, radius } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
-import { getMonthName, navigateMonth } from '../utils/dateUtils';
+import { navigateMonth, useFormatDate } from '../utils/dateUtils';
 
 interface Props {
   month: number;
@@ -13,6 +13,7 @@ interface Props {
 
 export const MonthSelector = ({ month, year, onChange }: Props) => {
   const { colors } = useTheme();
+  const { monthYear } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const goBack = () => {
     const { month: m, year: y } = navigateMonth(month, year, 'prev');
@@ -31,7 +32,7 @@ export const MonthSelector = ({ month, year, onChange }: Props) => {
       </TouchableOpacity>
 
       <Text style={styles.label}>
-        {getMonthName(month)} {year}
+        {monthYear(new Date(year, month - 1, 1))}
       </Text>
 
       <TouchableOpacity onPress={goForward} style={styles.arrow} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>

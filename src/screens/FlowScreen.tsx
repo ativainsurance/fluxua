@@ -18,10 +18,9 @@ import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
   useFormatCurrency,
+  useFormatDate,
   getWeeklyBreakdown,
-  getShortMonthName,
   getCurrentWeekIndex,
-  getDayOrdinal,
 } from '../utils/dateUtils';
 import {gradient, typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
@@ -242,6 +241,7 @@ const CommitmentFlowRow = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { ordinalDay } = useFormatDate();
   const flowRowStyles = useMemo(() => makeFlowRowStyles(colors), [colors]);
 
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
@@ -286,7 +286,7 @@ const CommitmentFlowRow = ({
 
           <View style={flowRowStyles.meta}>
             <Text style={flowRowStyles.name} numberOfLines={1}>{expense.name}</Text>
-            <Text style={flowRowStyles.due}>{t('flow.dueOnThe', { day: getDayOrdinal(expense.due_day) })}</Text>
+            <Text style={flowRowStyles.due}>{t('flow.dueOnThe', { day: ordinalDay(expense.due_day) })}</Text>
           </View>
 
           <View style={flowRowStyles.right}>
@@ -438,6 +438,7 @@ export default function FlowScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const { dateRange, shortMonth } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
@@ -447,7 +448,7 @@ export default function FlowScreen() {
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = isCurrentMonth ? getCurrentWeekIndex(month, year) : 0;
-  const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year, getShortMonthName(month));
+  const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year);
 
   const currentWeekData = totalWeeklyBreakdown[currentWeekIdx];
   const weekNeeded = currentWeekData?.amount ?? 0;
@@ -531,7 +532,7 @@ export default function FlowScreen() {
                     <View>
                       <Text style={styles.heroEyebrow}>{t('flow.thisWeek').toUpperCase()}</Text>
                       <Text style={styles.heroTitle}>
-                        {getShortMonthName(month)} {currentWeekData.startDay}–{currentWeekData.endDay}
+                        {dateRange(new Date(year, month - 1, currentWeekData.startDay), new Date(year, month - 1, currentWeekData.endDay))}
                       </Text>
                     </View>
                     <View style={[styles.heroBadge, { backgroundColor: heroBarColor + '22' }]}>
@@ -602,7 +603,7 @@ export default function FlowScreen() {
 
             {/* ── Month Flow Grid ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{getShortMonthName(month)} {t('nav.flow')}</Text>
+              <Text style={styles.sectionLabel}>{shortMonth(new Date(year, month - 1, 1))} {t('nav.flow')}</Text>
               <View style={styles.weekGrid}>
                 {totalWeeklyBreakdown.map((week, i) => {
                   const coverage = getWeekCoverage(expenses, i, month, year);
@@ -612,7 +613,7 @@ export default function FlowScreen() {
                     <WeekBar
                       key={week.week}
                       label={t('flow.week', { n: week.week })}
-                      dateRange={`${getShortMonthName(month)} ${week.startDay}–${week.endDay}`}
+                      dateRange={dateRange(new Date(year, month - 1, week.startDay), new Date(year, month - 1, week.endDay))}
                       amount={week.amount}
                       coverage={coverage}
                       isCurrent={isCurrent}
