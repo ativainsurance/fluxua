@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -18,7 +19,7 @@ import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
   getMonthName,
-  formatCurrency,
+  useFormatCurrency,
   getWeeklyBreakdown,
   getShortMonthName,
   getCurrentWeekIndex,
@@ -54,20 +55,20 @@ const getCategoryColor = (category: string) =>
 
 // STATUS_ACCENT uses warm editorial semantic colors
 // NOTE: these are light-mode hardcodes; dark mode derives from the ThemeContext per-component
-const STATUS_ACCENT_LIGHT: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
-  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)', label: 'Completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', label: 'Waived',   icon: 'gift-outline'      },
-  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)', label: 'Overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)', label: 'Due Soon',  icon: 'time'              },
-  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', label: 'Upcoming', icon: 'calendar-outline' },
+const STATUS_ACCENT_LIGHT: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
+  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)', labelKey: 'status.completed', icon: 'checkmark-circle'  },
+  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', labelKey: 'status.waived',   icon: 'gift-outline'      },
+  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)', labelKey: 'status.overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)', labelKey: 'status.dueSoon',  icon: 'time'              },
+  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', labelKey: 'status.upcoming', icon: 'calendar-outline' },
 };
 
-const STATUS_ACCENT_DARK: Record<string, { accent: string; bg: string; label: string; icon: string }> = {
-  paid:       { accent: '#7FA582', bg: 'rgba(127,165,130,0.15)', label: 'Completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#A78BFA', bg: 'rgba(167,139,250,0.15)', label: 'Waived',    icon: 'gift-outline'      },
-  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',  label: 'Overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)', label: 'Due Soon',  icon: 'time'              },
-  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',   label: 'Upcoming',  icon: 'calendar-outline'  },
+const STATUS_ACCENT_DARK: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
+  paid:       { accent: '#7FA582', bg: 'rgba(127,165,130,0.15)', labelKey: 'status.completed', icon: 'checkmark-circle'  },
+  waived:     { accent: '#A78BFA', bg: 'rgba(167,139,250,0.15)', labelKey: 'status.waived',    icon: 'gift-outline'      },
+  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',  labelKey: 'status.overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)', labelKey: 'status.dueSoon',  icon: 'time'              },
+  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',   labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
 };
 
 const getStatusAccent = (isDark: boolean) => isDark ? STATUS_ACCENT_DARK : STATUS_ACCENT_LIGHT;
@@ -170,6 +171,8 @@ const SplitCard = ({
   total: number;
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const barAnim = useRef(new Animated.Value(0)).current;
 
   const personalPct = total > 0 ? personalTotal / total : 0;
@@ -219,7 +222,7 @@ const SplitCard = ({
           fontWeight: typography.bold,
           color: colors.textInverse,
           letterSpacing: -0.1,
-        }}>Commitment Split</Text>
+        }}>{t('overview.commitmentSplit')}</Text>
         <View style={{
           backgroundColor: 'rgba(250,250,247,0.08)',
           borderRadius: radius.full,
@@ -268,7 +271,7 @@ const SplitCard = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.personal }} />
             <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
-              PERSONAL
+              {t('overview.personal')}
             </Text>
           </View>
           <Text style={{
@@ -278,7 +281,7 @@ const SplitCard = ({
             letterSpacing: -0.5,
           }}>{formatCurrency(personalTotal)}</Text>
           <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
-            {Math.round(personalPct * 100)}% of total
+            {Math.round(personalPct * 100)}{t('overview.ofTotal')}
           </Text>
         </View>
 
@@ -294,7 +297,7 @@ const SplitCard = ({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.business }} />
             <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
-              BUSINESS
+              {t('overview.business')}
             </Text>
           </View>
           <Text style={{
@@ -304,7 +307,7 @@ const SplitCard = ({
             letterSpacing: -0.5,
           }}>{formatCurrency(businessTotal)}</Text>
           <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
-            {Math.round(businessPct * 100)}% of total
+            {Math.round(businessPct * 100)}{t('overview.ofTotal')}
           </Text>
         </View>
       </View>
@@ -334,6 +337,7 @@ const WeekBar = ({
   delay: number;
 }) => {
   const { colors } = useTheme();
+  const formatCurrency = useFormatCurrency();
   const totalAnim = useRef(new Animated.Value(0)).current;
   const paidAnim = useRef(new Animated.Value(0)).current;
 
@@ -352,7 +356,7 @@ const WeekBar = ({
       {/* Amount label above bar */}
       {amount > 0 && (
         <Text style={{ fontSize: 9, color: colors.textTertiary, fontWeight: typography.semibold }}>
-          {amount >= 1000 ? `$${(amount / 1000).toFixed(1)}k` : `$${Math.round(amount)}`}
+          {formatCurrency(amount, true)}
         </Text>
       )}
 
@@ -416,6 +420,8 @@ const WeeklyFlowChart = ({
   year: number;
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
 
   // Bucket expenses by week using due_day
   const weekBuckets = useMemo(() => {
@@ -459,9 +465,9 @@ const WeeklyFlowChart = ({
             fontWeight: typography.bold,
             color: colors.textPrimary,
             letterSpacing: -0.1,
-          }}>Weekly Flow</Text>
+          }}>{t('overview.weeklyFlow')}</Text>
           <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>
-            {getMonthName(month)} commitment schedule
+            {t('overview.commitmentSchedule', { month: getMonthName(month) })}
           </Text>
         </View>
         <View style={{
@@ -507,11 +513,11 @@ const WeeklyFlowChart = ({
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.teal }} />
-          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.medium }}>Covered</Text>
+          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.medium }}>{t('overview.coveredLegend')}</Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border }} />
-          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.medium }}>Remaining</Text>
+          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.medium }}>{t('overview.remainingLegend')}</Text>
         </View>
       </View>
     </View>
@@ -536,6 +542,8 @@ const CategoryBar = ({
   isDark: boolean;
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const barAnim = useRef(new Animated.Value(0)).current;
   const pct = maxAmount > 0 ? amount / maxAmount : 0;
 
@@ -585,7 +593,7 @@ const CategoryBar = ({
               fontSize: 10,
               color: colors.textTertiary,
               fontWeight: typography.medium,
-            }}>{count} {count === 1 ? 'bill' : 'bills'}</Text>
+            }}>{t('common.bills', { count })}</Text>
             <Text style={{
               fontSize: typography.sm,
               fontWeight: typography.bold,
@@ -622,6 +630,7 @@ const CategoryBar = ({
 
 const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
 
   const categoryBreakdown = useMemo(() => {
     const map: Record<string, { total: number; count: number }> = {};
@@ -657,12 +666,12 @@ const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => 
           fontWeight: typography.bold,
           color: colors.textPrimary,
           letterSpacing: -0.1,
-        }}>Commitment Allocation</Text>
+        }}>{t('overview.commitmentAllocation')}</Text>
         <Text style={{
           fontSize: typography.xs,
           color: colors.textTertiary,
           fontWeight: typography.medium,
-        }}>Top {categoryBreakdown.length} categories</Text>
+        }}>{t('overview.topCategories', { count: categoryBreakdown.length })}</Text>
       </View>
 
       {/* Category bars */}
@@ -688,6 +697,8 @@ const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => 
 
 const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
 
   const autopayCount = expenses.filter(e => e.is_autopay).length;
   const recurringCount = expenses.filter(e => e.is_recurring).length;
@@ -732,7 +743,7 @@ const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
             letterSpacing: -0.5,
           }}>{autopayCount}</Text>
           <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>
-            On autopay
+            {t('overview.onAutopay')}
           </Text>
           <Text style={{ fontSize: 10, color: colors.primary, fontWeight: typography.bold }}>
             {formatCurrency(autopayAmount)}
@@ -770,10 +781,10 @@ const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
             letterSpacing: -0.5,
           }}>{recurringCount}</Text>
           <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>
-            Recurring
+            {t('overview.recurring')}
           </Text>
           <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>
-            auto-tracked
+            {t('overview.autoTracked')}
           </Text>
         </View>
       )}
@@ -793,6 +804,8 @@ const CommitmentRow = ({
   onTogglePaid: (expense: ExpenseWithRecord, isPaid: boolean) => void;
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
   const STATUS_ACCENT = useMemo(() => getStatusAccent(isDark), [isDark]);
 
@@ -832,7 +845,7 @@ const CommitmentRow = ({
           <View style={rowStyles.badgeRow}>
             <View style={[rowStyles.statusBadge, { backgroundColor: config.bg }]}>
               <Ionicons name={config.icon as any} size={9} color={config.accent} />
-              <Text style={[rowStyles.statusText, { color: config.accent }]}>{config.label}</Text>
+              <Text style={[rowStyles.statusText, { color: config.accent }]}>{t(config.labelKey)}</Text>
             </View>
             {expense.due_day > 0 && (
               <Text style={rowStyles.dueDay}>
@@ -1006,6 +1019,8 @@ const HeroCard = ({
   expenses: ExpenseWithRecord[];
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const heroStyles = useMemo(() => makeHeroStyles(colors), [colors]);
 
   const pct = total > 0 ? paid / total : 0;
@@ -1048,7 +1063,7 @@ const HeroCard = ({
           </View>
         </View>
         <View style={heroStyles.amountBlock}>
-          <Text style={heroStyles.amountLabel}>{getMonthName(month)} {year} · Total Flow</Text>
+          <Text style={heroStyles.amountLabel}>{getMonthName(month)} {year} · {t('overview.totalFlow')}</Text>
           <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
         </View>
         <View style={heroStyles.progressSection}>
@@ -1060,28 +1075,28 @@ const HeroCard = ({
             }]} />
           </View>
           <View style={heroStyles.progressLabels}>
-            <Text style={heroStyles.progressLabelLeft}>{formatCurrency(paid)} settled</Text>
+            <Text style={heroStyles.progressLabelLeft}>{formatCurrency(paid)} {t('overview.settled').toLowerCase()}</Text>
             <Text style={heroStyles.progressLabelRight}>{paidCount}/{totalCount} bills</Text>
           </View>
         </View>
         <View style={heroStyles.statsRow}>
           <View style={heroStyles.stat}>
             <Text style={heroStyles.statValue}>{formatCurrency(paid)}</Text>
-            <Text style={heroStyles.statLabel}>SETTLED</Text>
+            <Text style={heroStyles.statLabel}>{t('overview.settled')}</Text>
           </View>
           <View style={heroStyles.statDivider} />
           <View style={heroStyles.stat}>
             <Text style={[heroStyles.statValue, { color: total - paid > 0 ? colors.warning : colors.success }]}>
               {formatCurrency(total - paid)}
             </Text>
-            <Text style={heroStyles.statLabel}>REMAINING</Text>
+            <Text style={heroStyles.statLabel}>{t('overview.remainingUpper')}</Text>
           </View>
           {dueSoonCount > 0 && (
             <>
               <View style={heroStyles.statDivider} />
               <View style={heroStyles.stat}>
                 <Text style={[heroStyles.statValue, { color: colors.danger }]}>{dueSoonCount}</Text>
-                <Text style={heroStyles.statLabel}>DUE SOON</Text>
+                <Text style={heroStyles.statLabel}>{t('overview.dueSoonUpper')}</Text>
               </View>
             </>
           )}
@@ -1174,6 +1189,8 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
 
 export default function DashboardScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const navigation = useNavigation<any>();
@@ -1221,8 +1238,8 @@ export default function DashboardScreen() {
 
   const greetingHour = new Date().getHours();
   const greeting =
-    greetingHour < 12 ? 'Good morning' :
-    greetingHour < 18 ? 'Good afternoon' : 'Good evening';
+    greetingHour < 12 ? t('overview.goodMorning') :
+    greetingHour < 18 ? t('overview.goodAfternoon') : t('overview.goodEvening');
   const userName = user?.email?.split('@')[0] ?? '';
 
   const coveragePct = summary.total > 0
@@ -1244,7 +1261,7 @@ export default function DashboardScreen() {
       >
         <View style={styles.topBar}>
           <View>
-            <Text style={styles.screenTitle}>Overview</Text>
+            <Text style={styles.screenTitle}>{t('overview.title')}</Text>
             <Text style={styles.screenSub}>{getMonthName(month)} {year}</Text>
           </View>
           <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.8}>
@@ -1259,11 +1276,11 @@ export default function DashboardScreen() {
             <View style={styles.emptyIconRing}>
               <Ionicons name="pulse-outline" size={30} color={colors.primary} />
             </View>
-            <Text style={styles.emptyTitle}>No commitments yet</Text>
-            <Text style={styles.emptySub}>Add your recurring bills and subscriptions to start tracking your flow.</Text>
+            <Text style={styles.emptyTitle}>{t('overview.noCommitmentsTitle')}</Text>
+            <Text style={styles.emptySub}>{t('overview.noCommitmentsSub')}</Text>
             <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.85}>
               <Ionicons name="add" size={16} color={colors.textInverse} />
-              <Text style={styles.emptyBtnText}>Add first commitment</Text>
+              <Text style={styles.emptyBtnText}>{t('overview.addFirstCommitment')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -1278,26 +1295,26 @@ export default function DashboardScreen() {
             <View style={styles.metricGrid}>
               <View style={styles.metricRow}>
                 <MetricCard
-                  label="Total Flow" value={formatCurrency(summary.total)}
-                  subtitle={`${summary.expenseCount} commitments`}
+                  label={t('overview.totalFlow')} value={formatCurrency(summary.total)}
+                  subtitle={t('overview.totalLabel', { count: summary.expenseCount })}
                   icon="receipt-outline" accent={colors.primary} accentBg={colors.primaryLight}
                 />
                 <MetricCard
-                  label="Total Covered" value={formatCurrency(summary.totalPaid)}
-                  subtitle={`${coveragePct}% of total`}
+                  label={t('overview.totalCovered')} value={formatCurrency(summary.totalPaid)}
+                  subtitle={`${coveragePct}${t('overview.ofTotal')}`}
                   icon="checkmark-done-outline" accent={colors.success} accentBg={colors.successLight}
                 />
               </View>
               <View style={styles.metricRow}>
                 <MetricCard
-                  label="Remaining" value={formatCurrency(summary.totalUnpaid)}
-                  subtitle={`${summary.expenseCount - summary.paidCount} unpaid`}
+                  label={t('overview.remaining')} value={formatCurrency(summary.totalUnpaid)}
+                  subtitle={t('overview.unpaidLabel', { count: summary.expenseCount - summary.paidCount })}
                   icon="hourglass-outline" accent={colors.warning} accentBg={colors.warningLight}
                 />
                 <MetricCard
-                  label="Due Soon"
+                  label={t('overview.dueSoon')}
                   value={dueSoonExpenses.length > 0 ? formatCurrency(dueSoonTotal) : '—'}
-                  subtitle={dueSoonExpenses.length > 0 ? `${dueSoonExpenses.length} bills` : 'All on track'}
+                  subtitle={dueSoonExpenses.length > 0 ? t('common.bills', { count: dueSoonExpenses.length }) : t('overview.allOnTrack')}
                   icon={dueSoonExpenses.length > 0 ? 'alert-circle-outline' : 'checkmark-circle-outline'}
                   accent={dueSoonExpenses.length > 0 ? colors.danger : colors.success}
                   accentBg={dueSoonExpenses.length > 0 ? colors.dangerLight : colors.successLight}
@@ -1322,10 +1339,10 @@ export default function DashboardScreen() {
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.danger, marginTop: 1 }} />
-                    <Text style={styles.sectionLabel}>Needs Attention</Text>
+                    <Text style={styles.sectionLabel}>{t('overview.needsAttention')}</Text>
                   </View>
                   <TouchableOpacity style={styles.seeAllBtn} onPress={() => navigation.navigate('Commitments')}>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
                     <Ionicons name="chevron-forward" size={13} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
@@ -1340,10 +1357,10 @@ export default function DashboardScreen() {
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
                     <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginTop: 1 }} />
-                    <Text style={styles.sectionLabel}>Upcoming</Text>
+                    <Text style={styles.sectionLabel}>{t('overview.upcoming')}</Text>
                   </View>
                   <TouchableOpacity style={styles.seeAllBtn} onPress={() => navigation.navigate('Commitments')}>
-                    <Text style={styles.seeAllText}>See all</Text>
+                    <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
                     <Ionicons name="chevron-forward" size={13} color={colors.primary} />
                   </TouchableOpacity>
                 </View>
@@ -1358,9 +1375,9 @@ export default function DashboardScreen() {
                 <View style={styles.allDoneIconRing}>
                   <Ionicons name="checkmark-circle" size={30} color={colors.success} />
                 </View>
-                <Text style={styles.allDoneTitle}>Flow complete ✦</Text>
+                <Text style={styles.allDoneTitle}>{t('overview.allDoneTitle')}</Text>
                 <Text style={styles.allDoneSub}>
-                  All {summary.expenseCount} commitments for {getMonthName(month)} are settled.
+                  {t('overview.allDoneSub', { count: summary.expenseCount, month: getMonthName(month) })}
                 </Text>
               </View>
             )}

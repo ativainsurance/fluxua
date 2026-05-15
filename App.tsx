@@ -1,4 +1,5 @@
 import 'react-native-url-polyfill/auto';
+import './src/i18n';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -26,10 +27,13 @@ import {
 
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
+import { SettingsProvider, useSettings } from './src/contexts/SettingsContext';
 import { AppNavigator } from './src/navigation';
 
 function ThemedApp() {
   const { isDark } = useTheme();
+  const { settingsReady } = useSettings();
+  if (!settingsReady) return null;
   return (
     <>
       <AppNavigator />
@@ -60,11 +64,13 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <ThemedApp />
-          </AuthProvider>
-        </ThemeProvider>
+        <SettingsProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <ThemedApp />
+            </AuthProvider>
+          </ThemeProvider>
+        </SettingsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

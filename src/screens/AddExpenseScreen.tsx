@@ -16,7 +16,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { useCustomCategories } from '../hooks/useCustomCategories';
 import { getCurrentMonthYear } from '../utils/dateUtils';
@@ -68,6 +70,8 @@ const defaultForm: ExpenseFormData = {
 
 export default function AddExpenseScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { currencySymbol } = useSettings();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
@@ -124,7 +128,7 @@ export default function AddExpenseScreen() {
   const handleSave = async () => {
     const err = validate();
     if (err) {
-      Alert.alert('Invalid input', err);
+      Alert.alert(t('addExpense.invalidInput'), err);
       return;
     }
     setLoading(true);
@@ -136,7 +140,7 @@ export default function AddExpenseScreen() {
       }
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to save.');
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('addExpense.failedSave'));
     } finally {
       setLoading(false);
     }
@@ -170,7 +174,7 @@ export default function AddExpenseScreen() {
             <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Commitment' : 'New Commitment'}
+            {isEditing ? t('addExpense.titleEdit') : t('addExpense.titleNew')}
           </Text>
           <TouchableOpacity
             style={[styles.saveBtn, loading && styles.saveBtnDisabled]}
@@ -180,7 +184,7 @@ export default function AddExpenseScreen() {
             {loading ? (
               <ActivityIndicator size="small" color={colors.textInverse} />
             ) : (
-              <Text style={styles.saveBtnText}>Save</Text>
+              <Text style={styles.saveBtnText}>{t('common.save')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -192,21 +196,21 @@ export default function AddExpenseScreen() {
         >
           {/* Name */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>COMMITMENT NAME</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.name')}</Text>
             <TextInput
               style={styles.input}
               value={form.name}
               onChangeText={(v) => set('name', v)}
-              placeholder="e.g., Netflix, Rent, Car Insurance"
+              placeholder={t('addExpense.namePlaceholder')}
               placeholderTextColor={colors.textDisabled}
             />
           </View>
 
           {/* Amount */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>PLANNED MONTHLY AMOUNT</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.amount')}</Text>
             <View style={styles.amountWrapper}>
-              <Text style={styles.currencySymbol}>$</Text>
+              <Text style={styles.currencySymbol}>{currencySymbol}</Text>
               <TextInput
                 style={[styles.input, styles.amountInput]}
                 value={form.amount}
@@ -216,14 +220,12 @@ export default function AddExpenseScreen() {
                 keyboardType="decimal-pad"
               />
             </View>
-            <Text style={styles.fieldHint}>
-              You can record the actual amount paid each month when marking it as paid.
-            </Text>
+            <Text style={styles.fieldHint}>{t('addExpense.amountHint')}</Text>
           </View>
 
           {/* Start Date */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>START DATE</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.startDate')}</Text>
             <DateInput
               value={form.start_date}
               onChange={(iso) => set('start_date', iso)}
@@ -233,10 +235,10 @@ export default function AddExpenseScreen() {
           {/* End Date */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>
-              END DATE <Text style={styles.optionalLabel}>(OPTIONAL)</Text>
+              {t('addExpense.endDate')} <Text style={styles.optionalLabel}>({t('addExpense.optional')})</Text>
             </Text>
             <Text style={styles.fieldHint}>
-              Set if this commitment has a known end date — leave blank for ongoing.
+              {t('addExpense.endDateHint')}
             </Text>
             <DateInput
               value={form.end_date}
@@ -248,34 +250,34 @@ export default function AddExpenseScreen() {
 
           {/* Type */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>TYPE</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.type')}</Text>
             <View style={styles.typeRow}>
-              {(['personal', 'business'] as ExpenseType[]).map((t) => (
+              {(['personal', 'business'] as ExpenseType[]).map((typeKey) => (
                 <TouchableOpacity
-                  key={t}
+                  key={typeKey}
                   style={[
                     styles.typeBtn,
-                    form.type === t && {
+                    form.type === typeKey && {
                       backgroundColor:
-                        t === 'personal' ? colors.personal : colors.business,
+                        typeKey === 'personal' ? colors.personal : colors.business,
                       borderColor:
-                        t === 'personal' ? colors.personal : colors.business,
+                        typeKey === 'personal' ? colors.personal : colors.business,
                     },
                   ]}
-                  onPress={() => set('type', t)}
+                  onPress={() => set('type', typeKey)}
                 >
                   <Ionicons
-                    name={t === 'personal' ? 'person' : 'briefcase'}
+                    name={typeKey === 'personal' ? 'person' : 'briefcase'}
                     size={16}
-                    color={form.type === t ? colors.textInverse : colors.textSecondary}
+                    color={form.type === typeKey ? colors.textInverse : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.typeBtnText,
-                      form.type === t && { color: colors.textInverse },
+                      form.type === typeKey && { color: colors.textInverse },
                     ]}
                   >
-                    {t === 'personal' ? 'Personal' : 'Business'}
+                    {typeKey === 'personal' ? t('addExpense.personal') : t('addExpense.business')}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -284,7 +286,7 @@ export default function AddExpenseScreen() {
 
           {/* Category */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>CATEGORY</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.category')}</Text>
             <TouchableOpacity
               style={styles.categoryPicker}
               onPress={() => setShowCategories(!showCategories)}
@@ -382,7 +384,7 @@ export default function AddExpenseScreen() {
 
           {/* Due Day */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DUE DAY OF MONTH</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.dueDay')}</Text>
             <View style={styles.dueDayRow}>
               <TouchableOpacity
                 style={styles.dueDayBtn}
@@ -392,7 +394,7 @@ export default function AddExpenseScreen() {
               </TouchableOpacity>
               <View style={styles.dueDayValue}>
                 <Text style={styles.dueDayNum}>{form.due_day}</Text>
-                <Text style={styles.dueDaySub}>of each month</Text>
+                <Text style={styles.dueDaySub}>{t('addExpense.ofEachMonth')}</Text>
               </View>
               <TouchableOpacity
                 style={styles.dueDayBtn}
@@ -406,8 +408,8 @@ export default function AddExpenseScreen() {
           {/* Recurring toggle */}
           <View style={[styles.section, styles.row]}>
             <View style={styles.flex}>
-              <Text style={styles.toggleLabel}>Recurring</Text>
-              <Text style={styles.toggleSub}>Repeat this commitment every month</Text>
+              <Text style={styles.toggleLabel}>{t('addExpense.recurring')}</Text>
+              <Text style={styles.toggleSub}>{t('addExpense.recurringHint')}</Text>
             </View>
             <Switch
               value={form.is_recurring}
@@ -420,7 +422,7 @@ export default function AddExpenseScreen() {
           {/* Recurrence type */}
           {form.is_recurring && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>RECURRENCE</Text>
+              <Text style={styles.sectionLabel}>{t('addExpense.recurrence')}</Text>
               <View style={styles.recurrGrid}>
                 <View style={styles.recurrRow}>
                   {(['weekly', 'monthly', 'quarterly'] as RecurrenceType[]).map((r) => (
@@ -456,8 +458,8 @@ export default function AddExpenseScreen() {
           <View style={styles.section}>
             <View style={[styles.row, { marginBottom: form.is_autopay ? spacing.md : 0 }]}>
               <View style={styles.flex}>
-                <Text style={styles.toggleLabel}>Autopay</Text>
-                <Text style={styles.toggleSub}>This bill is paid automatically</Text>
+                <Text style={styles.toggleLabel}>{t('addExpense.autopay')}</Text>
+                <Text style={styles.toggleSub}>{t('addExpense.autopayHint')}</Text>
               </View>
               <Switch
                 value={form.is_autopay}
@@ -470,7 +472,7 @@ export default function AddExpenseScreen() {
             {form.is_autopay && (
               <>
                 {/* Method: Card / ACH */}
-                <Text style={[styles.sectionLabel, { marginBottom: spacing.sm }]}>PAYMENT METHOD</Text>
+                <Text style={[styles.sectionLabel, { marginBottom: spacing.sm }]}>{t('addExpense.autopayMethod')}</Text>
                 <View style={styles.typeRow}>
                   {(['card', 'ach'] as AutopayMethod[]).map((method) => (
                     <TouchableOpacity
@@ -495,7 +497,7 @@ export default function AddExpenseScreen() {
                           form.autopay_method === method && { color: colors.textInverse },
                         ]}
                       >
-                        {method === 'card' ? 'Credit / Debit Card' : 'ACH / Bank Transfer'}
+                        {method === 'card' ? t('addExpense.card') : t('addExpense.bankTransfer')}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -503,18 +505,14 @@ export default function AddExpenseScreen() {
 
                 {/* Last 4 digits */}
                 <Text style={[styles.sectionLabel, { marginTop: spacing.md, marginBottom: spacing.xs }]}>
-                  LAST 4 DIGITS <Text style={styles.optionalLabel}>(OPTIONAL)</Text>
+                  {t('addExpense.last4')}
                 </Text>
-                <Text style={styles.fieldHint}>
-                  {form.autopay_method === 'card'
-                    ? 'Helps identify which card to update if lost or replaced.'
-                    : 'Helps identify which bank account to update if changed.'}
-                </Text>
+                <Text style={styles.fieldHint}>{t('addExpense.last4Hint')}</Text>
                 <TextInput
                   style={styles.input}
                   value={form.autopay_last4}
                   onChangeText={(v) => set('autopay_last4', v.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="e.g. 4242"
+                  placeholder={t('addExpense.last4Placeholder')}
                   placeholderTextColor={colors.textDisabled}
                   keyboardType="number-pad"
                   maxLength={4}
@@ -525,12 +523,12 @@ export default function AddExpenseScreen() {
 
           {/* Notes */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>NOTES (OPTIONAL)</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.notes')}</Text>
             <TextInput
               style={[styles.input, styles.notesInput]}
               value={form.notes}
               onChangeText={(v) => set('notes', v)}
-              placeholder="Add any notes..."
+              placeholder={t('addExpense.notesPlaceholder')}
               placeholderTextColor={colors.textDisabled}
               multiline
               numberOfLines={3}

@@ -10,9 +10,11 @@ import { useTheme } from '../contexts/ThemeContext';
 import { ExpenseWithRecord,
   getCategoryLabel,
   getCategoryIcon } from '../types';
-import { formatCurrency,
+import { useFormatCurrency,
   formatDueDay,
   getBillStatus } from '../utils/dateUtils';
+import { useTranslation } from 'react-i18next';
+
 
 interface Props {
   expense: ExpenseWithRecord;
@@ -26,11 +28,11 @@ interface Props {
 
 // ── Status configuration — semantic, not decorative ──
 const getStatusConfig = (colors: any) => ({
-  paid:      { color: colors.success,       bg: colors.successLight, label: 'Completed', icon: 'checkmark-circle' },
-  waived:    { color: colors.accentMuted,   bg: colors.primaryLight, label: 'Waived',    icon: 'gift-outline' },
-  overdue:   { color: colors.danger,        bg: colors.dangerLight,  label: 'Overdue',   icon: 'alert-circle' },
-  'due-soon':{ color: colors.warning,       bg: colors.warningLight, label: 'Due Soon',  icon: 'time' },
-  upcoming:  { color: colors.textSecondary, bg: colors.surfaceAlt,   label: 'Upcoming',  icon: 'calendar-outline' },
+  paid:       { color: colors.success,       bg: colors.successLight, labelKey: 'status.completed', icon: 'checkmark-circle' },
+  waived:     { color: colors.accentMuted,   bg: colors.primaryLight, labelKey: 'status.waived',    icon: 'gift-outline' },
+  overdue:    { color: colors.danger,        bg: colors.dangerLight,  labelKey: 'status.overdue',   icon: 'alert-circle' },
+  'due-soon': { color: colors.warning,       bg: colors.warningLight, labelKey: 'status.dueSoon',   icon: 'time' },
+  upcoming:   { color: colors.textSecondary, bg: colors.surfaceAlt,   labelKey: 'status.upcoming',  icon: 'calendar-outline' },
 });
 
 const formatShortDate = (iso: string): string => {
@@ -48,6 +50,8 @@ export const ExpenseCard = ({
   onWaive,
   weeklyAllocation }: Props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_CONFIG = useMemo(() => getStatusConfig(colors), [colors]);
 
@@ -75,46 +79,46 @@ export const ExpenseCard = ({
     colors.textPrimary;
 
   const handleLongPress = () => {
-    Alert.alert(expense.name, 'What would you like to do?', [
-      { text: 'Edit', onPress: () => onEdit?.(expense) },
+    Alert.alert(expense.name, t('commitments.whatToDo'), [
+      { text: t('common.edit'), onPress: () => onEdit?.(expense) },
       {
-        text: 'Mark as Waived',
+        text: t('commitments.markAsWaived'),
         onPress: () =>
           Alert.alert(
-            'Mark as Waived',
-            `Mark "${expense.name}" as waived? No payment needed — it will be resolved at $0.`,
+            t('commitments.markAsWaived'),
+            t('commitments.waiveConfirm', { name: expense.name }),
             [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Mark as Waived', onPress: () => onWaive?.(expense) },
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('commitments.markAsWaived'), onPress: () => onWaive?.(expense) },
             ]
           ) },
       {
-        text: 'Remove from this month',
+        text: t('commitments.removeFromMonth'),
         onPress: () =>
           Alert.alert(
-            'Remove from This Month',
-            `Remove "${expense.name}" from this month only? It will still appear in future months.`,
+            t('commitments.removeFromMonthTitle'),
+            t('commitments.removeFromMonthConfirm', { name: expense.name }),
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: t('common.cancel'), style: 'cancel' },
               {
-                text: 'Remove',
+                text: t('common.remove'),
                 style: 'destructive',
                 onPress: () => onExcludeFromMonth?.(expense) },
             ]
           ) },
       {
-        text: 'Delete permanently',
+        text: t('commitments.deletePermanently'),
         style: 'destructive',
         onPress: () =>
           Alert.alert(
-            'Delete Commitment',
-            `Are you sure you want to delete "${expense.name}"? This will remove it from all months.`,
+            t('commitments.deleteTitle'),
+            t('commitments.deleteConfirm', { name: expense.name }),
             [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Delete', style: 'destructive', onPress: () => onDelete?.(expense) },
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('common.delete'), style: 'destructive', onPress: () => onDelete?.(expense) },
             ]
           ) },
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
 
@@ -162,7 +166,7 @@ export const ExpenseCard = ({
                     : colors.business },
               ]}
             >
-              {expense.type === 'personal' ? 'Personal' : 'Business'}
+              {expense.type === 'personal' ? t('commitments.personal') : t('commitments.business')}
             </Text>
           </View>
         </View>
@@ -194,7 +198,7 @@ export const ExpenseCard = ({
         {/* Weekly allocation */}
         {weeklyAllocation !== undefined && !isResolved && (
           <Text style={styles.weeklyAlloc}>
-            This week:{' '}
+            {t('commitments.thisWeek')}{' '}
             <Text style={styles.weeklyAllocAmt}>{formatCurrency(weeklyAllocation)}</Text>
           </Text>
         )}
@@ -208,7 +212,7 @@ export const ExpenseCard = ({
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {statusConfig.label}
+              {t(statusConfig.labelKey)}
             </Text>
           </View>
           {expense.is_autopay && (

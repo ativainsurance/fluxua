@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 
 import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useSettings } from '../../contexts/SettingsContext';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Currency'>;
 
@@ -50,7 +52,15 @@ const CURRENCIES: Currency[] = [
   { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$', flag: '🇳🇿', locale: 'en-NZ', example: 'NZ$1,234.56' },
 ];
 
-const CurrencyItem = ({ item, selected, onSelect }: { item: Currency; selected: boolean; onSelect: () => void }) => {
+const CurrencyItem = ({
+  item,
+  selected,
+  onSelect,
+}: {
+  item: Currency;
+  selected: boolean;
+  onSelect: () => void;
+}) => {
   const { colors } = useTheme();
   return (
     <TouchableOpacity
@@ -80,7 +90,8 @@ const CurrencyItem = ({ item, selected, onSelect }: { item: Currency; selected: 
 export default function CurrencyScreen() {
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
-  const [selected, setSelected] = useState('USD');
+  const { t } = useTranslation();
+  const { currency, setCurrency } = useSettings();
   const [query, setQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -92,11 +103,17 @@ export default function CurrencyScreen() {
     );
   }, [query]);
 
-  const selectedCurrency = CURRENCIES.find(c => c.code === selected)!;
+  const selectedCurrency = CURRENCIES.find(c => c.code === currency) ?? CURRENCIES[0];
+
+  const handleSelect = async (code: string) => {
+    if (code === currency) return;
+    await setCurrency(code);
+    navigation.goBack();
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <SubScreenHeader title="Currency" onBack={() => navigation.goBack()} />
+      <SubScreenHeader title={t('currency.title')} onBack={() => navigation.goBack()} />
 
       <View style={{ flex: 1, gap: spacing.md, paddingTop: spacing.xs }}>
         {/* ── Preview card ── */}
@@ -109,7 +126,7 @@ export default function CurrencyScreen() {
             </View>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 3 }}>
-            <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.4)', letterSpacing: 0.4 }}>Example</Text>
+            <Text style={{ fontSize: typography.xs, color: 'rgba(250,250,247,0.4)', letterSpacing: 0.4 }}>{t('currency.example')}</Text>
             <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.teal, letterSpacing: -0.2 }}>{selectedCurrency.example}</Text>
           </View>
         </View>
@@ -121,7 +138,7 @@ export default function CurrencyScreen() {
             style={{ flex: 1, fontSize: typography.base, color: colors.textPrimary, paddingVertical: 0 }}
             value={query}
             onChangeText={setQuery}
-            placeholder="Search currencies…"
+            placeholder={t('currency.searchPlaceholder')}
             placeholderTextColor={colors.textDisabled}
             autoCapitalize="none"
             autoCorrect={false}
@@ -145,18 +162,26 @@ export default function CurrencyScreen() {
               {index > 0 && <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: spacing.base + 28 + spacing.md }} />}
               <CurrencyItem
                 item={item}
-                selected={item.code === selected}
-                onSelect={() => setSelected(item.code)}
+                selected={item.code === currency}
+                onSelect={() => handleSelect(item.code)}
               />
             </>
           )}
           style={{ marginHorizontal: spacing.base, backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden', ...shadows.card }}
-          contentContainerStyle={{ paddingBottom: spacing.xxxl }}
+          contentContainerStyle={{ paddingBottom: spacing.xxl }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
             <View style={{ alignItems: 'center', padding: spacing.xxl }}>
-              <Text style={{ fontSize: typography.sm, color: colors.textTertiary }}>No currencies match "{query}"</Text>
+              <Text style={{ fontSize: typography.sm, color: colors.textTertiary }}>{t('currency.noResults', { query })}</Text>
+            </View>
+          }
+          ListFooterComponent={
+            <View style={{ marginHorizontal: spacing.base, marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.md }}>
+              <Ionicons name="information-circle-outline" size={16} color={colors.textTertiary} />
+              <Text style={{ flex: 1, fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18 }}>
+                {t('settings.currencyDisclaimer')}
+              </Text>
             </View>
           }
         />

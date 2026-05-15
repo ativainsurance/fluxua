@@ -4,8 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { typography, spacing, radius, shadows } from '../theme';
 import { SettingsStackParamList } from '../navigation/types';
 
@@ -62,6 +64,8 @@ export default function SettingsScreen() {
   const navigation = useNavigation<Nav>();
   const { colors, isDark, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
+  const { language: lang, currency: curr } = useSettings();
   const [loading, setLoading] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signOutError, setSignOutError] = useState('');
@@ -69,14 +73,13 @@ export default function SettingsScreen() {
   const handleSignOut = async () => {
     setSignOutError(''); setLoading(true);
     try { await signOut(); }
-    catch { setSignOutError('Failed to sign out. Try again.'); setLoading(false); }
+    catch { setSignOutError(t('settings.failedSignOut')); setLoading(false); }
   };
 
   const emailDisplay = user?.email ?? '';
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
   const displayName = meta.display_name ?? meta.first_name ?? emailDisplay.split('@')[0] ?? 'User';
-  const currency = meta.currency ?? 'USD';
-  const language = meta.language === 'pt' ? 'Portuguese' : meta.language === 'es' ? 'Spanish' : 'English';
+  const languageLabel = lang === 'pt' ? 'Português' : lang === 'es' ? 'Español' : 'English';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -84,7 +87,7 @@ export default function SettingsScreen() {
 
         {/* Title */}
         <View style={{ paddingTop: spacing.md }}>
-          <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.3 }}>Settings</Text>
+          <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.3 }}>{t('settings.title')}</Text>
         </View>
 
         {/* Profile Card */}
@@ -103,7 +106,7 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.55)' }} numberOfLines={1}>{emailDisplay}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
                 <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.teal }} />
-                <Text style={{ fontSize: typography.xs, color: colors.teal, fontWeight: typography.semibold, letterSpacing: 0.2 }}>Personal &amp; Business</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.teal, fontWeight: typography.semibold, letterSpacing: 0.2 }}>{t('settings.personalBusiness')}</Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={16} color="rgba(250,250,247,0.4)" />
@@ -111,30 +114,30 @@ export default function SettingsScreen() {
         </TouchableOpacity>
 
         {/* Account */}
-        <Section label="Account">
-          <SettingsRow icon="person-outline" iconColor={colors.primary} iconBg={colors.primaryLight} label="Personal Details" right={{ type: 'chevron' }} onPress={() => navigation.navigate('PersonalDetails')} isFirst />
-          <SettingsRow icon="mail-outline" iconColor={colors.primary} iconBg={colors.primaryLight} label="Email" right={{ type: 'value', text: emailDisplay }} onPress={() => navigation.navigate('Email')} />
-          <SettingsRow icon="shield-outline" iconColor={colors.personal} iconBg={colors.personalLight} label="Security" right={{ type: 'chevron' }} onPress={() => navigation.navigate('Security')} />
+        <Section label={t('settings.account')}>
+          <SettingsRow icon="person-outline" iconColor={colors.primary} iconBg={colors.primaryLight} label={t('settings.personalDetails')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('PersonalDetails')} isFirst />
+          <SettingsRow icon="mail-outline" iconColor={colors.primary} iconBg={colors.primaryLight} label={t('settings.email')} right={{ type: 'value', text: emailDisplay }} onPress={() => navigation.navigate('Email')} />
+          <SettingsRow icon="shield-outline" iconColor={colors.personal} iconBg={colors.personalLight} label={t('settings.security')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('Security')} />
         </Section>
 
         {/* Preferences */}
-        <Section label="Preferences">
-          <SettingsRow icon="moon-outline" iconColor={colors.navy} iconBg={colors.surfaceAlt} label="Dark Mode" right={{ type: 'toggle', value: isDark, onChange: () => toggleTheme() }} onPress={() => toggleTheme()} isFirst />
-          <SettingsRow icon="notifications-outline" iconColor={colors.warning} iconBg={colors.warningLight} label="Notifications" right={{ type: 'chevron' }} onPress={() => navigation.navigate('Notifications')} />
-          <SettingsRow icon="cash-outline" iconColor={colors.success} iconBg={colors.successLight} label="Currency" right={{ type: 'value', text: currency }} onPress={() => navigation.navigate('Currency')} />
-          <SettingsRow icon="language-outline" iconColor={colors.teal} iconBg={colors.tealLight} label="Language" right={{ type: 'value', text: language }} onPress={() => navigation.navigate('Language')} />
+        <Section label={t('settings.preferences')}>
+          <SettingsRow icon="moon-outline" iconColor={colors.navy} iconBg={colors.surfaceAlt} label={t('settings.darkMode')} right={{ type: 'toggle', value: isDark, onChange: () => toggleTheme() }} onPress={() => toggleTheme()} isFirst />
+          <SettingsRow icon="notifications-outline" iconColor={colors.warning} iconBg={colors.warningLight} label={t('settings.notifications')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('Notifications')} />
+          <SettingsRow icon="cash-outline" iconColor={colors.success} iconBg={colors.successLight} label={t('settings.currency')} right={{ type: 'value', text: curr }} onPress={() => navigation.navigate('Currency')} />
+          <SettingsRow icon="language-outline" iconColor={colors.teal} iconBg={colors.tealLight} label={t('settings.language')} right={{ type: 'value', text: languageLabel }} onPress={() => navigation.navigate('Language')} />
         </Section>
 
         {/* Support */}
-        <Section label="Support">
-          <SettingsRow icon="help-circle-outline" iconColor={colors.business} iconBg={colors.businessLight} label="Help &amp; FAQ" right={{ type: 'chevron' }} onPress={() => navigation.navigate('HelpFaq')} isFirst />
-          <SettingsRow icon="lock-closed-outline" iconColor={colors.textSecondary} iconBg={colors.surfaceAlt} label="Privacy Policy" right={{ type: 'chevron' }} onPress={() => navigation.navigate('PrivacyPolicy')} />
-          <SettingsRow icon="star-outline" iconColor={colors.warning} iconBg={colors.warningLight} label="Rate Fluxua" right={{ type: 'badge', text: 'NEW', color: colors.teal }} onPress={() => {}} />
+        <Section label={t('settings.support')}>
+          <SettingsRow icon="help-circle-outline" iconColor={colors.business} iconBg={colors.businessLight} label={t('settings.helpFaq')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('HelpFaq')} isFirst />
+          <SettingsRow icon="lock-closed-outline" iconColor={colors.textSecondary} iconBg={colors.surfaceAlt} label={t('settings.privacyPolicy')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('PrivacyPolicy')} />
+          <SettingsRow icon="star-outline" iconColor={colors.warning} iconBg={colors.warningLight} label={t('settings.rateApp')} right={{ type: 'badge', text: t('common.new'), color: colors.teal }} onPress={() => {}} />
         </Section>
 
         {/* App */}
-        <Section label="App">
-          <SettingsRow icon="information-circle-outline" iconColor={colors.textSecondary} iconBg={colors.surfaceAlt} label="App Version" right={{ type: 'value', text: '1.0.0' }} isFirst />
+        <Section label={t('settings.app')}>
+          <SettingsRow icon="information-circle-outline" iconColor={colors.textSecondary} iconBg={colors.surfaceAlt} label={t('settings.appVersion')} right={{ type: 'value', text: '1.0.0' }} isFirst />
         </Section>
 
         {/* Sign out */}
@@ -144,7 +147,7 @@ export default function SettingsScreen() {
               <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: colors.danger + '22', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                 <Ionicons name="log-out-outline" size={18} color={colors.danger} />
               </View>
-              <Text style={{ flex: 1, fontSize: typography.base, fontWeight: typography.semibold, color: colors.danger }}>Log Out</Text>
+              <Text style={{ flex: 1, fontSize: typography.base, fontWeight: typography.semibold, color: colors.danger }}>{t('settings.logOut')}</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.danger} />
             </TouchableOpacity>
           ) : (
@@ -154,18 +157,18 @@ export default function SettingsScreen() {
                   <Ionicons name="log-out-outline" size={18} color={colors.danger} />
                 </View>
                 <View>
-                  <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }}>Sign out of Fluxua?</Text>
-                  <Text style={{ fontSize: typography.sm, color: colors.textSecondary, marginTop: 1 }}>You can sign back in anytime.</Text>
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }}>{t('settings.signOutTitle')}</Text>
+                  <Text style={{ fontSize: typography.sm, color: colors.textSecondary, marginTop: 1 }}>{t('settings.signOutSub')}</Text>
                 </View>
               </View>
               {signOutError ? <Text style={{ fontSize: typography.sm, color: colors.danger }}>{signOutError}</Text> : null}
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                 <TouchableOpacity style={{ flex: 1, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.md, paddingVertical: spacing.sm + 2, alignItems: 'center', backgroundColor: colors.surface }} onPress={() => { setConfirmSignOut(false); setSignOutError(''); }} activeOpacity={0.7}>
-                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textSecondary }}>Cancel</Text>
+                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textSecondary }}>{t('settings.cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ flex: 1, backgroundColor: colors.danger, borderRadius: radius.md, paddingVertical: spacing.sm + 2, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, opacity: loading ? 0.6 : 1, shadowColor: colors.danger, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.28, shadowRadius: 8, elevation: 3 }} onPress={handleSignOut} disabled={loading} activeOpacity={0.7}>
                   <Ionicons name="log-out-outline" size={14} color={colors.textInverse} />
-                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textInverse }}>{loading ? 'Signing out…' : 'Sign Out'}</Text>
+                  <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textInverse }}>{loading ? t('settings.signingOut') : t('settings.signOut')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

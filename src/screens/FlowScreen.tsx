@@ -11,12 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
-  formatCurrency,
+  useFormatCurrency,
   getWeeklyBreakdown,
   getShortMonthName,
   getCurrentWeekIndex,
@@ -86,6 +87,8 @@ const WeekBar = ({
   delay: number;
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const weekStyles = useMemo(() => makeWeekStyles(colors), [colors]);
 
   const barAnim = useRef(new Animated.Value(0)).current;
@@ -118,7 +121,7 @@ const WeekBar = ({
         <View style={weekStyles.headerRight}>
           {isCurrent && (
             <View style={weekStyles.nowPill}>
-              <Text style={weekStyles.nowText}>NOW</Text>
+              <Text style={weekStyles.nowText}>{t('flow.now')}</Text>
             </View>
           )}
           {isPast && !isCurrent && coverage >= 0.9 && (
@@ -138,7 +141,7 @@ const WeekBar = ({
 
       {isPast && (
         <Text style={[weekStyles.coverage, { color }]}>
-          {Math.round(coverage * 100)}% covered
+          {Math.round(coverage * 100)}% {t('overview.covered')}
         </Text>
       )}
     </View>
@@ -237,6 +240,8 @@ const CommitmentFlowRow = ({
   delay: number;
 }) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const flowRowStyles = useMemo(() => makeFlowRowStyles(colors), [colors]);
 
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
@@ -281,7 +286,7 @@ const CommitmentFlowRow = ({
 
           <View style={flowRowStyles.meta}>
             <Text style={flowRowStyles.name} numberOfLines={1}>{expense.name}</Text>
-            <Text style={flowRowStyles.due}>Due on the {getDayOrdinal(expense.due_day)}</Text>
+            <Text style={flowRowStyles.due}>{t('flow.dueOnThe', { day: getDayOrdinal(expense.due_day) })}</Text>
           </View>
 
           <View style={flowRowStyles.right}>
@@ -294,12 +299,12 @@ const CommitmentFlowRow = ({
             {isResolved ? (
               <View style={flowRowStyles.resolvedChip}>
                 <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={9} color={colors.success} />
-                <Text style={flowRowStyles.resolvedText}>{isWaived ? 'Waived' : 'Done'}</Text>
+                <Text style={flowRowStyles.resolvedText}>{isWaived ? t('status.waived') : t('status.paid')}</Text>
               </View>
             ) : thisWeek ? (
               <Text style={flowRowStyles.weekAlloc}>
                 <Text style={flowRowStyles.weekAllocAmt}>{formatCurrency(thisWeek.amount)}</Text>
-                {' '}this wk
+                {' '}{t('flow.thisWeek').toLowerCase()}
               </Text>
             ) : null}
           </View>
@@ -431,6 +436,8 @@ const makeFlowRowStyles = (colors: any) => StyleSheet.create({
 
 export default function FlowScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
@@ -484,8 +491,8 @@ export default function FlowScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Flow</Text>
-            <Text style={styles.subtitle}>Weekly cash commitment rhythm</Text>
+            <Text style={styles.title}>{t('nav.flow')}</Text>
+            <Text style={styles.subtitle}>{t('flow.subtitle')}</Text>
           </View>
         </View>
 
@@ -504,8 +511,8 @@ export default function FlowScreen() {
             <View style={styles.emptyIcon}>
               <Ionicons name="pulse-outline" size={28} color={colors.textTertiary} />
             </View>
-            <Text style={styles.emptyTitle}>No commitments this month</Text>
-            <Text style={styles.emptyText}>Add commitments in the Commitments tab to see your flow here.</Text>
+            <Text style={styles.emptyTitle}>{t('flow.noExpensesTitle')}</Text>
+            <Text style={styles.emptyText}>{t('flow.noExpensesText')}</Text>
           </View>
         ) : (
           <>
@@ -522,7 +529,7 @@ export default function FlowScreen() {
                   {/* Header */}
                   <View style={styles.heroHeaderRow}>
                     <View>
-                      <Text style={styles.heroEyebrow}>THIS WEEK</Text>
+                      <Text style={styles.heroEyebrow}>{t('flow.thisWeek').toUpperCase()}</Text>
                       <Text style={styles.heroTitle}>
                         {getShortMonthName(month)} {currentWeekData.startDay}–{currentWeekData.endDay}
                       </Text>
@@ -530,14 +537,14 @@ export default function FlowScreen() {
                     <View style={[styles.heroBadge, { backgroundColor: heroBarColor + '22' }]}>
                       <View style={[styles.heroBadgeDot, { backgroundColor: heroBarColor }]} />
                       <Text style={[styles.heroBadgeText, { color: heroBarColor }]}>
-                        {Math.round(coveragePct)}% covered
+                        {Math.round(coveragePct)}% {t('overview.covered')}
                       </Text>
                     </View>
                   </View>
 
                   {/* Amount */}
                   <Text style={styles.heroAmount}>{formatCurrency(weekNeeded)}</Text>
-                  <Text style={styles.heroAmountLabel}>committed this week</Text>
+                  <Text style={styles.heroAmountLabel}>{t('flow.committedThisWeek').toLowerCase()}</Text>
 
                   {/* Progress bar with glow */}
                   <View style={styles.heroBarTrack}>
@@ -571,7 +578,7 @@ export default function FlowScreen() {
                       <Text style={[styles.heroStatValue, { color: colors.success }]}>
                         {formatCurrency(weekCovered)}
                       </Text>
-                      <Text style={styles.heroStatLabel}>COVERED</Text>
+                      <Text style={styles.heroStatLabel}>{t('overview.covered').toUpperCase()}</Text>
                     </View>
                     <View style={styles.heroStatDivider} />
                     <View style={styles.heroStat}>
@@ -581,12 +588,12 @@ export default function FlowScreen() {
                       ]}>
                         {formatCurrency(weekUnallocated)}
                       </Text>
-                      <Text style={styles.heroStatLabel}>REMAINING</Text>
+                      <Text style={styles.heroStatLabel}>{t('overview.remainingUpper')}</Text>
                     </View>
                     <View style={styles.heroStatDivider} />
                     <View style={styles.heroStat}>
                       <Text style={styles.heroStatValue}>{formatCurrency(weekNeeded)}</Text>
-                      <Text style={styles.heroStatLabel}>COMMITTED</Text>
+                      <Text style={styles.heroStatLabel}>{t('flow.committed')}</Text>
                     </View>
                   </View>
                 </View>
@@ -595,7 +602,7 @@ export default function FlowScreen() {
 
             {/* ── Month Flow Grid ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{getShortMonthName(month)} Flow</Text>
+              <Text style={styles.sectionLabel}>{getShortMonthName(month)} {t('nav.flow')}</Text>
               <View style={styles.weekGrid}>
                 {totalWeeklyBreakdown.map((week, i) => {
                   const coverage = getWeekCoverage(expenses, i, month, year);
@@ -604,7 +611,7 @@ export default function FlowScreen() {
                   return (
                     <WeekBar
                       key={week.week}
-                      label={`Week ${week.week}`}
+                      label={t('flow.week', { n: week.week })}
                       dateRange={`${getShortMonthName(month)} ${week.startDay}–${week.endDay}`}
                       amount={week.amount}
                       coverage={coverage}
@@ -619,7 +626,7 @@ export default function FlowScreen() {
 
             {/* ── Per-Commitment Flow ── */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Per Commitment</Text>
+              <Text style={styles.sectionLabel}>{t('flow.perExpenseBreakdown')}</Text>
               {expenses.map((expense, i) => (
                 <CommitmentFlowRow
                   key={expense.id}

@@ -1,3 +1,4 @@
+import { useSettings } from '../contexts/SettingsContext';
 import { WeeklyBreakdown } from '../types';
 
 /**
@@ -127,15 +128,39 @@ export const getWeeklyBreakdown = (
 };
 
 /**
- * Formats a currency amount as a string.
- * e.g., 1200 → "$1,200.00"
+ * Pure formatter — use in non-component contexts (utilities, tests).
  */
-export const formatCurrency = (amount: number): string =>
-  new Intl.NumberFormat('en-US', {
+export const formatCurrencyRaw = (
+  amount: number,
+  currency: string,
+  locale: string,
+  compact = false
+): string => {
+  if (compact) {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(amount);
+  }
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'USD',
+    currency,
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
+};
+
+/**
+ * Hook — reads currency and language from SettingsContext.
+ * Returns a formatter function for use inside React components.
+ */
+export const useFormatCurrency = (): ((amount: number, compact?: boolean) => string) => {
+  const { currency, language } = useSettings();
+  return (amount: number, compact = false) =>
+    formatCurrencyRaw(amount, currency, language, compact);
+};
 
 /**
  * Returns the 0-based index of the week that contains `day` in a given month.

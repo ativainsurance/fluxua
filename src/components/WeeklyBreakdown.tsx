@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { ExpenseWithRecord } from '../types';
 import { getWeeklyBreakdown,
-  formatCurrency,
+  useFormatCurrency,
   getShortMonthName,
   getDayOrdinal,
   getCurrentWeekIndex,
@@ -35,6 +36,8 @@ const getPressureBarColor = (
 
 export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const weeks = getWeeklyBreakdown(expense.amount, month, year, getShortMonthName(month));
   const maxAmount = Math.max(...weeks.map((w) => w.amount));
@@ -68,12 +71,12 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
             </View>
           )}
         </View>
-        <Text style={styles.subtitle}>Weekly flow allocation</Text>
+        <Text style={styles.subtitle}>{t('flow.weeklyFlowAllocation')}</Text>
       </View>
 
       {/* Total */}
       <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total Flow</Text>
+        <Text style={styles.totalLabel}>{t('flow.totalFlow')}</Text>
         <Text style={styles.totalAmount}>{formatCurrency(expense.amount)}</Text>
       </View>
 
@@ -125,8 +128,8 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
         />
         <Text style={[styles.dueText, isPaid && { color: colors.success }]}>
           {isPaid
-            ? `Completed — ${formatCurrency(expense.record?.actual_amount ?? expense.amount)} paid`
-            : `Full amount of ${formatCurrency(expense.amount)} due on the ${getDayOrdinal(expense.due_day)}`
+            ? `${t('status.completed')} — ${formatCurrency(expense.record?.actual_amount ?? expense.amount)} ${t('overview.settled').toLowerCase()}`
+            : t('flow.fullAmountDue', { amount: formatCurrency(expense.amount), day: getDayOrdinal(expense.due_day) })
           }
         </Text>
       </View>

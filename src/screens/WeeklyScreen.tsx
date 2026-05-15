@@ -8,9 +8,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { useExpenses } from '../hooks/useExpenses';
-import { getCurrentMonthYear, formatCurrency, getWeeklyBreakdown, getShortMonthName } from '../utils/dateUtils';
+import { getCurrentMonthYear, useFormatCurrency, getWeeklyBreakdown, getShortMonthName } from '../utils/dateUtils';
 import {  typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { MonthSelector } from '../components/MonthSelector';
@@ -18,6 +19,8 @@ import { WeeklyBreakdown } from '../components/WeeklyBreakdown';
 
 export default function WeeklyScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
   const [month, setMonth] = useState(currentMonth);
@@ -44,10 +47,8 @@ export default function WeeklyScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Weekly Breakdown</Text>
-          <Text style={styles.subtitle}>
-            How much to set aside each week to cover your bills
-          </Text>
+          <Text style={styles.title}>{t('flow.title')}</Text>
+          <Text style={styles.subtitle}>{t('flow.subtitle')}</Text>
         </View>
 
         {/* Month selector */}
@@ -66,9 +67,9 @@ export default function WeeklyScreen() {
             {/* Total weekly overview */}
             {summary.total > 0 && (
               <View style={styles.overviewCard}>
-                <Text style={styles.overviewTitle}>All Expenses Combined</Text>
+                <Text style={styles.overviewTitle}>{t('flow.allExpensesCombined')}</Text>
                 <Text style={styles.overviewSub}>
-                  Total monthly: {formatCurrency(summary.total)}
+                  {t('flow.totalMonthly')} {formatCurrency(summary.total)}
                 </Text>
                 <View style={styles.weekGrid}>
                   {totalWeeklyBreakdown.map((week) => (
@@ -87,7 +88,7 @@ export default function WeeklyScreen() {
             {/* Per-expense breakdowns */}
             {expenses.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Per-Expense Breakdown</Text>
+                <Text style={styles.sectionTitle}>{t('flow.perExpenseBreakdown')}</Text>
                 {expenses.map((expense) => (
                   <WeeklyBreakdown
                     key={expense.id}
@@ -102,10 +103,8 @@ export default function WeeklyScreen() {
             {/* Empty state */}
             {expenses.length === 0 && (
               <View style={styles.empty}>
-                <Text style={styles.emptyTitle}>No expenses this month</Text>
-                <Text style={styles.emptyText}>
-                  Add expenses in the Expenses tab to see your weekly breakdown here.
-                </Text>
+                <Text style={styles.emptyTitle}>{t('flow.noExpensesTitle')}</Text>
+                <Text style={styles.emptyText}>{t('flow.noExpensesText')}</Text>
               </View>
             )}
           </>

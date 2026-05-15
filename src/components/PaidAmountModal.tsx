@@ -8,9 +8,11 @@ import { Modal,
   KeyboardAvoidingView,
   Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
-import { formatCurrency } from '../utils/dateUtils';
+import { useFormatCurrency } from '../utils/dateUtils';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface Props {
   visible: boolean;
@@ -31,6 +33,9 @@ export const PaidAmountModal = ({
   onSkip,
   onCancel }: Props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { currencySymbol } = useSettings();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [value, setValue] = useState('');
@@ -81,21 +86,20 @@ export const PaidAmountModal = ({
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.title}>Mark as Paid</Text>
+          <Text style={styles.title}>{t('paidModal.title')}</Text>
           <Text style={styles.subtitle}>
-            How much did you actually pay for{' '}
-            <Text style={styles.bold}>{expenseName}</Text> in {monthLabel}?
+            {t('paidModal.subtitle', { name: expenseName, month: monthLabel })}
           </Text>
 
           {/* Planned amount hint */}
           <Text style={styles.hint}>
-            Planned: {formatCurrency(plannedAmount)}
+            {t('paidModal.planned')} {formatCurrency(plannedAmount)}
           </Text>
 
           {/* Actual amount input */}
-          <Text style={styles.fieldLabel}>Amount paid</Text>
+          <Text style={styles.fieldLabel}>{t('paidModal.amountPaid')}</Text>
           <View style={styles.inputWrapper}>
-            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
             <TextInput
               style={styles.input}
               value={value}
@@ -120,16 +124,16 @@ export const PaidAmountModal = ({
                 ]}
               >
                 {parsed > plannedAmount ? '+' : ''}
-                {formatCurrency(parsed - plannedAmount)} vs planned
+                {formatCurrency(parsed - plannedAmount)} {t('paidModal.vsPlanned')}
               </Text>
             </View>
           )}
 
           {/* Credit applied input */}
-          <Text style={styles.fieldLabel}>Credit applied <Text style={styles.optional}>(optional)</Text></Text>
+          <Text style={styles.fieldLabel}>{t('paidModal.creditApplied')} <Text style={styles.optional}>{t('paidModal.optional')}</Text></Text>
           <View style={[styles.inputWrapper, styles.creditWrapper]}>
             <Ionicons name="gift-outline" size={16} color={colors.primary} style={styles.lateFeeIcon} />
-            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
             <TextInput
               style={styles.input}
               value={creditValue}
@@ -144,17 +148,17 @@ export const PaidAmountModal = ({
             <View style={styles.diffRow}>
               <Ionicons name="checkmark-circle-outline" size={14} color={colors.primary} />
               <Text style={[styles.diffText, { color: colors.primary }]}>
-                {formatCurrency(parsedCredit)} credit applied
-                {isValid ? ` · Net out of pocket: ${formatCurrency(Math.max(0, parsed - parsedCredit))}` : ''}
+                {t('paidModal.creditAppliedLabel', { amount: formatCurrency(parsedCredit) })}
+                {isValid ? ` · ${t('paidModal.netOutOfPocket', { amount: formatCurrency(Math.max(0, parsed - parsedCredit)) })}` : ''}
               </Text>
             </View>
           )}
 
           {/* Late fee input */}
-          <Text style={styles.fieldLabel}>Late fee <Text style={styles.optional}>(optional)</Text></Text>
+          <Text style={styles.fieldLabel}>{t('paidModal.lateFee')} <Text style={styles.optional}>{t('paidModal.optional')}</Text></Text>
           <View style={[styles.inputWrapper, styles.lateFeeWrapper]}>
             <Ionicons name="warning-outline" size={16} color={colors.warning} style={styles.lateFeeIcon} />
-            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.currencySymbol}>{currencySymbol}</Text>
             <TextInput
               style={styles.input}
               value={lateFeeValue}
@@ -169,8 +173,7 @@ export const PaidAmountModal = ({
             <View style={styles.diffRow}>
               <Ionicons name="alert-circle-outline" size={14} color={colors.warning} />
               <Text style={[styles.diffText, { color: colors.warning }]}>
-                Total out: {formatCurrency(parsed + parsedLateFee)}
-                {' '}({formatCurrency(parsed)} + {formatCurrency(parsedLateFee)} fee)
+                {t('paidModal.totalOut', { total: formatCurrency(parsed + parsedLateFee), amount: formatCurrency(parsed), fee: formatCurrency(parsedLateFee) })}
               </Text>
             </View>
           )}
@@ -178,14 +181,14 @@ export const PaidAmountModal = ({
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.skipBtn} onPress={onSkip}>
-              <Text style={styles.skipText}>Use planned amount</Text>
+              <Text style={styles.skipText}>{t('paidModal.usePlannedAmount')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.confirmBtn, !isValid && styles.confirmBtnDisabled]}
               onPress={handleConfirm}
               disabled={!isValid}
             >
-              <Text style={styles.confirmText}>Confirm</Text>
+              <Text style={styles.confirmText}>{t('paidModal.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -78,6 +79,7 @@ const SettingsNavigator = () => (
 
 const MainNavigator = () => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <MainTab.Navigator
       initialRouteName="Flow"
@@ -116,10 +118,10 @@ const MainNavigator = () => {
         },
       })}
     >
-      <MainTab.Screen name="Flow" component={FlowScreen} options={{ tabBarLabel: 'Flow' }} />
-      <MainTab.Screen name="Commitments" component={ExpensesScreen} options={{ tabBarLabel: 'Commitments' }} />
-      <MainTab.Screen name="Overview" component={DashboardScreen} options={{ tabBarLabel: 'Overview' }} />
-      <MainTab.Screen name="Settings" component={SettingsNavigator} options={{ tabBarLabel: 'Settings' }} />
+      <MainTab.Screen name="Flow" component={FlowScreen} options={{ tabBarLabel: t('nav.flow') }} />
+      <MainTab.Screen name="Commitments" component={ExpensesScreen} options={{ tabBarLabel: t('nav.commitments') }} />
+      <MainTab.Screen name="Overview" component={DashboardScreen} options={{ tabBarLabel: t('nav.overview') }} />
+      <MainTab.Screen name="Settings" component={SettingsNavigator} options={{ tabBarLabel: t('nav.settings') }} />
     </MainTab.Navigator>
   );
 };

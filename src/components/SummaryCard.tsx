@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { gradient, typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { MonthlySummary } from '../types';
-import { formatCurrency } from '../utils/dateUtils';
+import { useFormatCurrency } from '../utils/dateUtils';
 
 interface Props {
   summary: MonthlySummary;
@@ -12,6 +12,7 @@ interface Props {
 
 export const SummaryCard = ({ summary }: Props) => {
   const { colors } = useTheme();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const progressPct =
     summary.total > 0 ? (summary.totalPaid / summary.total) * 100 : 0;

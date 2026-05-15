@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
@@ -35,6 +36,7 @@ interface PendingPaid {
 
 export default function ExpensesScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
 
@@ -72,9 +74,9 @@ export default function ExpensesScreen() {
   };
 
   const tabs: { key: TabType; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'personal', label: 'Personal' },
-    { key: 'business', label: 'Business' },
+    { key: 'all', label: t('commitments.all') },
+    { key: 'personal', label: t('commitments.personal') },
+    { key: 'business', label: t('commitments.business') },
   ];
 
   const tabColor = (tab: TabType) => {
@@ -87,7 +89,7 @@ export default function ExpensesScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Commitments</Text>
+        <Text style={styles.title}>{t('commitments.title')}</Text>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => navigation.navigate('AddExpense')}
@@ -107,12 +109,12 @@ export default function ExpensesScreen() {
       <View style={styles.stripRow}>
         <View style={[styles.strip, { backgroundColor: colors.successLight }]}>
           <Text style={[styles.stripAmt, { color: colors.success }]}>
-            {summary.paidCount} completed
+            {t('commitments.completed', { count: summary.paidCount })}
           </Text>
         </View>
         <View style={[styles.strip, { backgroundColor: colors.dangerLight }]}>
           <Text style={[styles.stripAmt, { color: colors.danger }]}>
-            {summary.expenseCount - summary.paidCount} unallocated
+            {t('commitments.unallocated', { count: summary.expenseCount - summary.paidCount })}
           </Text>
         </View>
       </View>
@@ -176,14 +178,16 @@ export default function ExpensesScreen() {
               <Ionicons name="receipt-outline" size={40} color={colors.textDisabled} />
               <Text style={styles.emptyText}>
                 {activeTab === 'all'
-                  ? 'No commitments this month'
-                  : `No ${activeTab} commitments`}
+                  ? t('commitments.noCommitmentsTitle')
+                  : activeTab === 'personal'
+                    ? t('commitments.noPersonalCommitments')
+                    : t('commitments.noBusinessCommitments')}
               </Text>
               <TouchableOpacity
                 style={styles.emptyBtn}
                 onPress={() => navigation.navigate('AddExpense')}
               >
-                <Text style={styles.emptyBtnText}>Add commitment</Text>
+                <Text style={styles.emptyBtnText}>{t('commitments.addCommitment')}</Text>
               </TouchableOpacity>
             </View>
           }
