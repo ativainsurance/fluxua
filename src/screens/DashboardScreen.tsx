@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
@@ -28,7 +29,6 @@ import {
 } from '../utils/dateUtils';
 import { typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
-import { PaidAmountModal } from '../components/PaidAmountModal';
 import { ExpenseWithRecord, getCategoryIcon, getCategoryLabel, CATEGORY_LABELS } from '../types';
 
 // ─────────────────────────────────────────────
@@ -53,28 +53,26 @@ const CATEGORY_COLORS: Record<string, { accent: string; bg: string; darkBg: stri
 const getCategoryColor = (category: string) =>
   CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
 
-// STATUS_ACCENT uses warm editorial semantic colors
-// NOTE: these are light-mode hardcodes; dark mode derives from the ThemeContext per-component
 const STATUS_ACCENT_LIGHT: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
-  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)', labelKey: 'status.completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)', labelKey: 'status.waived',   icon: 'gift-outline'      },
-  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)', labelKey: 'status.overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)', labelKey: 'status.dueSoon',  icon: 'time'              },
-  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', labelKey: 'status.upcoming', icon: 'calendar-outline' },
+  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)',   labelKey: 'status.completed', icon: 'checkmark-circle'  },
+  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)',  labelKey: 'status.waived',    icon: 'gift-outline'      },
+  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)',   labelKey: 'status.overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)',   labelKey: 'status.dueSoon',   icon: 'time'              },
+  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
 };
 
 const STATUS_ACCENT_DARK: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
   paid:       { accent: '#7FA582', bg: 'rgba(127,165,130,0.15)', labelKey: 'status.completed', icon: 'checkmark-circle'  },
   waived:     { accent: '#A78BFA', bg: 'rgba(167,139,250,0.15)', labelKey: 'status.waived',    icon: 'gift-outline'      },
-  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',  labelKey: 'status.overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)', labelKey: 'status.dueSoon',  icon: 'time'              },
-  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',   labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
+  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',   labelKey: 'status.overdue',   icon: 'alert-circle'      },
+  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)',  labelKey: 'status.dueSoon',   icon: 'time'              },
+  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',    labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
 };
 
 const getStatusAccent = (isDark: boolean) => isDark ? STATUS_ACCENT_DARK : STATUS_ACCENT_LIGHT;
 
 // ─────────────────────────────────────────────
-// MetricCard — premium KPI tile
+// MetricCard — kept for future use
 // ─────────────────────────────────────────────
 
 const MetricCard = ({
@@ -106,51 +104,28 @@ const MetricCard = ({
       borderWidth: 1,
       borderColor: colors.border,
     }}>
-      {/* Icon + accent strip */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{
-          width: 36,
-          height: 36,
-          borderRadius: 11,
-          backgroundColor: accentBg,
-          justifyContent: 'center',
-          alignItems: 'center',
+          width: 36, height: 36, borderRadius: 11,
+          backgroundColor: accentBg, justifyContent: 'center', alignItems: 'center',
         }}>
           <Ionicons name={icon as any} size={17} color={accent} />
         </View>
-        <View style={{
-          width: 6,
-          height: 6,
-          borderRadius: 3,
-          backgroundColor: accent,
-          opacity: 0.6,
-        }} />
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: accent, opacity: 0.6 }} />
       </View>
-
-      {/* Value */}
       <Text style={{
-        fontSize: typography.xl,
-        fontWeight: typography.extrabold,
-        color: colors.textPrimary,
-        letterSpacing: -0.6,
-        lineHeight: 28,
+        fontSize: typography.xl, fontWeight: typography.extrabold,
+        color: colors.textPrimary, letterSpacing: -0.6, lineHeight: 28,
       }} numberOfLines={1}>{value}</Text>
-
-      {/* Label */}
       <View style={{ gap: 2 }}>
         <Text style={{
-          fontSize: typography.xs,
-          fontWeight: typography.semibold,
-          color: colors.textSecondary,
-          letterSpacing: 0.1,
+          fontSize: typography.xs, fontWeight: typography.semibold,
+          color: colors.textSecondary, letterSpacing: 0.1,
         }}>{label}</Text>
         {subtitle ? (
-          <Text style={{
-            fontSize: 10,
-            color: accent,
-            fontWeight: typography.semibold,
-            letterSpacing: 0.2,
-          }}>{subtitle}</Text>
+          <Text style={{ fontSize: 10, color: accent, fontWeight: typography.semibold, letterSpacing: 0.2 }}>
+            {subtitle}
+          </Text>
         ) : null}
       </View>
     </View>
@@ -158,7 +133,7 @@ const MetricCard = ({
 };
 
 // ─────────────────────────────────────────────
-// SplitCard — Business vs Personal breakdown
+// SplitCard (navy) — kept for future use
 // ─────────────────────────────────────────────
 
 const SplitCard = ({
@@ -170,7 +145,7 @@ const SplitCard = ({
   businessTotal: number;
   total: number;
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const barAnim = useRef(new Animated.Value(0)).current;
@@ -179,11 +154,7 @@ const SplitCard = ({
   const businessPct = total > 0 ? businessTotal / total : 0;
 
   useEffect(() => {
-    Animated.timing(barAnim, {
-      toValue: 1,
-      duration: 900,
-      useNativeDriver: false,
-    }).start();
+    Animated.timing(barAnim, { toValue: 1, duration: 900, useNativeDriver: false }).start();
   }, [personalPct]);
 
   const personalWidth = barAnim.interpolate({
@@ -196,119 +167,40 @@ const SplitCard = ({
 
   return (
     <View style={{
-      backgroundColor: colors.navy,
-      borderRadius: radius.xxl,
-      padding: spacing.xl,
-      gap: spacing.lg,
-      overflow: 'hidden',
-      ...shadows.hero,
+      backgroundColor: colors.navy, borderRadius: radius.xxl,
+      padding: spacing.xl, gap: spacing.lg, overflow: 'hidden', ...shadows.hero,
     }}>
-      {/* Ambient glow */}
-      <View style={{
-        position: 'absolute', top: -60, left: -40,
-        width: 200, height: 200, borderRadius: 100,
-        backgroundColor: colors.personal, opacity: 0.10,
-      }} />
-      <View style={{
-        position: 'absolute', bottom: -50, right: -30,
-        width: 180, height: 180, borderRadius: 90,
-        backgroundColor: colors.business, opacity: 0.10,
-      }} />
-
-      {/* Header */}
+      <View style={{ position: 'absolute', top: -60, left: -40, width: 200, height: 200, borderRadius: 100, backgroundColor: colors.personal, opacity: 0.10 }} />
+      <View style={{ position: 'absolute', bottom: -50, right: -30, width: 180, height: 180, borderRadius: 90, backgroundColor: colors.business, opacity: 0.10 }} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{
-          fontSize: typography.sm,
-          fontWeight: typography.bold,
-          color: colors.textInverse,
-          letterSpacing: -0.1,
-        }}>{t('overview.commitmentSplit')}</Text>
-        <View style={{
-          backgroundColor: 'rgba(250,250,247,0.08)',
-          borderRadius: radius.full,
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderWidth: 1,
-          borderColor: 'rgba(250,250,247,0.10)',
-        }}>
+        <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.1 }}>
+          {t('overview.commitmentSplit')}
+        </Text>
+        <View style={{ backgroundColor: 'rgba(250,250,247,0.08)', borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(250,250,247,0.10)' }}>
           <Text style={{ fontSize: 10, color: 'rgba(250,250,247,0.55)', fontWeight: typography.semibold }}>
             {formatCurrency(total)} total
           </Text>
         </View>
       </View>
-
-      {/* Split bar */}
-      <View style={{
-        height: 10,
-        borderRadius: radius.full,
-        backgroundColor: 'rgba(250,250,247,0.08)',
-        overflow: 'hidden',
-        flexDirection: 'row',
-      }}>
-        <Animated.View style={{
-          width: personalWidth,
-          height: '100%',
-          backgroundColor: colors.personal,
-          shadowColor: colors.personal,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 6,
-        }} />
-        {/* Remaining = business (shown as different shade) */}
+      <View style={{ height: 10, borderRadius: radius.full, backgroundColor: 'rgba(250,250,247,0.08)', overflow: 'hidden', flexDirection: 'row' }}>
+        <Animated.View style={{ width: personalWidth, height: '100%', backgroundColor: colors.personal, shadowColor: colors.personal, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 6 }} />
       </View>
-
-      {/* Legend row */}
       <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        {/* Personal */}
-        <View style={{
-          flex: 1,
-          backgroundColor: colors.personalLight,
-          borderRadius: radius.lg,
-          padding: spacing.md,
-          borderWidth: 1,
-          borderColor: colors.personal + '30',
-        }}>
+        <View style={{ flex: 1, backgroundColor: colors.personalLight, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.personal + '30' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.personal }} />
-            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
-              {t('overview.personal')}
-            </Text>
+            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>{t('overview.personal')}</Text>
           </View>
-          <Text style={{
-            fontSize: typography.lg,
-            fontWeight: typography.extrabold,
-            color: colors.textInverse,
-            letterSpacing: -0.5,
-          }}>{formatCurrency(personalTotal)}</Text>
-          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
-            {Math.round(personalPct * 100)}{t('overview.ofTotal')}
-          </Text>
+          <Text style={{ fontSize: typography.lg, fontWeight: typography.extrabold, color: colors.textInverse, letterSpacing: -0.5 }}>{formatCurrency(personalTotal)}</Text>
+          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>{Math.round(personalPct * 100)}{t('overview.ofTotal')}</Text>
         </View>
-
-        {/* Business */}
-        <View style={{
-          flex: 1,
-          backgroundColor: colors.businessLight,
-          borderRadius: radius.lg,
-          padding: spacing.md,
-          borderWidth: 1,
-          borderColor: colors.business + '30',
-        }}>
+        <View style={{ flex: 1, backgroundColor: colors.businessLight, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.business + '30' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.business }} />
-            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>
-              {t('overview.business')}
-            </Text>
+            <Text style={{ fontSize: 10, color: 'rgba(244,241,234,0.50)', fontWeight: typography.semibold, letterSpacing: 0.5 }}>{t('overview.business')}</Text>
           </View>
-          <Text style={{
-            fontSize: typography.lg,
-            fontWeight: typography.extrabold,
-            color: colors.textInverse,
-            letterSpacing: -0.5,
-          }}>{formatCurrency(businessTotal)}</Text>
-          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>
-            {Math.round(businessPct * 100)}{t('overview.ofTotal')}
-          </Text>
+          <Text style={{ fontSize: typography.lg, fontWeight: typography.extrabold, color: colors.textInverse, letterSpacing: -0.5 }}>{formatCurrency(businessTotal)}</Text>
+          <Text style={{ fontSize: 11, color: 'rgba(244,241,234,0.40)', marginTop: 2 }}>{Math.round(businessPct * 100)}{t('overview.ofTotal')}</Text>
         </View>
       </View>
     </View>
@@ -316,25 +208,16 @@ const SplitCard = ({
 };
 
 // ─────────────────────────────────────────────
-// WeekBar — single animated vertical bar
+// WeekBar — kept for future use
 // ─────────────────────────────────────────────
 
 const BAR_MAX_HEIGHT = 62;
 
 const WeekBar = ({
-  label,
-  amount,
-  maxAmount,
-  paidAmount,
-  accent,
-  delay,
+  label, amount, maxAmount, paidAmount, accent, delay,
 }: {
-  label: string;
-  amount: number;
-  maxAmount: number;
-  paidAmount: number;
-  accent: string;
-  delay: number;
+  label: string; amount: number; maxAmount: number;
+  paidAmount: number; accent: string; delay: number;
 }) => {
   const { colors } = useTheme();
   const formatCurrency = useFormatCurrency();
@@ -353,83 +236,35 @@ const WeekBar = ({
 
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 6 }}>
-      {/* Amount label above bar */}
       {amount > 0 && (
         <Text style={{ fontSize: 9, color: colors.textTertiary, fontWeight: typography.semibold }}>
           {formatCurrency(amount, true)}
         </Text>
       )}
-
-      {/* Bar container */}
-      <View style={{
-        width: '70%',
-        height: BAR_MAX_HEIGHT,
-        justifyContent: 'flex-end',
-        borderRadius: radius.sm,
-        backgroundColor: colors.surfaceAlt,
-        overflow: 'hidden',
-      }}>
-        {/* Total bar (track) */}
-        <Animated.View style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: totalAnim,
-          backgroundColor: accent + '30',
-          borderRadius: radius.sm,
-        }} />
-        {/* Paid portion */}
-        <Animated.View style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: paidAnim,
-          backgroundColor: accent,
-          borderRadius: radius.sm,
-          shadowColor: accent,
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
-          shadowRadius: 4,
-        }} />
+      <View style={{ width: '70%', height: BAR_MAX_HEIGHT, justifyContent: 'flex-end', borderRadius: radius.sm, backgroundColor: colors.surfaceAlt, overflow: 'hidden' }}>
+        <Animated.View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: totalAnim, backgroundColor: accent + '30', borderRadius: radius.sm }} />
+        <Animated.View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: paidAnim, backgroundColor: accent, borderRadius: radius.sm, shadowColor: accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 4 }} />
       </View>
-
-      {/* Week label */}
-      <Text style={{
-        fontSize: 10,
-        color: colors.textSecondary,
-        fontWeight: typography.semibold,
-        letterSpacing: 0.2,
-      }}>{label}</Text>
+      <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold, letterSpacing: 0.2 }}>{label}</Text>
     </View>
   );
 };
 
 // ─────────────────────────────────────────────
-// WeeklyFlowChart — 4-column bar chart
+// WeeklyFlowChart — kept for future use
 // ─────────────────────────────────────────────
 
-const WeeklyFlowChart = ({
-  expenses,
-  month,
-  year,
-}: {
-  expenses: ExpenseWithRecord[];
-  month: number;
-  year: number;
-}) => {
+const WeeklyFlowChart = ({ expenses, month, year }: { expenses: ExpenseWithRecord[]; month: number; year: number }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
 
-  // Bucket expenses by week using due_day
   const weekBuckets = useMemo(() => {
     const buckets = [
-      { label: 'Wk 1', days: '1–7',  total: 0, paid: 0 },
-      { label: 'Wk 2', days: '8–14', total: 0, paid: 0 },
-      { label: 'Wk 3', days: '15–21',total: 0, paid: 0 },
-      { label: 'Wk 4', days: '22+',  total: 0, paid: 0 },
+      { label: 'Wk 1', days: '1–7',   total: 0, paid: 0 },
+      { label: 'Wk 2', days: '8–14',  total: 0, paid: 0 },
+      { label: 'Wk 3', days: '15–21', total: 0, paid: 0 },
+      { label: 'Wk 4', days: '22+',   total: 0, paid: 0 },
     ];
     expenses.forEach(e => {
       const d = e.due_day;
@@ -444,73 +279,25 @@ const WeeklyFlowChart = ({
 
   const maxAmount = Math.max(...weekBuckets.map(b => b.total), 1);
   const totalFlow = weekBuckets.reduce((s, b) => s + b.total, 0);
-
   const BAR_ACCENTS = [colors.primary, colors.teal, colors.accentMuted, colors.warning];
 
   return (
-    <View style={{
-      backgroundColor: colors.surface,
-      borderRadius: radius.xl,
-      padding: spacing.base,
-      gap: spacing.md,
-      ...shadows.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-    }}>
-      {/* Header */}
+    <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View>
-          <Text style={{
-            fontSize: typography.sm,
-            fontWeight: typography.bold,
-            color: colors.textPrimary,
-            letterSpacing: -0.1,
-          }}>{t('overview.weeklyFlow')}</Text>
-          <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>
-            {t('overview.commitmentSchedule', { month: getMonthName(month) })}
-          </Text>
+          <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.1 }}>{t('overview.weeklyFlow')}</Text>
+          <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>{t('overview.commitmentSchedule', { month: getMonthName(month) })}</Text>
         </View>
-        <View style={{
-          backgroundColor: colors.tealLight,
-          borderRadius: radius.full,
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-        }}>
-          <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>
-            {formatCurrency(totalFlow)}
-          </Text>
+        <View style={{ backgroundColor: colors.tealLight, borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4 }}>
+          <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>{formatCurrency(totalFlow)}</Text>
         </View>
       </View>
-
-      {/* Bar chart */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'flex-end',
-        gap: spacing.xs,
-        paddingTop: 20,
-        paddingBottom: 4,
-      }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xs, paddingTop: 20, paddingBottom: 4 }}>
         {weekBuckets.map((bucket, i) => (
-          <WeekBar
-            key={bucket.label}
-            label={bucket.label}
-            amount={bucket.total}
-            maxAmount={maxAmount}
-            paidAmount={bucket.paid}
-            accent={BAR_ACCENTS[i]}
-            delay={i * 80}
-          />
+          <WeekBar key={bucket.label} label={bucket.label} amount={bucket.total} maxAmount={maxAmount} paidAmount={bucket.paid} accent={BAR_ACCENTS[i]} delay={i * 80} />
         ))}
       </View>
-
-      {/* Legend */}
-      <View style={{
-        flexDirection: 'row',
-        gap: spacing.lg,
-        paddingTop: spacing.xs,
-        borderTopWidth: 1,
-        borderTopColor: colors.divider,
-      }}>
+      <View style={{ flexDirection: 'row', gap: spacing.lg, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.divider }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: colors.teal }} />
           <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.medium }}>{t('overview.coveredLegend')}</Text>
@@ -525,22 +312,10 @@ const WeeklyFlowChart = ({
 };
 
 // ─────────────────────────────────────────────
-// CategoryBar — single animated category row
+// CategoryBar — kept for future use
 // ─────────────────────────────────────────────
 
-const CategoryBar = ({
-  category,
-  amount,
-  count,
-  maxAmount,
-  isDark,
-}: {
-  category: string;
-  amount: number;
-  count: number;
-  maxAmount: number;
-  isDark: boolean;
-}) => {
+const CategoryBar = ({ category, amount, count, maxAmount, isDark }: { category: string; amount: number; count: number; maxAmount: number; isDark: boolean }) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
@@ -548,76 +323,28 @@ const CategoryBar = ({
   const pct = maxAmount > 0 ? amount / maxAmount : 0;
 
   useEffect(() => {
-    Animated.timing(barAnim, {
-      toValue: pct,
-      duration: 700,
-      delay: 100,
-      useNativeDriver: false,
-    }).start();
+    Animated.timing(barAnim, { toValue: pct, duration: 700, delay: 100, useNativeDriver: false }).start();
   }, [pct]);
 
-  const barWidth = barAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-    extrapolate: 'clamp',
-  });
-
+  const barWidth = barAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
   const catColor = getCategoryColor(category);
   const iconBg = isDark ? catColor.darkBg : catColor.bg;
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-      {/* Icon */}
-      <View style={{
-        width: 36,
-        height: 36,
-        borderRadius: 11,
-        backgroundColor: iconBg,
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexShrink: 0,
-      }}>
+      <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: iconBg, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
         <Ionicons name={getCategoryIcon(category) as any} size={16} color={catColor.accent} />
       </View>
-
-      {/* Bar + meta */}
       <View style={{ flex: 1, gap: 5 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{
-            fontSize: typography.sm,
-            fontWeight: typography.semibold,
-            color: colors.textPrimary,
-          }}>{getCategoryLabel(category)}</Text>
+          <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary }}>{getCategoryLabel(category)}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <Text style={{
-              fontSize: 10,
-              color: colors.textTertiary,
-              fontWeight: typography.medium,
-            }}>{t('common.bills', { count })}</Text>
-            <Text style={{
-              fontSize: typography.sm,
-              fontWeight: typography.bold,
-              color: catColor.accent,
-            }}>{formatCurrency(amount)}</Text>
+            <Text style={{ fontSize: 10, color: colors.textTertiary, fontWeight: typography.medium }}>{t('common.bills', { count })}</Text>
+            <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: catColor.accent }}>{formatCurrency(amount)}</Text>
           </View>
         </View>
-        {/* Bar track */}
-        <View style={{
-          height: 5,
-          backgroundColor: colors.surfaceAlt,
-          borderRadius: radius.full,
-          overflow: 'hidden',
-        }}>
-          <Animated.View style={{
-            height: '100%',
-            width: barWidth,
-            backgroundColor: catColor.accent,
-            borderRadius: radius.full,
-            shadowColor: catColor.accent,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.5,
-            shadowRadius: 3,
-          }} />
+        <View style={{ height: 5, backgroundColor: colors.surfaceAlt, borderRadius: radius.full, overflow: 'hidden' }}>
+          <Animated.View style={{ height: '100%', width: barWidth, backgroundColor: catColor.accent, borderRadius: radius.full, shadowColor: catColor.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 3 }} />
         </View>
       </View>
     </View>
@@ -625,7 +352,7 @@ const CategoryBar = ({
 };
 
 // ─────────────────────────────────────────────
-// CategoryAllocation — top categories panel
+// CategoryAllocation — kept for future use
 // ─────────────────────────────────────────────
 
 const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
@@ -646,45 +373,17 @@ const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => 
   }, [expenses]);
 
   const maxAmount = Math.max(...categoryBreakdown.map(c => c.total), 1);
-
   if (categoryBreakdown.length === 0) return null;
 
   return (
-    <View style={{
-      backgroundColor: colors.surface,
-      borderRadius: radius.xl,
-      padding: spacing.base,
-      gap: spacing.md,
-      ...shadows.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-    }}>
-      {/* Header */}
+    <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card, borderWidth: 1, borderColor: colors.border }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{
-          fontSize: typography.sm,
-          fontWeight: typography.bold,
-          color: colors.textPrimary,
-          letterSpacing: -0.1,
-        }}>{t('overview.commitmentAllocation')}</Text>
-        <Text style={{
-          fontSize: typography.xs,
-          color: colors.textTertiary,
-          fontWeight: typography.medium,
-        }}>{t('overview.topCategories', { count: categoryBreakdown.length })}</Text>
+        <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.1 }}>{t('overview.commitmentAllocation')}</Text>
+        <Text style={{ fontSize: typography.xs, color: colors.textTertiary, fontWeight: typography.medium }}>{t('overview.topCategories', { count: categoryBreakdown.length })}</Text>
       </View>
-
-      {/* Category bars */}
       <View style={{ gap: spacing.md }}>
         {categoryBreakdown.map((item) => (
-          <CategoryBar
-            key={item.category}
-            category={item.category}
-            amount={item.total}
-            count={item.count}
-            maxAmount={maxAmount}
-            isDark={isDark}
-          />
+          <CategoryBar key={item.category} category={item.category} amount={item.total} count={item.count} maxAmount={maxAmount} isDark={isDark} />
         ))}
       </View>
     </View>
@@ -692,7 +391,7 @@ const CategoryAllocation = ({ expenses }: { expenses: ExpenseWithRecord[] }) => 
 };
 
 // ─────────────────────────────────────────────
-// InsightStrip — autopay & recurring summary
+// InsightStrip — kept for future use
 // ─────────────────────────────────────────────
 
 const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
@@ -702,90 +401,30 @@ const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
 
   const autopayCount = expenses.filter(e => e.is_autopay).length;
   const recurringCount = expenses.filter(e => e.is_recurring).length;
-  const autopayAmount = expenses
-    .filter(e => e.is_autopay)
-    .reduce((s, e) => s + e.amount, 0);
+  const autopayAmount = expenses.filter(e => e.is_autopay).reduce((s, e) => s + e.amount, 0);
 
   if (autopayCount === 0 && recurringCount === 0) return null;
 
   return (
-    <View style={{
-      flexDirection: 'row',
-      gap: spacing.sm,
-    }}>
-      {/* Autopay tile */}
+    <View style={{ flexDirection: 'row', gap: spacing.sm }}>
       {autopayCount > 0 && (
-        <View style={{
-          flex: 1,
-          backgroundColor: colors.surface,
-          borderRadius: radius.xl,
-          padding: spacing.base,
-          gap: spacing.xs,
-          ...shadows.card,
-          borderWidth: 1,
-          borderColor: colors.border,
-        }}>
-          <View style={{
-            width: 32,
-            height: 32,
-            borderRadius: 10,
-            backgroundColor: colors.primaryLight,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 2,
-          }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.xs, ...shadows.card, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', marginBottom: 2 }}>
             <Ionicons name="flash" size={15} color={colors.primary} />
           </View>
-          <Text style={{
-            fontSize: typography.xl,
-            fontWeight: typography.extrabold,
-            color: colors.textPrimary,
-            letterSpacing: -0.5,
-          }}>{autopayCount}</Text>
-          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>
-            {t('overview.onAutopay')}
-          </Text>
-          <Text style={{ fontSize: 10, color: colors.primary, fontWeight: typography.bold }}>
-            {formatCurrency(autopayAmount)}
-          </Text>
+          <Text style={{ fontSize: typography.xl, fontWeight: typography.extrabold, color: colors.textPrimary, letterSpacing: -0.5 }}>{autopayCount}</Text>
+          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>{t('overview.onAutopay')}</Text>
+          <Text style={{ fontSize: 10, color: colors.primary, fontWeight: typography.bold }}>{formatCurrency(autopayAmount)}</Text>
         </View>
       )}
-
-      {/* Recurring tile */}
       {recurringCount > 0 && (
-        <View style={{
-          flex: 1,
-          backgroundColor: colors.surface,
-          borderRadius: radius.xl,
-          padding: spacing.base,
-          gap: spacing.xs,
-          ...shadows.card,
-          borderWidth: 1,
-          borderColor: colors.border,
-        }}>
-          <View style={{
-            width: 32,
-            height: 32,
-            borderRadius: 10,
-            backgroundColor: colors.tealLight,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 2,
-          }}>
+        <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.xs, ...shadows.card, borderWidth: 1, borderColor: colors.border }}>
+          <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: colors.tealLight, justifyContent: 'center', alignItems: 'center', marginBottom: 2 }}>
             <Ionicons name="repeat" size={15} color={colors.teal} />
           </View>
-          <Text style={{
-            fontSize: typography.xl,
-            fontWeight: typography.extrabold,
-            color: colors.textPrimary,
-            letterSpacing: -0.5,
-          }}>{recurringCount}</Text>
-          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>
-            {t('overview.recurring')}
-          </Text>
-          <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>
-            {t('overview.autoTracked')}
-          </Text>
+          <Text style={{ fontSize: typography.xl, fontWeight: typography.extrabold, color: colors.textPrimary, letterSpacing: -0.5 }}>{recurringCount}</Text>
+          <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: typography.semibold }}>{t('overview.recurring')}</Text>
+          <Text style={{ fontSize: 10, color: colors.teal, fontWeight: typography.bold }}>{t('overview.autoTracked')}</Text>
         </View>
       )}
     </View>
@@ -793,7 +432,7 @@ const InsightStrip = ({ expenses }: { expenses: ExpenseWithRecord[] }) => {
 };
 
 // ─────────────────────────────────────────────
-// CommitmentRow — premium fintech card
+// CommitmentRow — kept for future use
 // ─────────────────────────────────────────────
 
 const CommitmentRow = ({
@@ -828,29 +467,20 @@ const CommitmentRow = ({
 
   return (
     <Animated.View style={[rowStyles.wrapper, { transform: [{ scale: scaleAnim }] }]}>
-      {/* Left accent strip */}
       <View style={[rowStyles.accentStrip, { backgroundColor: config.accent }]} />
-
       <View style={rowStyles.body}>
-        {/* Category icon */}
         <View style={[rowStyles.iconCircle, { backgroundColor: config.bg }]}>
           <Ionicons name={categoryIcon as any} size={19} color={config.accent} />
         </View>
-
-        {/* Info: name + status badge */}
         <View style={rowStyles.info}>
-          <Text style={[rowStyles.name, isResolved && { opacity: 0.6 }]} numberOfLines={1}>
-            {expense.name}
-          </Text>
+          <Text style={[rowStyles.name, isResolved && { opacity: 0.6 }]} numberOfLines={1}>{expense.name}</Text>
           <View style={rowStyles.badgeRow}>
             <View style={[rowStyles.statusBadge, { backgroundColor: config.bg }]}>
               <Ionicons name={config.icon as any} size={9} color={config.accent} />
               <Text style={[rowStyles.statusText, { color: config.accent }]}>{t(config.labelKey)}</Text>
             </View>
             {expense.due_day > 0 && (
-              <Text style={rowStyles.dueDay}>
-                {getDayOrdinal(expense.due_day)}
-              </Text>
+              <Text style={rowStyles.dueDay}>{getDayOrdinal(expense.due_day)}</Text>
             )}
             {expense.is_autopay && (
               <View style={rowStyles.autopayBadge}>
@@ -860,29 +490,16 @@ const CommitmentRow = ({
             )}
           </View>
         </View>
-
-        {/* Amount + check — right panel */}
         <View style={rowStyles.right}>
-          <Text style={[
-            rowStyles.amount,
-            isResolved && { color: colors.success, opacity: 0.8 },
-          ]}>
+          <Text style={[rowStyles.amount, isResolved && { color: colors.success, opacity: 0.8 }]}>
             {formatCurrency(amount)}
           </Text>
           <TouchableOpacity
-            style={[
-              rowStyles.checkBtn,
-              isResolved ? rowStyles.checkBtnDone : rowStyles.checkBtnPending,
-              isWaived && rowStyles.checkBtnWaived,
-            ]}
+            style={[rowStyles.checkBtn, isResolved ? rowStyles.checkBtnDone : rowStyles.checkBtnPending, isWaived && rowStyles.checkBtnWaived]}
             onPress={handlePress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons
-              name={isWaived ? 'gift-outline' : 'checkmark'}
-              size={13}
-              color={isResolved ? colors.textInverse : colors.textDisabled}
-            />
+            <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={13} color={isResolved ? colors.textInverse : colors.textDisabled} />
           </TouchableOpacity>
         </View>
       </View>
@@ -891,106 +508,24 @@ const CommitmentRow = ({
 };
 
 const makeRowStyles = (colors: any) => StyleSheet.create({
-  wrapper: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    marginBottom: spacing.sm,
-    ...shadows.card,
-  },
+  wrapper: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden', marginBottom: spacing.sm, ...shadows.card },
   accentStrip: { width: 5 },
-  body: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.base,
-    gap: spacing.md,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
+  body: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.base, gap: spacing.md },
+  iconCircle: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   info: { flex: 1, gap: 6 },
-  name: {
-    fontSize: typography.base,
-    fontWeight: typography.semibold,
-    color: colors.textPrimary,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flexWrap: 'wrap',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    borderRadius: radius.full,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: typography.semibold,
-    letterSpacing: 0.1,
-  },
-  dueDay: {
-    fontSize: 10,
-    color: colors.textTertiary,
-    fontWeight: typography.medium,
-  },
-  autopayBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.full,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  autopayText: {
-    fontSize: 10,
-    color: colors.primary,
-    fontWeight: typography.semibold,
-  },
-  right: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-    flexShrink: 0,
-  },
-  amount: {
-    fontSize: typography.lg,
-    fontWeight: typography.bold,
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-  checkBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-  },
-  checkBtnDone: {
-    backgroundColor: colors.success,
-    borderColor: colors.success,
-  },
-  checkBtnWaived: {
-    backgroundColor: colors.textTertiary,
-    borderColor: colors.textTertiary,
-  },
-  checkBtnPending: {
-    backgroundColor: 'transparent',
-    borderColor: colors.border,
-  },
+  name: { fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: radius.full, paddingHorizontal: 7, paddingVertical: 2 },
+  statusText: { fontSize: 10, fontWeight: typography.semibold, letterSpacing: 0.1 },
+  dueDay: { fontSize: 10, color: colors.textTertiary, fontWeight: typography.medium },
+  autopayBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: colors.primaryLight, borderRadius: radius.full, paddingHorizontal: 6, paddingVertical: 2 },
+  autopayText: { fontSize: 10, color: colors.primary, fontWeight: typography.semibold },
+  right: { alignItems: 'flex-end', gap: spacing.xs, flexShrink: 0 },
+  amount: { fontSize: typography.lg, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.5 },
+  checkBtn: { width: 30, height: 30, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
+  checkBtnDone: { backgroundColor: colors.success, borderColor: colors.success },
+  checkBtnWaived: { backgroundColor: colors.textTertiary, borderColor: colors.textTertiary },
+  checkBtnPending: { backgroundColor: 'transparent', borderColor: colors.border },
 });
 
 // ─────────────────────────────────────────────
@@ -1024,20 +559,14 @@ const HeroCard = ({
   const heroStyles = useMemo(() => makeHeroStyles(colors), [colors]);
 
   const pct = total > 0 ? paid / total : 0;
-  const coveragePct = Math.round(pct * 100);
 
   const barAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(barAnim, { toValue: pct, duration: 1100, useNativeDriver: false }).start();
   }, [pct]);
 
-  const barWidth = barAnim.interpolate({
-    inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp',
-  });
-
-  const barColor =
-    pct >= 0.9 ? colors.success : pct >= 0.6 ? colors.teal : pct >= 0.3 ? colors.warning : colors.danger;
-  const trendColor = pct >= 0.5 ? colors.success : colors.danger;
+  const barWidth = barAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
+  const barColor = pct >= 0.9 ? colors.success : pct >= 0.6 ? colors.teal : pct >= 0.3 ? colors.warning : colors.danger;
 
   const dueSoonCount = expenses.filter(e => {
     const s = getBillStatus(e.due_day, e.record?.is_paid ?? false);
@@ -1046,45 +575,41 @@ const HeroCard = ({
 
   return (
     <View style={heroStyles.card}>
-      <View style={heroStyles.glowTopRight} />
-      <View style={heroStyles.glowBottomLeft} />
-      <View style={heroStyles.glowCenter} />
-      <View style={heroStyles.ringOuter} />
-      <View style={heroStyles.ringInner} />
       <View style={heroStyles.content}>
+        {/* Greeting */}
         <View style={heroStyles.headerRow}>
-          <View>
-            <Text style={heroStyles.eyebrow}>{greeting}</Text>
-            <Text style={heroStyles.userName} numberOfLines={1}>{userName}</Text>
-          </View>
-          <View style={[heroStyles.coverageBadge, { backgroundColor: trendColor + '22' }]}>
-            <View style={[heroStyles.coverageDot, { backgroundColor: trendColor }]} />
-            <Text style={[heroStyles.coverageText, { color: trendColor }]}>{coveragePct}% covered</Text>
-          </View>
+          <Text style={heroStyles.eyebrow}>{greeting}</Text>
+          <Text style={heroStyles.userName} numberOfLines={1}>{userName}</Text>
         </View>
+
+        {/* Amount */}
         <View style={heroStyles.amountBlock}>
           <Text style={heroStyles.amountLabel}>{getMonthName(month)} {year} · {t('overview.totalFlow')}</Text>
           <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
         </View>
+
+        {/* Progress bar */}
         <View style={heroStyles.progressSection}>
           <View style={heroStyles.progressTrack}>
             <Animated.View style={[heroStyles.progressFill, {
               width: barWidth, backgroundColor: barColor,
               shadowColor: barColor, shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.9, shadowRadius: 8, elevation: 4,
+              shadowOpacity: 0.7, shadowRadius: 6, elevation: 3,
             }]} />
           </View>
           <View style={heroStyles.progressLabels}>
             <Text style={heroStyles.progressLabelLeft}>{formatCurrency(paid)} {t('overview.settled').toLowerCase()}</Text>
-            <Text style={heroStyles.progressLabelRight}>{paidCount}/{totalCount} bills</Text>
+            <Text style={heroStyles.progressLabelRight}>{paidCount}/{totalCount}</Text>
           </View>
         </View>
+
+        {/* Stats row with · separators */}
         <View style={heroStyles.statsRow}>
           <View style={heroStyles.stat}>
-            <Text style={heroStyles.statValue}>{formatCurrency(paid)}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.success }]}>{formatCurrency(paid)}</Text>
             <Text style={heroStyles.statLabel}>{t('overview.settled')}</Text>
           </View>
-          <View style={heroStyles.statDivider} />
+          <Text style={heroStyles.statSep}>·</Text>
           <View style={heroStyles.stat}>
             <Text style={[heroStyles.statValue, { color: total - paid > 0 ? colors.warning : colors.success }]}>
               {formatCurrency(total - paid)}
@@ -1093,7 +618,7 @@ const HeroCard = ({
           </View>
           {dueSoonCount > 0 && (
             <>
-              <View style={heroStyles.statDivider} />
+              <Text style={heroStyles.statSep}>·</Text>
               <View style={heroStyles.stat}>
                 <Text style={[heroStyles.statValue, { color: colors.danger }]}>{dueSoonCount}</Text>
                 <Text style={heroStyles.statLabel}>{t('overview.dueSoonUpper')}</Text>
@@ -1108,80 +633,260 @@ const HeroCard = ({
 
 const makeHeroStyles = (colors: any) => StyleSheet.create({
   card: {
-    backgroundColor: colors.navy, borderRadius: radius.xxl,
-    overflow: 'hidden', marginHorizontal: -spacing.base, ...shadows.hero,
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    ...shadows.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  glowTopRight: {
-    position: 'absolute', top: -70, right: -70,
-    width: 260, height: 260, borderRadius: 130, backgroundColor: colors.teal, opacity: 0.16,
-  },
-  glowBottomLeft: {
-    position: 'absolute', bottom: -90, left: -50,
-    width: 280, height: 280, borderRadius: 140, backgroundColor: colors.primary, opacity: 0.13,
-  },
-  glowCenter: {
-    position: 'absolute', top: '15%', right: '20%',
-    width: 200, height: 200, borderRadius: 100, backgroundColor: colors.accentMuted, opacity: 0.07,
-  },
-  ringOuter: {
-    position: 'absolute', top: -50, right: -50, width: 280, height: 280,
-    borderRadius: 140, borderWidth: 1, borderColor: 'rgba(250,250,247,0.05)',
-  },
-  ringInner: {
-    position: 'absolute', top: -20, right: -20, width: 200, height: 200,
-    borderRadius: 100, borderWidth: 1, borderColor: 'rgba(250,250,247,0.04)',
-  },
-  content: { padding: spacing.xl, paddingBottom: spacing.xxl, gap: spacing.lg },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  content: { padding: 32, gap: spacing.lg },
+  headerRow: { gap: 2 },
   eyebrow: {
     fontSize: typography.xs, fontWeight: typography.semibold,
-    color: 'rgba(244,241,234,0.70)', letterSpacing: 1.2, textTransform: 'uppercase',
+    color: colors.textSecondary, letterSpacing: 1.2, textTransform: 'uppercase',
   },
-  userName: {
-    fontSize: typography.sm, color: 'rgba(244,241,234,0.80)',
-    marginTop: 3, fontWeight: typography.medium,
-  },
-  coverageBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 5,
-  },
-  coverageDot: { width: 6, height: 6, borderRadius: 3 },
-  coverageText: { fontSize: typography.xs, fontWeight: typography.bold },
+  userName: { fontSize: typography.sm, color: colors.textSecondary, fontWeight: typography.medium },
   amountBlock: { gap: 4 },
   amountLabel: {
-    fontSize: typography.xs, color: 'rgba(244,241,234,0.60)',
+    fontSize: typography.xs, color: colors.textTertiary,
     letterSpacing: 0.5, textTransform: 'uppercase',
   },
   amount: {
     fontSize: typography.display, fontWeight: typography.extrabold,
-    color: colors.textInverse, letterSpacing: -2, lineHeight: 54,
+    color: colors.textPrimary, letterSpacing: -2, lineHeight: 54,
   },
   progressSection: { gap: spacing.xs },
   progressTrack: {
-    height: 8, backgroundColor: 'rgba(250,250,247,0.10)',
+    height: 8, backgroundColor: colors.surfaceAlt,
     borderRadius: radius.full, overflow: 'hidden',
   },
   progressFill: { height: '100%', borderRadius: radius.full },
   progressLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressLabelLeft: {
-    fontSize: typography.xs, color: 'rgba(244,241,234,0.40)', fontWeight: typography.medium,
-  },
-  progressLabelRight: {
-    fontSize: typography.xs, color: 'rgba(244,241,234,0.40)', fontWeight: typography.medium,
-  },
+  progressLabelLeft: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: typography.medium },
+  progressLabelRight: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: typography.medium },
   statsRow: {
-    flexDirection: 'row', alignItems: 'center', paddingTop: spacing.md,
-    borderTopWidth: 1, borderTopColor: 'rgba(244,241,234,0.07)', marginTop: -spacing.xs,
+    flexDirection: 'row', alignItems: 'center',
+    paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.divider,
+    gap: spacing.sm,
   },
-  stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(244,241,234,0.08)' },
-  statValue: {
-    fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse, letterSpacing: -0.3,
-  },
-  statLabel: {
-    fontSize: 9, color: 'rgba(244,241,234,0.55)', fontWeight: typography.semibold, letterSpacing: 0.8,
-  },
+  stat: { alignItems: 'center', gap: 3 },
+  statSep: { fontSize: typography.lg, color: colors.textTertiary, opacity: 0.5, flexShrink: 0 },
+  statValue: { fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.3 },
+  statLabel: { fontSize: 9, color: colors.textTertiary, fontWeight: typography.semibold, letterSpacing: 0.8 },
 });
+
+// ─────────────────────────────────────────────
+// SplitSection — personal / business bars
+// ─────────────────────────────────────────────
+
+const SplitSection = ({
+  personalTotal,
+  businessTotal,
+  total,
+}: {
+  personalTotal: number;
+  businessTotal: number;
+  total: number;
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
+
+  const personalPct = total > 0 ? personalTotal / total : 0;
+  const businessPct = total > 0 ? businessTotal / total : 0;
+
+  const personalAnim = useRef(new Animated.Value(0)).current;
+  const businessAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(120, [
+      Animated.timing(personalAnim, { toValue: 1, duration: 900, useNativeDriver: false }),
+      Animated.timing(businessAnim, { toValue: 1, duration: 900, useNativeDriver: false }),
+    ]).start();
+  }, [personalPct, businessPct]);
+
+  const personalWidth = personalAnim.interpolate({
+    inputRange: [0, 1], outputRange: ['0%', `${Math.round(personalPct * 100)}%`], extrapolate: 'clamp',
+  });
+  const businessWidth = businessAnim.interpolate({
+    inputRange: [0, 1], outputRange: ['0%', `${Math.round(businessPct * 100)}%`], extrapolate: 'clamp',
+  });
+
+  if (total === 0 || (personalTotal === 0 && businessTotal === 0)) return null;
+
+  return (
+    <View style={{
+      backgroundColor: colors.surface, borderRadius: radius.xl,
+      padding: spacing.base, gap: spacing.md,
+      ...shadows.card, borderWidth: 1, borderColor: colors.border,
+    }}>
+      <Text style={{
+        fontSize: typography.xs, fontWeight: typography.semibold,
+        color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase',
+      }}>{t('overview.split')}</Text>
+
+      {personalTotal > 0 && (
+        <View style={{ gap: 6 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+              {t('overview.personal')}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <Text style={{ fontSize: 11, color: colors.textTertiary }}>{Math.round(personalPct * 100)}{t('overview.ofTotal')}</Text>
+              <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.personal }}>
+                {formatCurrency(personalTotal)}
+              </Text>
+            </View>
+          </View>
+          <View style={{ height: 12, backgroundColor: colors.surfaceAlt, borderRadius: radius.full, overflow: 'hidden' }}>
+            <Animated.View style={{ width: personalWidth, height: '100%', backgroundColor: colors.personal, borderRadius: radius.full }} />
+          </View>
+        </View>
+      )}
+
+      {businessTotal > 0 && (
+        <View style={{ gap: 6 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+              {t('overview.business')}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <Text style={{ fontSize: 11, color: colors.textTertiary }}>{Math.round(businessPct * 100)}{t('overview.ofTotal')}</Text>
+              <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.business }}>
+                {formatCurrency(businessTotal)}
+              </Text>
+            </View>
+          </View>
+          <View style={{ height: 12, backgroundColor: colors.surfaceAlt, borderRadius: radius.full, overflow: 'hidden' }}>
+            <Animated.View style={{ width: businessWidth, height: '100%', backgroundColor: colors.business, borderRadius: radius.full }} />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+};
+
+// ─────────────────────────────────────────────
+// UpcomingSection — next 3 unpaid with relative dates
+// ─────────────────────────────────────────────
+
+const UpcomingSection = ({
+  expenses,
+  month,
+  year,
+  onNavigate,
+}: {
+  expenses: ExpenseWithRecord[];
+  month: number;
+  year: number;
+  onNavigate: () => void;
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
+  const { language } = useSettings();
+
+  const today = useMemo(() => new Date(), []);
+
+  const unpaid = useMemo(() =>
+    expenses
+      .filter(e => !(e.record?.is_paid) && !(e.record?.is_waived))
+      .sort((a, b) => a.due_day - b.due_day)
+      .slice(0, 3),
+    [expenses]
+  );
+
+  const getRelativeDate = (dueDay: number): { label: string; color: string } => {
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const todayDate = today.getDate();
+    const isCurrentMonth = month === currentMonth && year === currentYear;
+    const isFutureMonth = year > currentYear || (year === currentYear && month > currentMonth);
+    const status = getBillStatus(dueDay, false);
+
+    let daysUntil: number;
+    if (isCurrentMonth) {
+      daysUntil = dueDay - todayDate;
+    } else if (isFutureMonth) {
+      const firstOfMonth = new Date(year, month - 1, 1);
+      const diffMs = firstOfMonth.getTime() - today.getTime();
+      daysUntil = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + dueDay - 1;
+    } else {
+      daysUntil = -1;
+    }
+
+    if (daysUntil < 0 || (isCurrentMonth && status === 'overdue')) {
+      return { label: t('overview.overdue'), color: colors.danger };
+    } else if (daysUntil === 0) {
+      return { label: t('overview.today'), color: colors.warning };
+    } else if (daysUntil === 1) {
+      return { label: t('overview.tomorrow'), color: colors.textSecondary };
+    } else if (daysUntil <= 7) {
+      return { label: t('overview.inDays', { count: daysUntil }), color: colors.textSecondary };
+    } else {
+      const dueDate = new Date(year, month - 1, dueDay);
+      const label = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' }).format(dueDate);
+      return { label, color: colors.textSecondary };
+    }
+  };
+
+  const allCaughtUp = expenses.length > 0 && unpaid.length === 0;
+
+  return (
+    <View style={{
+      backgroundColor: colors.surface, borderRadius: radius.xl,
+      ...shadows.card, borderWidth: 1, borderColor: colors.border,
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <View style={{
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        paddingHorizontal: spacing.base, paddingTop: spacing.base, paddingBottom: spacing.sm,
+      }}>
+        <Text style={{
+          fontSize: typography.xs, fontWeight: typography.semibold,
+          color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase',
+        }}>{t('overview.upcomingCommitments')}</Text>
+        <TouchableOpacity onPress={onNavigate} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+          <Text style={{ fontSize: typography.sm, color: colors.primary, fontWeight: typography.semibold }}>
+            {t('overview.seeAll')}
+          </Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {allCaughtUp ? (
+        <View style={{ paddingHorizontal: spacing.base, paddingBottom: spacing.lg, paddingTop: spacing.xs, alignItems: 'center', gap: spacing.xs }}>
+          <Ionicons name="checkmark-circle" size={28} color={colors.success} />
+          <Text style={{ fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>
+            {t('overview.allCaughtUp')}
+          </Text>
+        </View>
+      ) : (
+        unpaid.map((expense) => {
+          const { label: dateLabel, color: dateColor } = getRelativeDate(expense.due_day);
+          return (
+            <View key={expense.id} style={{
+              flexDirection: 'row', alignItems: 'center',
+              paddingHorizontal: spacing.base, paddingVertical: 12,
+              borderTopWidth: 1, borderTopColor: colors.divider,
+            }}>
+              <Text style={{ flex: 1, fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary }} numberOfLines={1}>
+                {expense.name}
+              </Text>
+              <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textPrimary, marginHorizontal: spacing.sm }}>
+                {formatCurrency(expense.amount)}
+              </Text>
+              <Text style={{ fontSize: typography.xs, color: dateColor, fontWeight: typography.semibold, minWidth: 64, textAlign: 'right' }}>
+                {dateLabel}
+              </Text>
+            </View>
+          );
+        })
+      )}
+    </View>
+  );
+};
 
 // ─────────────────────────────────────────────
 // Overview Screen
@@ -1190,7 +895,6 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
 export default function DashboardScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { user } = useAuth();
   const navigation = useNavigation<any>();
@@ -1199,58 +903,13 @@ export default function DashboardScreen() {
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
 
-  const { expenses, summary, loading, reload, markAsPaid } = useExpenses(month, year);
-  const [pendingPaid, setPendingPaid] = useState<{ expense: ExpenseWithRecord; isPaid: boolean } | null>(null);
-
-  const urgentCommitments = useMemo(() =>
-    expenses
-      .filter(e => {
-        if (e.record?.is_paid || e.record?.is_waived) return false;
-        const s = getBillStatus(e.due_day, false);
-        return s === 'overdue' || s === 'due-soon';
-      })
-      .sort((a, b) => {
-        const sa = getBillStatus(a.due_day, false);
-        const sb = getBillStatus(b.due_day, false);
-        if (sa === 'overdue' && sb !== 'overdue') return -1;
-        if (sb === 'overdue' && sa !== 'overdue') return 1;
-        return a.due_day - b.due_day;
-      })
-      .slice(0, 4),
-    [expenses]
-  );
-
-  const upcomingCommitments = useMemo(() =>
-    expenses
-      .filter(e => !(e.record?.is_paid) && !(e.record?.is_waived))
-      .sort((a, b) => a.due_day - b.due_day)
-      .slice(0, 5),
-    [expenses]
-  );
-
-  const handleTogglePaid = (expense: ExpenseWithRecord, isPaid: boolean) => {
-    if (isPaid) {
-      setPendingPaid({ expense, isPaid });
-    } else {
-      markAsPaid(expense, false);
-    }
-  };
+  const { expenses, summary, loading, reload } = useExpenses(month, year);
 
   const greetingHour = new Date().getHours();
   const greeting =
     greetingHour < 12 ? t('overview.goodMorning') :
     greetingHour < 18 ? t('overview.goodAfternoon') : t('overview.goodEvening');
   const userName = user?.email?.split('@')[0] ?? '';
-
-  const coveragePct = summary.total > 0
-    ? Math.round((summary.totalPaid / summary.total) * 100) : 0;
-
-  const dueSoonExpenses = expenses.filter(e => {
-    if (e.record?.is_paid || e.record?.is_waived) return false;
-    const s = getBillStatus(e.due_day, false);
-    return s === 'due-soon' || s === 'overdue';
-  });
-  const dueSoonTotal = dueSoonExpenses.reduce((s, e) => s + e.amount, 0);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -1271,137 +930,46 @@ export default function DashboardScreen() {
 
         <MonthSelector month={month} year={year} onChange={(m, y) => { setMonth(m); setYear(y); }} />
 
-        {summary.expenseCount === 0 && !loading ? (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIconRing}>
-              <Ionicons name="pulse-outline" size={30} color={colors.primary} />
-            </View>
-            <Text style={styles.emptyTitle}>{t('overview.noCommitmentsTitle')}</Text>
-            <Text style={styles.emptySub}>{t('overview.noCommitmentsSub')}</Text>
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.85}>
-              <Ionicons name="add" size={16} color={colors.textInverse} />
-              <Text style={styles.emptyBtnText}>{t('overview.addFirstCommitment')}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <>
-            <HeroCard
-              greeting={greeting} userName={userName}
-              total={summary.total} paid={summary.totalPaid}
-              paidCount={summary.paidCount} totalCount={summary.expenseCount}
-              month={month} year={year} expenses={expenses}
-            />
-
-            <View style={styles.metricGrid}>
-              <View style={styles.metricRow}>
-                <MetricCard
-                  label={t('overview.totalFlow')} value={formatCurrency(summary.total)}
-                  subtitle={t('overview.totalLabel', { count: summary.expenseCount })}
-                  icon="receipt-outline" accent={colors.primary} accentBg={colors.primaryLight}
-                />
-                <MetricCard
-                  label={t('overview.totalCovered')} value={formatCurrency(summary.totalPaid)}
-                  subtitle={`${coveragePct}${t('overview.ofTotal')}`}
-                  icon="checkmark-done-outline" accent={colors.success} accentBg={colors.successLight}
-                />
+        <View style={styles.contentWrapper}>
+          {summary.expenseCount === 0 && !loading ? (
+            <View style={styles.emptyCard}>
+              <View style={styles.emptyIconRing}>
+                <Ionicons name="pulse-outline" size={30} color={colors.primary} />
               </View>
-              <View style={styles.metricRow}>
-                <MetricCard
-                  label={t('overview.remaining')} value={formatCurrency(summary.totalUnpaid)}
-                  subtitle={t('overview.unpaidLabel', { count: summary.expenseCount - summary.paidCount })}
-                  icon="hourglass-outline" accent={colors.warning} accentBg={colors.warningLight}
-                />
-                <MetricCard
-                  label={t('overview.dueSoon')}
-                  value={dueSoonExpenses.length > 0 ? formatCurrency(dueSoonTotal) : '—'}
-                  subtitle={dueSoonExpenses.length > 0 ? t('common.bills', { count: dueSoonExpenses.length }) : t('overview.allOnTrack')}
-                  icon={dueSoonExpenses.length > 0 ? 'alert-circle-outline' : 'checkmark-circle-outline'}
-                  accent={dueSoonExpenses.length > 0 ? colors.danger : colors.success}
-                  accentBg={dueSoonExpenses.length > 0 ? colors.dangerLight : colors.successLight}
-                />
-              </View>
+              <Text style={styles.emptyTitle}>{t('overview.noCommitmentsTitle')}</Text>
+              <Text style={styles.emptySub}>{t('overview.noCommitmentsSub')}</Text>
+              <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('AddExpense')} activeOpacity={0.85}>
+                <Ionicons name="add" size={16} color={colors.textInverse} />
+                <Text style={styles.emptyBtnText}>{t('overview.addFirstCommitment')}</Text>
+              </TouchableOpacity>
             </View>
-
-            {(summary.personalTotal > 0 || summary.businessTotal > 0) && (
-              <SplitCard
-                personalTotal={summary.personalTotal}
-                businessTotal={summary.businessTotal}
-                total={summary.total}
+          ) : (
+            <>
+              <HeroCard
+                greeting={greeting} userName={userName}
+                total={summary.total} paid={summary.totalPaid}
+                paidCount={summary.paidCount} totalCount={summary.expenseCount}
+                month={month} year={year} expenses={expenses}
               />
-            )}
 
-            <WeeklyFlowChart expenses={expenses} month={month} year={year} />
+              {(summary.personalTotal > 0 || summary.businessTotal > 0) && (
+                <SplitSection
+                  personalTotal={summary.personalTotal}
+                  businessTotal={summary.businessTotal}
+                  total={summary.total}
+                />
+              )}
 
-            <CategoryAllocation expenses={expenses} />
-
-            {urgentCommitments.length > 0 && (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionTitleRow}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.danger, marginTop: 1 }} />
-                    <Text style={styles.sectionLabel}>{t('overview.needsAttention')}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.seeAllBtn} onPress={() => navigation.navigate('Commitments')}>
-                    <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-                    <Ionicons name="chevron-forward" size={13} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-                {urgentCommitments.map(e => (
-                  <CommitmentRow key={e.id} expense={e} onTogglePaid={handleTogglePaid} />
-                ))}
-              </View>
-            )}
-
-            {upcomingCommitments.length > 0 ? (
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionTitleRow}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary, marginTop: 1 }} />
-                    <Text style={styles.sectionLabel}>{t('overview.upcoming')}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.seeAllBtn} onPress={() => navigation.navigate('Commitments')}>
-                    <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-                    <Ionicons name="chevron-forward" size={13} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-                {upcomingCommitments.map(e => (
-                  <CommitmentRow key={e.id} expense={e} onTogglePaid={handleTogglePaid} />
-                ))}
-              </View>
-            ) : (
-              <View style={styles.allDoneCard}>
-                <View style={styles.allDoneGlowA} />
-                <View style={styles.allDoneGlowB} />
-                <View style={styles.allDoneIconRing}>
-                  <Ionicons name="checkmark-circle" size={30} color={colors.success} />
-                </View>
-                <Text style={styles.allDoneTitle}>{t('overview.allDoneTitle')}</Text>
-                <Text style={styles.allDoneSub}>
-                  {t('overview.allDoneSub', { count: summary.expenseCount, month: getMonthName(month) })}
-                </Text>
-              </View>
-            )}
-
-            <InsightStrip expenses={expenses} />
-          </>
-        )}
+              <UpcomingSection
+                expenses={expenses}
+                month={month}
+                year={year}
+                onNavigate={() => navigation.navigate('Commitments')}
+              />
+            </>
+          )}
+        </View>
       </ScrollView>
-
-      <PaidAmountModal
-        visible={pendingPaid !== null}
-        expenseName={pendingPaid?.expense.name ?? ''}
-        plannedAmount={pendingPaid?.expense.amount ?? 0}
-        monthLabel={`${getMonthName(month)} ${year}`}
-        onConfirm={(actualAmount, lateFee) => {
-          if (pendingPaid) markAsPaid(pendingPaid.expense, true, actualAmount, lateFee);
-          setPendingPaid(null);
-        }}
-        onSkip={() => {
-          if (pendingPaid) markAsPaid(pendingPaid.expense, true, pendingPaid.expense.amount);
-          setPendingPaid(null);
-        }}
-        onCancel={() => setPendingPaid(null)}
-      />
     </SafeAreaView>
   );
 }
@@ -1424,44 +992,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
     shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.40, shadowRadius: 12, elevation: 5,
   },
-  metricGrid: { gap: spacing.sm },
-  metricRow: { flexDirection: 'row', gap: spacing.sm },
-  section: { gap: 0 },
-  sectionHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: spacing.md,
-  },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  sectionLabel: {
-    fontSize: typography.xs, fontWeight: typography.semibold,
-    color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase',
-  },
-  seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  seeAllText: { fontSize: typography.sm, color: colors.primary, fontWeight: typography.semibold },
-  allDoneCard: {
-    backgroundColor: colors.successLight, borderRadius: radius.xl,
-    padding: spacing.xxl, alignItems: 'center', gap: spacing.sm,
-    overflow: 'hidden', position: 'relative',
-  },
-  allDoneGlowA: {
-    position: 'absolute', top: -40, right: -40, width: 160, height: 160,
-    borderRadius: 80, backgroundColor: colors.success, opacity: 0.08,
-  },
-  allDoneGlowB: {
-    position: 'absolute', bottom: -40, left: -30, width: 140, height: 140,
-    borderRadius: 70, backgroundColor: colors.teal, opacity: 0.07,
-  },
-  allDoneIconRing: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surfaceRaised,
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: colors.success, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20, shadowRadius: 12, elevation: 3,
-  },
-  allDoneTitle: {
-    fontSize: typography.lg, fontWeight: typography.bold, color: colors.success, letterSpacing: -0.3,
-  },
-  allDoneSub: {
-    fontSize: typography.sm, color: colors.success, textAlign: 'center', opacity: 0.85, lineHeight: 20,
+  contentWrapper: {
+    maxWidth: 600, width: '100%', alignSelf: 'center', gap: spacing.base,
   },
   emptyCard: {
     backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.xxl,

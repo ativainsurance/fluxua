@@ -61,7 +61,16 @@
     "allOnTrack": "All on track",
     "commitmentSchedule": "{{month}} commitment schedule",
     "totalLabel": "{{count}} commitments",
-    "unpaidLabel": "{{count}} unpaid"
+    "unpaidLabel": "{{count}} unpaid",
+    "upcomingCommitments": "Upcoming commitments",
+    "seeAll": "See all",
+    "overdue": "Overdue",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "inDays": "In {{count}} days",
+    "allCaughtUp": "All caught up. ✨",
+    "split": "Commitment split",
+    "onDate": "{{month}} {{day}}"
   },
   "flow": {
     "title": "Weekly Flow",

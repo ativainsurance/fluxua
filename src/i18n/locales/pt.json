@@ -61,7 +61,16 @@
     "allOnTrack": "Tudo em dia",
     "commitmentSchedule": "Agenda de {{month}}",
     "totalLabel": "{{count}} compromissos",
-    "unpaidLabel": "{{count}} não pagos"
+    "unpaidLabel": "{{count}} não pagos",
+    "upcomingCommitments": "Próximos compromissos",
+    "seeAll": "Ver todos",
+    "overdue": "Vencido",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "inDays": "Em {{count}} dias",
+    "allCaughtUp": "Tudo em dia. ✨",
+    "split": "Divisão de compromissos",
+    "onDate": "{{day}} de {{month}}"
   },
   "flow": {
     "title": "Fluxo semanal",
