@@ -13,6 +13,7 @@ import { typography, spacing, radius, shadows } from '../../theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'PersonalDetails'>;
 
@@ -43,6 +44,7 @@ const FormField = ({ label, value, onChange, placeholder, autoCapitalize = 'word
 
 export default function PersonalDetailsScreen() {
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { user } = useAuth();
   const meta = (user?.user_metadata ?? {}) as Record<string, string>;
@@ -100,13 +102,13 @@ export default function PersonalDetailsScreen() {
             </View>
             <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.full, borderWidth: 1, borderColor: colors.primary + '44', backgroundColor: colors.primaryLight }} activeOpacity={0.7}>
               <Ionicons name="camera-outline" size={14} color={colors.primary} />
-              <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.primary }}>Change Photo</Text>
+              <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.primary }}>{t('settings.changePhoto')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Name fields */}
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
-            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Name</Text>
+            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('settings.nameSectionLabel')}</Text>
             <View style={{ gap: spacing.md }}>
               <FormField label="First Name" value={firstName} onChange={setFirstName} placeholder="e.g. Leticia" />
               <FormField label="Last Name" value={lastName} onChange={setLastName} placeholder="e.g. Zuany" />
@@ -116,15 +118,15 @@ export default function PersonalDetailsScreen() {
 
           {/* Account type */}
           <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
-            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Account Type</Text>
+            <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('settings.accountTypeSectionLabel')}</Text>
             <View style={{ gap: spacing.sm }}>
-              {ACCOUNT_TYPES.map(t => {
-                const active = accountType === t.key;
-                const tc = TYPE_COLORS[t.key];
+              {ACCOUNT_TYPES.map(typeItem => {
+                const active = accountType === typeItem.key;
+                const tc = TYPE_COLORS[typeItem.key];
                 return (
-                  <TouchableOpacity key={t.key} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.base, paddingVertical: 13, borderRadius: radius.md, borderWidth: 1.5, borderColor: active ? tc.color : colors.border, backgroundColor: active ? tc.bg : colors.surfaceAlt }} onPress={() => setAccountType(t.key as any)} activeOpacity={0.75}>
-                    <Ionicons name={t.icon} size={18} color={active ? tc.color : colors.textTertiary} />
-                    <Text style={{ flex: 1, fontSize: typography.sm, fontWeight: typography.semibold, color: active ? tc.color : colors.textSecondary }}>{t.label}</Text>
+                  <TouchableOpacity key={typeItem.key} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.base, paddingVertical: 13, borderRadius: radius.md, borderWidth: 1.5, borderColor: active ? tc.color : colors.border, backgroundColor: active ? tc.bg : colors.surfaceAlt }} onPress={() => setAccountType(typeItem.key as any)} activeOpacity={0.75}>
+                    <Ionicons name={typeItem.icon} size={18} color={active ? tc.color : colors.textTertiary} />
+                    <Text style={{ flex: 1, fontSize: typography.sm, fontWeight: typography.semibold, color: active ? tc.color : colors.textSecondary }}>{typeItem.label}</Text>
                     {active && <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: tc.color, justifyContent: 'center', alignItems: 'center' }}><Ionicons name="checkmark" size={9} color={colors.textInverse} /></View>}
                   </TouchableOpacity>
                 );
@@ -136,11 +138,11 @@ export default function PersonalDetailsScreen() {
 
           <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.successLight, borderRadius: radius.md, paddingHorizontal: spacing.base, paddingVertical: 10, opacity: successAnim, transform: [{ translateY: successAnim.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }} pointerEvents="none">
             <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-            <Text style={{ fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>Changes saved successfully</Text>
+            <Text style={{ fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>{t('settings.changesSaved')}</Text>
           </Animated.View>
 
           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.lg, paddingVertical: 15, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 12, elevation: 4, opacity: loading ? 0.65 : 1 }} onPress={handleSave} disabled={loading} activeOpacity={0.8}>
-            {loading ? <ActivityIndicator size="small" color={colors.textInverse} /> : <><Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} /><Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Save Changes</Text></>}
+            {loading ? <ActivityIndicator size="small" color={colors.textInverse} /> : <><Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} /><Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('settings.saveChanges')}</Text></>}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

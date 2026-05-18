@@ -7,6 +7,7 @@ import { View,
   Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -76,11 +77,13 @@ interface Props {
 export const DateInput = ({
   value,
   onChange,
-  placeholder = 'MM/DD/YYYY',
+  placeholder,
   minimumDate,
   optional = false,
   error }: Props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t('dateInput.placeholder');
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [displayText, setDisplayText] = useState(isoToDisplay(value));
@@ -175,7 +178,7 @@ export const DateInput = ({
           value={displayText}
           onChangeText={handleTextChange}
           onBlur={handleBlur}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           placeholderTextColor={colors.textDisabled}
           keyboardType="numeric"
           maxLength={10}
@@ -204,12 +207,12 @@ export const DateInput = ({
 
       {hasError && (
         <Text style={styles.errorText}>
-          Enter a valid date (MM/DD/YYYY)
+          {t('dateInput.errorInvalidFormat')}
         </Text>
       )}
 
       <Text style={styles.hint}>
-        Type directly or tap the calendar icon
+        {t('dateInput.hint')}
       </Text>
 
       <DateTimePickerModal

@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { gradient, typography, spacing, radius, shadows } from '../../theme';
@@ -27,6 +28,7 @@ type Props = {
 export default function LoginScreen({ navigation }: Props) {
   const { signIn } = useAuth();
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [email, setEmail] = useState('');
@@ -38,7 +40,7 @@ export default function LoginScreen({ navigation }: Props) {
   const handleLogin = async () => {
     setError('');
     if (!email.trim() || !password) {
-      setError('Please enter your email and password.');
+      setError(t('auth.errorEmailPasswordRequired'));
       return;
     }
     setLoading(true);
@@ -49,8 +51,8 @@ export default function LoginScreen({ navigation }: Props) {
       const lower = msg.toLowerCase();
       setError(
         lower.includes('invalid') || lower.includes('credentials')
-          ? 'Incorrect email or password.'
-          : msg || 'Login failed. Please try again.'
+          ? t('auth.errorIncorrectCredentials')
+          : msg || t('auth.errorLoginFailed')
       );
     } finally {
       setLoading(false);
@@ -87,13 +89,14 @@ export default function LoginScreen({ navigation }: Props) {
                 >
                   <Ionicons name="wallet" size={30} color={colors.textInverse} />
                 </LinearGradient>
+                {/* eslint-disable-next-line i18next/no-literal-string */}
                 <Text style={styles.appName}>Fluxua</Text>
-                <Text style={styles.tagline}>Stay ahead of every commitment</Text>
+                <Text style={styles.tagline}>{t('auth.tagline')}</Text>
               </View>
 
               {/* Form */}
               <View style={styles.form}>
-                <Text style={styles.formTitle}>Welcome back</Text>
+                <Text style={styles.formTitle}>{t('auth.welcomeBack')}</Text>
 
                 {error ? (
                   <View style={styles.errorBox}>
@@ -103,12 +106,12 @@ export default function LoginScreen({ navigation }: Props) {
                 ) : null}
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Email</Text>
+                  <Text style={styles.label}>{t('auth.email')}</Text>
                   <TextInput
                     style={styles.input}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     placeholderTextColor={colors.textDisabled}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -117,13 +120,13 @@ export default function LoginScreen({ navigation }: Props) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Password</Text>
+                  <Text style={styles.label}>{t('auth.password')}</Text>
                   <View style={styles.passwordWrapper}>
                     <TextInput
                       style={[styles.input, styles.passwordInput]}
                       value={password}
                       onChangeText={setPassword}
-                      placeholder="••••••••"
+                      placeholder={t('auth.passwordPlaceholder')}
                       placeholderTextColor={colors.textDisabled}
                       secureTextEntry={!showPw}
                       autoCapitalize="none"
@@ -143,12 +146,12 @@ export default function LoginScreen({ navigation }: Props) {
                     onPress={() => navigation.navigate('ForgotPassword')}
                     style={styles.forgotRow}
                   >
-                    <Text style={styles.forgotLink}>Forgot password?</Text>
+                    <Text style={styles.forgotLink}>{t('auth.forgotPassword')}</Text>
                   </TouchableOpacity>
                 </View>
 
                 <GradientButton
-                  title="Sign In"
+                  title={t('auth.signIn')}
                   onPress={handleLogin}
                   loading={loading}
                   style={styles.btn}
@@ -156,14 +159,14 @@ export default function LoginScreen({ navigation }: Props) {
 
                 <View style={styles.trustRow}>
                   <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
-                  <Text style={styles.trustText}>Your financial data stays private and protected</Text>
+                  <Text style={styles.trustText}>{t('auth.privacyMessage')}</Text>
                 </View>
               </View>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                  <Text style={styles.footerLink}>Create one</Text>
+                  <Text style={styles.footerLink}>{t('auth.createOne')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useTranslation } from 'react-i18next';
 import { useAuth, SignupMeta } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { gradient, typography, spacing, radius, shadows } from '../../theme';
@@ -27,10 +28,10 @@ type Props = {
 
 type AccountType = 'personal' | 'business' | 'both';
 
-const ACCOUNT_TYPES: { value: AccountType; label: string; icon: string }[] = [
-  { value: 'personal', label: 'Personal', icon: 'person-outline' },
-  { value: 'business', label: 'Business', icon: 'briefcase-outline' },
-  { value: 'both', label: 'Both', icon: 'git-merge-outline' },
+const ACCOUNT_TYPES: { value: AccountType; icon: string }[] = [
+  { value: 'personal', icon: 'person-outline' },
+  { value: 'business', icon: 'briefcase-outline' },
+  { value: 'both', icon: 'git-merge-outline' },
 ];
 
 // ── Password strength ──────────────────────────────────────────────────────
@@ -47,18 +48,14 @@ const getPasswordStrength = (pw: string): { level: StrengthLevel; score: number 
   return { level, score };
 };
 
-const STRENGTH_HINT = {
-  weak: '8+ characters required',
-  medium: 'Add a symbol (!, @, #…) for a stronger password',
-  strong: 'Great password!',
-} as const;
-
 const StrengthBar = ({ score, level, colors }: { score: number; level: StrengthLevel; colors: any }) => {
+  const { t } = useTranslation();
   if (score === 0) return null;
   const color =
     level === 'strong' ? colors.success :
     level === 'medium' ? colors.warning :
     colors.danger;
+  const cap = level.charAt(0).toUpperCase() + level.slice(1);
   return (
     <View style={sbStyles.wrap}>
       <View style={sbStyles.bar}>
@@ -68,9 +65,9 @@ const StrengthBar = ({ score, level, colors }: { score: number; level: StrengthL
       </View>
       <View style={sbStyles.row}>
         <Text style={[sbStyles.label, { color }]}>
-          {level.charAt(0).toUpperCase() + level.slice(1)}
+          {t(`auth.passwordStrength${cap}`)}
         </Text>
-        <Text style={[sbStyles.hint, { color: colors.textDisabled }]}>{STRENGTH_HINT[level]}</Text>
+        <Text style={[sbStyles.hint, { color: colors.textDisabled }]}>{t(`auth.passwordHint${cap}`)}</Text>
       </View>
     </View>
   );
@@ -100,6 +97,7 @@ const FadeInSection = ({ children, delay = 0 }: { children: React.ReactNode; del
 export default function SignupScreen({ navigation }: Props) {
   const { signUp } = useAuth();
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [firstName, setFirstName] = useState('');
@@ -125,13 +123,13 @@ export default function SignupScreen({ navigation }: Props) {
   const section2Complete = accountType === 'personal' || businessName.trim().length > 0;
 
   const validate = (): string | null => {
-    if (!firstName.trim()) return 'Please enter your first name.';
-    if (!emailValid) return 'Please enter a valid email address.';
+    if (!firstName.trim()) return t('auth.errorFirstNameRequired');
+    if (!emailValid) return t('auth.errorEmailInvalid');
     if ((accountType === 'business' || accountType === 'both') && !businessName.trim())
-      return 'Please enter your business name.';
-    if (pwScore < 1) return 'Password must be at least 8 characters.';
-    if (pwScore < 2) return 'Password must contain at least one number.';
-    if (!confirmVisible || !confirmMatch) return 'Passwords do not match.';
+      return t('auth.errorBusinessNameRequired');
+    if (pwScore < 1) return t('auth.errorPasswordTooShort');
+    if (pwScore < 2) return t('auth.errorPasswordNoNumber');
+    if (!confirmVisible || !confirmMatch) return t('auth.errorPasswordsMismatch');
     return null;
   };
 
@@ -151,7 +149,7 @@ export default function SignupScreen({ navigation }: Props) {
       await signUp(email.trim().toLowerCase(), password, meta);
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.');
+      setError(err instanceof Error ? err.message : t('auth.errorSignupFailed'));
     } finally {
       setLoading(false);
     }
@@ -169,15 +167,13 @@ export default function SignupScreen({ navigation }: Props) {
             <View style={styles.successIcon}>
               <Ionicons name="checkmark-circle" size={56} color={colors.success} />
             </View>
-            <Text style={styles.successTitle}>You're in!</Text>
+            <Text style={styles.successTitle}>{t('auth.signupSuccessTitle')}</Text>
             <Text style={styles.successText}>
-              We sent a confirmation link to{'\n'}
+              {t('auth.signupSuccessMessage')}{'\n'}
               <Text style={styles.successEmail}>{email}</Text>
             </Text>
-            <Text style={styles.successSub}>
-              Click the link in your email to activate your account, then come back and sign in.
-            </Text>
-            <GradientButton title="Go to Sign In" onPress={() => navigation.navigate('Login')} style={styles.btn} />
+            <Text style={styles.successSub}>{t('auth.signupSuccessInstructions')}</Text>
+            <GradientButton title={t('auth.goToSignIn')} onPress={() => navigation.navigate('Login')} style={styles.btn} />
           </View>
         </SafeAreaView>
       </View>
@@ -204,8 +200,8 @@ export default function SignupScreen({ navigation }: Props) {
               </TouchableOpacity>
 
               <View style={styles.header}>
-                <Text style={styles.title}>Create your account</Text>
-                <Text style={styles.subtitle}>Take control of your money flow</Text>
+                <Text style={styles.title}>{t('auth.createAccountTitle')}</Text>
+                <Text style={styles.subtitle}>{t('auth.createAccountSubtitle')}</Text>
               </View>
 
               {!!error && (
@@ -216,16 +212,16 @@ export default function SignupScreen({ navigation }: Props) {
               )}
 
               {/* ── Block 1: Basic Info ───────────────────── */}
-              <Text style={[styles.sectionLabel, { marginTop: 0 }]}>BASIC INFO</Text>
+              <Text style={[styles.sectionLabel, { marginTop: 0 }]}>{t('auth.sectionBasicInfo')}</Text>
 
               <View style={styles.field}>
-                <Text style={styles.label}>First Name</Text>
+                <Text style={styles.label}>{t('auth.firstNameLabel')}</Text>
                 <View style={styles.inputRow}>
                   <TextInput
                     style={[styles.input, firstName.trim().length > 0 && styles.inputWithCheck]}
                     value={firstName}
                     onChangeText={setFirstName}
-                    placeholder="Ana"
+                    placeholder={t('auth.firstNamePlaceholder')}
                     placeholderTextColor={colors.textDisabled}
                     autoCapitalize="words"
                   />
@@ -238,13 +234,13 @@ export default function SignupScreen({ navigation }: Props) {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Email</Text>
+                <Text style={styles.label}>{t('auth.email')}</Text>
                 <View style={styles.inputRow}>
                   <TextInput
                     style={[styles.input, emailValid && styles.inputWithCheck]}
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="you@example.com"
+                    placeholder={t('auth.emailPlaceholder')}
                     placeholderTextColor={colors.textDisabled}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -261,10 +257,11 @@ export default function SignupScreen({ navigation }: Props) {
               {/* ── Block 2: Setup ────────────────────────── */}
               {section1Complete && (
                 <FadeInSection>
-                  <Text style={styles.sectionLabel}>YOUR SETUP</Text>
+                  <Text style={styles.sectionLabel}>{t('auth.sectionSetup')}</Text>
                   <View style={styles.pillRow}>
-                    {ACCOUNT_TYPES.map(({ value, label, icon }) => {
+                    {ACCOUNT_TYPES.map(({ value, icon }) => {
                       const active = accountType === value;
+                      const cap = value.charAt(0).toUpperCase() + value.slice(1);
                       return (
                         <TouchableOpacity
                           key={value}
@@ -277,7 +274,7 @@ export default function SignupScreen({ navigation }: Props) {
                             color={active ? colors.primary : colors.textSecondary}
                           />
                           <Text style={[styles.pillText, active && styles.pillTextActive]}>
-                            {label}
+                            {t(`auth.accountType${cap}`)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -286,13 +283,13 @@ export default function SignupScreen({ navigation }: Props) {
 
                   {(accountType === 'business' || accountType === 'both') && (
                     <View style={styles.field}>
-                      <Text style={styles.label}>Business Name</Text>
+                      <Text style={styles.label}>{t('auth.businessNameLabel')}</Text>
                       <View style={styles.inputRow}>
                         <TextInput
                           style={[styles.input, businessName.trim().length > 0 && styles.inputWithCheck]}
                           value={businessName}
                           onChangeText={setBusinessName}
-                          placeholder="Acme Corp"
+                          placeholder={t('auth.businessNamePlaceholder')}
                           placeholderTextColor={colors.textDisabled}
                           autoCapitalize="words"
                         />
@@ -310,16 +307,16 @@ export default function SignupScreen({ navigation }: Props) {
               {/* ── Block 3: Security ─────────────────────── */}
               {section1Complete && section2Complete && (
                 <FadeInSection delay={150}>
-                  <Text style={styles.sectionLabel}>SECURITY</Text>
+                  <Text style={styles.sectionLabel}>{t('auth.sectionSecurity')}</Text>
 
                   <View style={styles.field}>
-                    <Text style={styles.label}>Password</Text>
+                    <Text style={styles.label}>{t('auth.password')}</Text>
                     <View style={styles.inputRow}>
                       <TextInput
                         style={[styles.input, styles.passwordInput, passwordValid && styles.inputWithCheck]}
                         value={password}
                         onChangeText={setPassword}
-                        placeholder="8+ characters, at least one number"
+                        placeholder={t('auth.passwordInputPlaceholder')}
                         placeholderTextColor={colors.textDisabled}
                         secureTextEntry={!showPw}
                         autoCapitalize="none"
@@ -341,8 +338,8 @@ export default function SignupScreen({ navigation }: Props) {
                   {confirmVisible && (
                     <View style={styles.field}>
                       <Text style={styles.label}>
-                        Confirm Password{' '}
-                        <Text style={styles.labelHint}>· Must match your password</Text>
+                        {t('auth.confirmPasswordLabel')}{' '}
+                        <Text style={styles.labelHint}>{t('auth.confirmPasswordHint')}</Text>
                       </Text>
                       <View style={styles.inputRow}>
                         <TextInput
@@ -354,7 +351,7 @@ export default function SignupScreen({ navigation }: Props) {
                           ]}
                           value={confirm}
                           onChangeText={setConfirm}
-                          placeholder="Repeat your password"
+                          placeholder={t('auth.confirmPasswordPlaceholder')}
                           placeholderTextColor={colors.textDisabled}
                           secureTextEntry={!showConfirm}
                           autoCapitalize="none"
@@ -373,13 +370,13 @@ export default function SignupScreen({ navigation }: Props) {
                       {confirmMatch && (
                         <View style={styles.matchRow}>
                           <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-                          <Text style={[styles.matchText, { color: colors.success }]}>Passwords match</Text>
+                          <Text style={[styles.matchText, { color: colors.success }]}>{t('auth.passwordsMatch')}</Text>
                         </View>
                       )}
                       {confirmMismatch && (
                         <View style={styles.matchRow}>
                           <Ionicons name="close-circle" size={13} color={colors.danger} />
-                          <Text style={[styles.matchText, { color: colors.danger }]}>Passwords don't match</Text>
+                          <Text style={[styles.matchText, { color: colors.danger }]}>{t('auth.passwordsMismatch')}</Text>
                         </View>
                       )}
                     </View>
@@ -389,7 +386,7 @@ export default function SignupScreen({ navigation }: Props) {
 
               {/* ── CTA ──────────────────────────────────── */}
               <GradientButton
-                title="Start tracking my flow"
+                title={t('auth.startTracking')}
                 onPress={handleSignup}
                 loading={loading}
                 style={styles.btn}
@@ -397,20 +394,20 @@ export default function SignupScreen({ navigation }: Props) {
 
               <View style={styles.trustRow}>
                 <Ionicons name="lock-closed" size={12} color={colors.textDisabled} />
-                <Text style={styles.trustText}>Bank-level encryption. Your data is private.</Text>
+                <Text style={styles.trustText}>{t('auth.securityMessage')}</Text>
               </View>
 
               <Text style={styles.terms}>
-                By creating an account, you agree to our{' '}
-                <Text style={styles.termsLink}>Terms of Service</Text>
-                {' '}and{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text>
+                {t('auth.termsAgreement')}{' '}
+                <Text style={styles.termsLink}>{t('auth.termsOfService')}</Text>
+                {' '}{t('auth.termsAnd')}{' '}
+                <Text style={styles.termsLink}>{t('auth.privacyPolicyLink')}</Text>
               </Text>
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
+                <Text style={styles.footerText}>{t('auth.hasAccount')} </Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.footerLink}>Sign in</Text>
+                  <Text style={styles.footerLink}>{t('auth.signIn')}</Text>
                 </TouchableOpacity>
               </View>
             </View>

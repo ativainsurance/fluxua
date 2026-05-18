@@ -21,6 +21,7 @@ import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Security'>;
 
@@ -106,6 +107,7 @@ export default function SecurityScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { t } = useTranslation();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -169,8 +171,8 @@ export default function SecurityScreen() {
                 <Ionicons name="lock-closed-outline" size={20} color={colors.personal} />
               </View>
               <View>
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>Change Password</Text>
-                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Keep your account secure</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>{t('settings.changePassword')}</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>{t('settings.keepAccountSecure')}</Text>
               </View>
             </View>
 
@@ -191,7 +193,7 @@ export default function SecurityScreen() {
             {success ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.successLight, borderRadius: radius.md, paddingHorizontal: spacing.base, paddingVertical: 10 }}>
                 <Ionicons name="checkmark-circle" size={15} color={colors.success} />
-                <Text style={{ flex: 1, fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>Password updated successfully</Text>
+                <Text style={{ flex: 1, fontSize: typography.sm, color: colors.success, fontWeight: typography.semibold }}>{t('settings.passwordUpdated')}</Text>
               </View>
             ) : null}
 
@@ -206,7 +208,7 @@ export default function SecurityScreen() {
               ) : (
                 <>
                   <Ionicons name="shield-checkmark-outline" size={18} color={colors.textInverse} />
-                  <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Update Password</Text>
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('settings.updatePassword')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -220,8 +222,8 @@ export default function SecurityScreen() {
                   <Ionicons name="finger-print-outline" size={20} color={colors.teal} />
                 </View>
                 <View>
-                  <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }}>Face ID / Biometrics</Text>
-                  <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Unlock app with biometrics</Text>
+                  <Text style={{ fontSize: typography.base, fontWeight: typography.semibold, color: colors.textPrimary }}>{t('settings.faceIdBiometrics')}</Text>
+                  <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>{t('settings.unlockWithBiometrics')}</Text>
                 </View>
               </View>
               <Switch
@@ -233,7 +235,7 @@ export default function SecurityScreen() {
               />
             </View>
             <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18, paddingHorizontal: spacing.xs }}>
-              Biometric authentication will be available in a future update.
+              {t('settings.biometricFutureNote')}
             </Text>
           </View>
 
@@ -244,8 +246,8 @@ export default function SecurityScreen() {
                 <Ionicons name="phone-portrait-outline" size={20} color={colors.business} />
               </View>
               <View>
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>Active Sessions</Text>
-                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Devices logged into your account</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>{t('settings.activeSessions')}</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>{t('settings.devicesLoggedIn')}</Text>
               </View>
             </View>
 
@@ -254,14 +256,14 @@ export default function SecurityScreen() {
                 <Ionicons name="phone-portrait" size={16} color={colors.success} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary }}>This Device</Text>
-                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>Current session · Active now</Text>
+                <Text style={{ fontSize: typography.sm, fontWeight: typography.semibold, color: colors.textPrimary }}>{t('settings.thisDevice')}</Text>
+                <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 1 }}>{t('settings.currentSessionActive')}</Text>
               </View>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success, flexShrink: 0 }} />
             </View>
 
             <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18, paddingHorizontal: spacing.xs }}>
-              Full session management will be available in a future update.
+              {t('settings.sessionManagementFuture')}
             </Text>
           </View>
         </ScrollView>

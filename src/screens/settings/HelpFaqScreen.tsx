@@ -8,6 +8,7 @@ import { typography, spacing, radius, shadows } from '../../theme';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'HelpFaq'>;
 
@@ -104,6 +105,7 @@ const FaqSectionCard = ({ section }: { section: FaqSection }) => {
 export default function HelpFaqScreen() {
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <SubScreenHeader title="Help & FAQ" onBack={() => navigation.goBack()} />
@@ -114,8 +116,8 @@ export default function HelpFaqScreen() {
             <Ionicons name="help-buoy-outline" size={28} color={colors.business} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.textPrimary }}>How can we help?</Text>
-            <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>Find answers to common questions below</Text>
+            <Text style={{ fontSize: typography.md, fontWeight: typography.bold, color: colors.textPrimary }}>{t('help.title')}</Text>
+            <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>{t('help.subtitle')}</Text>
           </View>
         </View>
 
@@ -124,12 +126,12 @@ export default function HelpFaqScreen() {
         <View style={{ backgroundColor: colors.navy, borderRadius: radius.xl, padding: spacing.lg, gap: spacing.md, ...shadows.hero }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.teal} />
-            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Still need help?</Text>
+            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('help.stillNeedHelp')}</Text>
           </View>
-          <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.6)', lineHeight: 20 }}>Can't find your answer? Send us a message and we'll get back to you within 24 hours.</Text>
+          <Text style={{ fontSize: typography.sm, color: 'rgba(250,250,247,0.6)', lineHeight: 20 }}>{t('help.contactMessage')}</Text>
           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.teal, borderRadius: radius.md, paddingVertical: 12, shadowColor: colors.teal, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }} activeOpacity={0.8}>
             <Ionicons name="mail-outline" size={16} color={colors.textInverse} />
-            <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textInverse }}>Contact Support</Text>
+            <Text style={{ fontSize: typography.sm, fontWeight: typography.bold, color: colors.textInverse }}>{t('help.contactSupport')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

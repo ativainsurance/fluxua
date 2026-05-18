@@ -5,6 +5,7 @@ import { gradient, typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { MonthlySummary } from '../types';
 import { useFormatCurrency } from '../utils/dateUtils';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   summary: MonthlySummary;
@@ -12,6 +13,7 @@ interface Props {
 
 export const SummaryCard = ({ summary }: Props) => {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const progressPct =
@@ -22,11 +24,11 @@ export const SummaryCard = ({ summary }: Props) => {
       {/* Total Flow */}
       <View style={styles.totalRow}>
         <View>
-          <Text style={styles.totalLabel}>Total Flow</Text>
+          <Text style={styles.totalLabel}>{t('flow.totalFlow')}</Text>
           <Text style={styles.totalAmount}>{formatCurrency(summary.total)}</Text>
         </View>
         <View style={styles.countBadge}>
-          <Text style={styles.countText}>{summary.expenseCount} commitments</Text>
+          <Text style={styles.countText}>{t('common.commitments', { count: summary.expenseCount })}</Text>
         </View>
       </View>
 
@@ -40,7 +42,7 @@ export const SummaryCard = ({ summary }: Props) => {
         />
       </View>
       <Text style={styles.progressLabel}>
-        {progressPct.toFixed(0)}% completed ({summary.paidCount}/{summary.expenseCount})
+        {t('overview.progressLabel', { pct: progressPct.toFixed(0), paid: summary.paidCount, total: summary.expenseCount })}
       </Text>
 
       {/* Completed / Unallocated breakdown */}
@@ -48,7 +50,7 @@ export const SummaryCard = ({ summary }: Props) => {
         <View style={[styles.pill, styles.paidPill]}>
           <View style={[styles.dot, { backgroundColor: colors.success }]} />
           <View>
-            <Text style={styles.pillLabel}>Completed</Text>
+            <Text style={styles.pillLabel}>{t('status.completed')}</Text>
             <Text style={[styles.pillAmount, { color: colors.success }]}>
               {formatCurrency(summary.totalPaid)}
             </Text>
@@ -58,7 +60,7 @@ export const SummaryCard = ({ summary }: Props) => {
         <View style={[styles.pill, styles.unpaidPill]}>
           <View style={[styles.dot, { backgroundColor: colors.danger }]} />
           <View>
-            <Text style={styles.pillLabel}>Unallocated</Text>
+            <Text style={styles.pillLabel}>{t('overview.unallocated')}</Text>
             <Text style={[styles.pillAmount, { color: colors.danger }]}>
               {formatCurrency(summary.totalUnpaid)}
             </Text>
@@ -72,7 +74,7 @@ export const SummaryCard = ({ summary }: Props) => {
           <View style={[styles.pill, styles.personalPill]}>
             <View style={[styles.dot, { backgroundColor: colors.personal }]} />
             <View>
-              <Text style={styles.pillLabel}>Personal</Text>
+              <Text style={styles.pillLabel}>{t('commitments.personal')}</Text>
               <Text style={[styles.pillAmount, { color: colors.personal }]}>
                 {formatCurrency(summary.personalTotal)}
               </Text>
@@ -82,7 +84,7 @@ export const SummaryCard = ({ summary }: Props) => {
           <View style={[styles.pill, styles.businessPill]}>
             <View style={[styles.dot, { backgroundColor: colors.business }]} />
             <View>
-              <Text style={styles.pillLabel}>Business</Text>
+              <Text style={styles.pillLabel}>{t('commitments.business')}</Text>
               <Text style={[styles.pillAmount, { color: colors.business }]}>
                 {formatCurrency(summary.businessTotal)}
               </Text>

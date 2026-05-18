@@ -17,6 +17,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { typography, spacing, radius } from '../../theme';
 import { AuthStackParamList } from '../../navigation/types';
 import { GradientButton } from '../../components/GradientButton';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
@@ -25,6 +26,7 @@ type Props = {
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const { resetPassword } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [email, setEmail] = useState('');
@@ -49,14 +51,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
           <View style={styles.successIcon}>
             <Ionicons name="mail-outline" size={40} color={colors.primary} />
           </View>
-          <Text style={styles.successTitle}>Check your email</Text>
+          <Text style={styles.successTitle}>{t('auth.checkEmailTitle')}</Text>
           <Text style={styles.successText}>
-            If <Text style={styles.bold}>{email}</Text> is registered, you'll receive a reset link shortly.
+            {t('auth.checkEmailMessage', { email })}
           </Text>
           <Text style={styles.successSub}>
-            The link expires in 15 minutes. Check your spam folder if you don't see it.
+            {t('auth.checkEmailNote')}
           </Text>
-          <GradientButton title="Back to Sign In" onPress={() => navigation.navigate('Login')} />
+          <GradientButton title={t('auth.backToSignIn')} onPress={() => navigation.navigate('Login')} />
         </View>
       </SafeAreaView>
     );
@@ -71,14 +73,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Forgot password?</Text>
+            <Text style={styles.title}>{t('auth.forgotPasswordTitle')}</Text>
             <Text style={styles.subtitle}>
-              Enter the email address linked to your account and we'll send you a reset link.
+              {t('auth.forgotPasswordSubtitle')}
             </Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Email address</Text>
+            <Text style={styles.label}>{t('auth.emailAddressLabel')}</Text>
             <TextInput
               style={styles.input}
               value={email}
@@ -90,7 +92,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               autoCorrect={false}
               autoFocus
             />
-            <GradientButton title="Send reset link" onPress={handleSubmit} loading={loading} disabled={!email.trim()} />
+            <GradientButton title={t('auth.sendResetLink')} onPress={handleSubmit} loading={loading} disabled={!email.trim()} />
           </View>
         </View>
       </KeyboardAvoidingView>

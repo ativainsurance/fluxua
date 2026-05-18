@@ -139,6 +139,7 @@ const LoadingScreen = () => {
   );
 };
 
+/* eslint-disable i18next/no-literal-string */
 const SetupScreen = () => {
   const { colors } = useTheme();
   return (
@@ -160,6 +161,8 @@ const SetupScreen = () => {
     </View>
   );
 };
+
+/* eslint-enable i18next/no-literal-string */
 
 export const AppNavigator = () => {
   const { session, loading } = useAuth();

@@ -178,8 +178,8 @@ export default function SettingsScreen() {
         {/* Footer */}
         <View style={{ alignItems: 'center', gap: 4, paddingTop: spacing.xs }}>
           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.teal, opacity: 0.55 }} />
-          <Text style={{ fontSize: typography.xs, color: colors.textDisabled, fontWeight: typography.medium }}>Fluxua · Track every commitment</Text>
-          <Text style={{ fontSize: 10, color: colors.textDisabled, opacity: 0.7 }}>Made with calm intelligence.</Text>
+          <Text style={{ fontSize: typography.xs, color: colors.textDisabled, fontWeight: typography.medium }}>{t('settings.footerTagline')}</Text>
+          <Text style={{ fontSize: 10, color: colors.textDisabled, opacity: 0.7 }}>{t('settings.footerSignature')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

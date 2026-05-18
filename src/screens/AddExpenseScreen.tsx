@@ -29,12 +29,11 @@ import {
   ExpenseType,
   RecurrenceType,
   AutopayMethod,
-  RECURRENCE_LABELS,
   BUILT_IN_CATEGORIES,
-  getCategoryLabel,
   getCategoryIcon,
   Expense,
 } from '../types';
+import { useCategoryLabel } from '../utils/categories';
 
 // Route types
 type RouteParams = { expense?: Expense };
@@ -81,6 +80,7 @@ export default function AddExpenseScreen() {
   const { month, year } = getCurrentMonthYear();
   const { addExpense, editExpense } = useExpenses(month, year);
   const { customCategories, addCategory } = useCustomCategories();
+  const getCategoryLabel = useCategoryLabel();
 
   const [form, setForm] = useState<ExpenseFormData>(defaultForm);
   const [loading, setLoading] = useState(false);
@@ -113,15 +113,15 @@ export default function AddExpenseScreen() {
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const validate = (): string | null => {
-    if (!form.name.trim()) return 'Please enter a name for this expense.';
+    if (!form.name.trim()) return t('addExpense.errorNameRequired');
     if (!form.amount || isNaN(parseFloat(form.amount)))
-      return 'Please enter a valid amount.';
-    if (parseFloat(form.amount) <= 0) return 'Amount must be greater than 0.';
+      return t('addExpense.errorInvalidAmount');
+    if (parseFloat(form.amount) <= 0) return t('addExpense.errorAmountZero');
     if (form.due_day < 1 || form.due_day > 31)
-      return 'Due day must be between 1 and 31.';
-    if (!form.start_date) return 'Please enter a start date.';
+      return t('addExpense.errorDueDayRange');
+    if (!form.start_date) return t('addExpense.errorStartDateRequired');
     if (form.end_date && form.end_date < form.start_date)
-      return 'End date must be after the start date.';
+      return t('addExpense.errorEndDateOrder');
     return null;
   };
 
@@ -215,7 +215,7 @@ export default function AddExpenseScreen() {
                 style={[styles.input, styles.amountInput]}
                 value={form.amount}
                 onChangeText={(v) => set('amount', v)}
-                placeholder="0.00"
+                placeholder={t('addExpense.amountPlaceholder')}
                 placeholderTextColor={colors.textDisabled}
                 keyboardType="decimal-pad"
               />
@@ -348,7 +348,7 @@ export default function AddExpenseScreen() {
                       style={styles.addCategoryInput}
                       value={newCategoryLabel}
                       onChangeText={setNewCategoryLabel}
-                      placeholder="Category name…"
+                      placeholder={t('addExpense.categoryNamePlaceholder')}
                       placeholderTextColor={colors.textDisabled}
                       autoFocus
                       returnKeyType="done"
@@ -375,7 +375,7 @@ export default function AddExpenseScreen() {
                     onPress={() => setShowAddCategory(true)}
                   >
                     <Ionicons name="add" size={16} color={colors.primary} />
-                    <Text style={styles.addCategoryBtnText}>Add category</Text>
+                    <Text style={styles.addCategoryBtnText}>{t('commitments.addCategory')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -432,7 +432,7 @@ export default function AddExpenseScreen() {
                       onPress={() => set('recurrence_type', r)}
                     >
                       <Text style={[styles.recurrText, form.recurrence_type === r && styles.recurrTextActive]}>
-                        {RECURRENCE_LABELS[r]}
+                        {t(`commitments.recurrence${r.charAt(0).toUpperCase()}${r.slice(1)}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -445,7 +445,7 @@ export default function AddExpenseScreen() {
                       onPress={() => set('recurrence_type', r)}
                     >
                       <Text style={[styles.recurrText, form.recurrence_type === r && styles.recurrTextActive]}>
-                        {RECURRENCE_LABELS[r]}
+                        {t(`commitments.recurrence${r.charAt(0).toUpperCase()}${r.slice(1)}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}

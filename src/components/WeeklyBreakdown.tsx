@@ -67,7 +67,7 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
           {isPaid && (
             <View style={styles.completedChip}>
               <Ionicons name="checkmark" size={10} color={colors.success} />
-              <Text style={styles.completedChipText}>Completed</Text>
+              <Text style={styles.completedChipText}>{t('status.completed')}</Text>
             </View>
           )}
         </View>

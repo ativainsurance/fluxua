@@ -26,7 +26,8 @@ import {
 } from '../utils/dateUtils';
 import { typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
-import { ExpenseWithRecord, getCategoryIcon, getCategoryLabel, CATEGORY_LABELS } from '../types';
+import { ExpenseWithRecord, getCategoryIcon } from '../types';
+import { useCategoryLabel } from '../utils/categories';
 
 // ─────────────────────────────────────────────
 // Module-level constants (no hook access here — hex only)
@@ -175,7 +176,7 @@ const SplitCard = ({
         </Text>
         <View style={{ backgroundColor: 'rgba(250,250,247,0.08)', borderRadius: radius.full, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(250,250,247,0.10)' }}>
           <Text style={{ fontSize: 10, color: 'rgba(250,250,247,0.55)', fontWeight: typography.semibold }}>
-            {formatCurrency(total)} total
+            {formatCurrency(total)} {t('common.total')}
           </Text>
         </View>
       </View>
@@ -317,6 +318,7 @@ const CategoryBar = ({ category, amount, count, maxAmount, isDark }: { category:
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
+  const getCategoryLabel = useCategoryLabel();
   const barAnim = useRef(new Animated.Value(0)).current;
   const pct = maxAmount > 0 ? amount / maxAmount : 0;
 
@@ -484,7 +486,7 @@ const CommitmentRow = ({
             {expense.is_autopay && (
               <View style={rowStyles.autopayBadge}>
                 <Ionicons name="flash" size={9} color={colors.primary} />
-                <Text style={rowStyles.autopayText}>Auto</Text>
+                <Text style={rowStyles.autopayText}>{t('common.auto')}</Text>
               </View>
             )}
           </View>

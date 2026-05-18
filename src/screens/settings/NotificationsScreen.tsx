@@ -14,6 +14,7 @@ import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Notifications'>;
 
@@ -101,6 +102,7 @@ const NotifSection = ({ label, items, prefs, toggle }: {
 export default function NotificationsScreen() {
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const [prefs, setPrefs] = useState<PrefsState>(DEFAULT);
   const { push: PUSH_ITEMS, summary: SUMMARY_ITEMS, email: EMAIL_ITEMS } = React.useMemo(() => getNotifItems(colors), [colors]);
 
@@ -117,8 +119,8 @@ export default function NotificationsScreen() {
             <Ionicons name="notifications" size={22} color={colors.warning} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>{activeCount} notification{activeCount !== 1 ? 's' : ''} active</Text>
-            <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>Stay informed about your commitments</Text>
+            <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary }}>{t('notifications.activeCount', { count: activeCount })}</Text>
+            <Text style={{ fontSize: typography.xs, color: colors.textSecondary, marginTop: 2 }}>{t('notifications.stayInformed')}</Text>
           </View>
         </View>
 
@@ -127,7 +129,7 @@ export default function NotificationsScreen() {
         <NotifSection label="Email" items={EMAIL_ITEMS} prefs={prefs} toggle={toggle} />
 
         <Text style={{ fontSize: typography.xs, color: colors.textTertiary, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.sm }}>
-          Notification delivery depends on your device settings. Ensure Fluxua has permission to send notifications.
+          {t('notifications.permissionNote')}
         </Text>
       </ScrollView>
     </SafeAreaView>

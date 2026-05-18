@@ -41,6 +41,10 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@types/react": "~18.2.79",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "eslint": "^8.57.1",
+    "eslint-plugin-i18next": "^6.1.4",
     "typescript": "~5.3.3"
   },
   "private": true

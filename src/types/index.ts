@@ -53,10 +53,6 @@ export const CATEGORY_ICONS: Record<string, string> = {
   other: 'ellipsis-horizontal',
 };
 
-/** Returns the display label for any category (built-in or custom) */
-export const getCategoryLabel = (category: string): string =>
-  CATEGORY_LABELS[category] ?? category;
-
 /** Returns the icon name for any category (built-in or custom) */
 export const getCategoryIcon = (category: string): string =>
   CATEGORY_ICONS[category] ?? 'tag-outline';

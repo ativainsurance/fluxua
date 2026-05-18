@@ -20,6 +20,7 @@ import { typography, spacing, radius, shadows } from '../../theme';
 import { SubScreenHeader } from '../../components/SubScreenHeader';
 import { SettingsStackParamList } from '../../navigation/types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<SettingsStackParamList, 'Email'>;
 
@@ -30,6 +31,7 @@ export default function EmailScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { t } = useTranslation();
   const currentEmail = user?.email ?? '';
   const isVerified = user?.email_confirmed_at != null;
 
@@ -101,24 +103,24 @@ export default function EmailScreen() {
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.successLight, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm }}>
                 <Ionicons name="checkmark-circle" size={48} color={colors.success} />
               </View>
-              <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.4 }}>Verification Sent</Text>
+              <Text style={{ fontSize: typography.xl, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.4 }}>{t('settings.verificationSent')}</Text>
               <Text style={{ fontSize: typography.sm, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 }}>
-                We've sent a verification link to{'\n'}
+                {t('settings.verificationSentPrefix')}{'\n'}
                 <Text style={{ fontWeight: typography.bold, color: colors.textPrimary }}>{newEmail}</Text>.{'\n\n'}
-                Open the email and click the link to confirm your new address.
+                {t('settings.verificationSentSuffix')}
               </Text>
               <TouchableOpacity
                 style={{ marginTop: spacing.sm, paddingHorizontal: spacing.xl, paddingVertical: 13, backgroundColor: colors.primary, borderRadius: radius.lg }}
                 onPress={() => navigation.goBack()}
                 activeOpacity={0.8}
               >
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Back to Settings</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('settings.backToSettings')}</Text>
               </TouchableOpacity>
             </View>
           ) : step === 'overview' ? (
             <>
               <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
-                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Current Email</Text>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('settings.currentEmail')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                   <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primaryLight, justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
                     <Ionicons name="mail" size={20} color={colors.primary} />
@@ -169,17 +171,17 @@ export default function EmailScreen() {
                 activeOpacity={0.8}
               >
                 <Ionicons name="pencil-outline" size={18} color={colors.textInverse} />
-                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Change Email Address</Text>
+                <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('settings.changeEmailAddress')}</Text>
               </TouchableOpacity>
 
               <Text style={{ fontSize: typography.xs, color: colors.textTertiary, textAlign: 'center', lineHeight: 18, paddingHorizontal: spacing.sm }}>
-                Changing your email requires password confirmation and will send a verification link to your new address.
+                {t('settings.changeEmailNote')}
               </Text>
             </>
           ) : (
             <>
               <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
-                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>New Email Address</Text>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('settings.newEmailAddress')}</Text>
                 <TextInput
                   style={{ backgroundColor: newFocused ? colors.surface : colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: newFocused ? colors.primary : colors.border, paddingHorizontal: spacing.base, paddingVertical: 13, fontSize: typography.base, color: colors.textPrimary }}
                   value={newEmail}
@@ -195,7 +197,7 @@ export default function EmailScreen() {
               </View>
 
               <View style={{ backgroundColor: colors.surface, borderRadius: radius.xl, padding: spacing.base, gap: spacing.md, ...shadows.card }}>
-                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>Confirm with Password</Text>
+                <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('settings.confirmWithPassword')}</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                   <TextInput
                     style={{ flex: 1, backgroundColor: passFocused ? colors.surface : colors.surfaceAlt, borderRadius: radius.md, borderWidth: 1.5, borderColor: passFocused ? colors.primary : colors.border, paddingHorizontal: spacing.base, paddingVertical: 13, fontSize: typography.base, color: colors.textPrimary }}
@@ -222,7 +224,7 @@ export default function EmailScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={{ fontSize: typography.xs, color: colors.textTertiary, lineHeight: 18 }}>
-                  Required to confirm your identity before changing the email.
+                  {t('settings.confirmIdentityNote')}
                 </Text>
               </View>
 
@@ -244,7 +246,7 @@ export default function EmailScreen() {
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle-outline" size={18} color={colors.textInverse} />
-                    <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>Update Email</Text>
+                    <Text style={{ fontSize: typography.base, fontWeight: typography.bold, color: colors.textInverse }}>{t('settings.updateEmail')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -254,7 +256,7 @@ export default function EmailScreen() {
                 onPress={() => { setStep('overview'); setError(''); setPassword(''); setNewEmail(''); }}
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: typography.sm, color: colors.textSecondary, fontWeight: typography.medium }}>Cancel</Text>
+                <Text style={{ fontSize: typography.sm, color: colors.textSecondary, fontWeight: typography.medium }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </>
           )}

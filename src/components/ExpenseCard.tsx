@@ -8,8 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { ExpenseWithRecord,
-  getCategoryLabel,
   getCategoryIcon } from '../types';
+import { useCategoryLabel } from '../utils/categories';
 import { useFormatCurrency,
   useFormatDate,
   getBillStatus } from '../utils/dateUtils';
@@ -48,6 +48,7 @@ export const ExpenseCard = ({
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { monthYear, ordinalDay } = useFormatDate();
+  const getCategoryLabel = useCategoryLabel();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const STATUS_CONFIG = useMemo(() => getStatusConfig(colors), [colors]);
 
@@ -238,10 +239,10 @@ export const ExpenseCard = ({
           </Text>
         )}
         {hasCredit && (
-          <Text style={styles.creditAmt}>-{formatCurrency(creditAmount!)} credit</Text>
+          <Text style={styles.creditAmt}>-{formatCurrency(creditAmount!)} {t('commitments.creditLabel')}</Text>
         )}
         {hasLateFee && (
-          <Text style={styles.lateFee}>+{formatCurrency(lateFee!)} fee</Text>
+          <Text style={styles.lateFee}>+{formatCurrency(lateFee!)} {t('commitments.feeLabel')}</Text>
         )}
 
         <TouchableOpacity
