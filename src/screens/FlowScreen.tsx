@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,9 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../contexts/ThemeContext';
@@ -22,29 +20,12 @@ import {
   getWeeklyBreakdown,
   getCurrentWeekIndex,
 } from '../utils/dateUtils';
-import {gradient, typography, spacing, radius, shadows } from '../theme';
+import { typography, spacing, radius, shadows } from '../theme';
+import { useEnergyState } from '../utils/energyState';
+import { FlowBar } from '../components/ui/FlowBar';
+import { GlowText } from '../components/ui/GlowText';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
-
-// ─────────────────────────────────────────────
-// Pressure color helpers
-// ─────────────────────────────────────────────
-
-const getPressureColor = (ratio: number, isPast: boolean, colors: any): string => {
-  if (!isPast) return colors.textTertiary;
-  if (ratio >= 0.9) return colors.success;
-  if (ratio >= 0.5) return colors.teal;
-  if (ratio >= 0.2) return colors.warning;
-  return colors.danger;
-};
-
-const getPressureBg = (ratio: number, isPast: boolean, colors: any): string => {
-  if (!isPast) return colors.surfaceAlt;
-  if (ratio >= 0.9) return colors.successLight;
-  if (ratio >= 0.5) return colors.tealLight;
-  if (ratio >= 0.2) return colors.warningLight;
-  return colors.dangerLight;
-};
 
 const getWeekCoverage = (
   expenses: ExpenseWithRecord[],
@@ -89,34 +70,20 @@ const WeekBar = ({
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const weekStyles = useMemo(() => makeWeekStyles(colors), [colors]);
+  const energyState = useEnergyState();
 
-  const barAnim = useRef(new Animated.Value(0)).current;
-  const color = isCurrent ? colors.teal : getPressureColor(coverage, isPast, colors);
-  const bg = isCurrent ? colors.tealLight : getPressureBg(coverage, isPast, colors);
-
-  useEffect(() => {
-    Animated.timing(barAnim, {
-      toValue: coverage,
-      duration: 700,
-      delay,
-      useNativeDriver: false,
-    }).start();
-  }, [coverage]);
-
-  const barWidth = barAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-    extrapolate: 'clamp',
-  });
+  const config = (isPast || isCurrent)
+    ? energyState({ ratio: coverage })
+    : { state: 'flowing' as const, color: colors.textTertiary, bg: colors.surfaceAlt };
 
   return (
     <View style={[
       weekStyles.card,
-      { backgroundColor: bg },
+      { backgroundColor: config.bg },
       isCurrent && weekStyles.cardCurrent,
     ]}>
       <View style={weekStyles.header}>
-        <Text style={[weekStyles.label, { color }]}>{label}</Text>
+        <Text style={[weekStyles.label, { color: config.color }]}>{label}</Text>
         <View style={weekStyles.headerRight}>
           {isCurrent && (
             <View style={weekStyles.nowPill}>
@@ -129,17 +96,15 @@ const WeekBar = ({
         </View>
       </View>
 
-      <Text style={[weekStyles.amount, { color: isCurrent ? colors.tealDark : colors.textPrimary }]}>
+      <Text style={[weekStyles.amount, { color: isCurrent ? colors.teal : colors.textPrimary }]}>
         {formatCurrency(amount)}
       </Text>
       <Text style={weekStyles.dateRange}>{dateRange}</Text>
 
-      <View style={weekStyles.track}>
-        <Animated.View style={[weekStyles.fill, { width: barWidth, backgroundColor: color }]} />
-      </View>
+      <FlowBar ratio={isPast || isCurrent ? coverage : 0} state={config.state} height={6} />
 
       {isPast && (
-        <Text style={[weekStyles.coverage, { color }]}>
+        <Text style={[weekStyles.coverage, { color: config.color }]}>
           {Math.round(coverage * 100)}% {t('overview.covered')}
         </Text>
       )}
@@ -201,17 +166,6 @@ const makeWeekStyles = (colors: any) => StyleSheet.create({
     fontSize: typography.xs,
     color: colors.textTertiary,
   },
-  track: {
-    height: 6,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    marginTop: spacing.xs,
-  },
-  fill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
   coverage: {
     fontSize: 10,
     fontWeight: typography.semibold,
@@ -243,6 +197,7 @@ const CommitmentFlowRow = ({
   const formatCurrency = useFormatCurrency();
   const { ordinalDay } = useFormatDate();
   const flowRowStyles = useMemo(() => makeFlowRowStyles(colors), [colors]);
+  const energyState = useEnergyState();
 
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
   const thisWeek = weeks[weekIndex];
@@ -251,27 +206,12 @@ const CommitmentFlowRow = ({
   const isResolved = isPaid || isWaived;
   const categoryIcon = getCategoryIcon(expense.category);
 
-  const barAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(barAnim, {
-      toValue: isResolved ? 1 : 0,
-      duration: 600,
-      delay,
-      useNativeDriver: false,
-    }).start();
-  }, [isResolved]);
-
-  const barWidth = barAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-    extrapolate: 'clamp',
-  });
-
+  const resolvedConfig = energyState({ status: isWaived ? 'waived' : 'paid' });
   const accentColor = isResolved
-    ? colors.success
+    ? resolvedConfig.color
     : expense.type === 'personal' ? colors.personal : colors.business;
   const accentBg = isResolved
-    ? colors.successLight
+    ? resolvedConfig.bg
     : expense.type === 'personal' ? colors.personalLight : colors.businessLight;
 
   return (
@@ -292,14 +232,16 @@ const CommitmentFlowRow = ({
           <View style={flowRowStyles.right}>
             <Text style={[
               flowRowStyles.amount,
-              { color: isResolved ? colors.success : colors.textPrimary }
+              { color: isResolved ? resolvedConfig.color : colors.textPrimary }
             ]}>
               {formatCurrency(expense.amount)}
             </Text>
             {isResolved ? (
-              <View style={flowRowStyles.resolvedChip}>
-                <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={9} color={colors.success} />
-                <Text style={flowRowStyles.resolvedText}>{isWaived ? t('status.waived') : t('status.paid')}</Text>
+              <View style={[flowRowStyles.resolvedChip, { backgroundColor: resolvedConfig.bg }]}>
+                <Ionicons name={isWaived ? 'gift-outline' : 'checkmark'} size={9} color={resolvedConfig.color} />
+                <Text style={[flowRowStyles.resolvedText, { color: resolvedConfig.color }]}>
+                  {isWaived ? t('status.waived') : t('status.paid')}
+                </Text>
               </View>
             ) : thisWeek ? (
               <Text style={flowRowStyles.weekAlloc}>
@@ -311,23 +253,11 @@ const CommitmentFlowRow = ({
         </View>
 
         {/* Single progress bar */}
-        <View style={flowRowStyles.barTrack}>
-          <Animated.View style={[
-            flowRowStyles.barFill,
-            {
-              width: barWidth,
-              backgroundColor: accentColor,
-              opacity: isResolved ? 0.7 : 1,
-            }
-          ]} />
-          {/* Week slice marker — shows where current week falls */}
-          {!isResolved && thisWeek && expense.amount > 0 && (
-            <View style={[
-              flowRowStyles.sliceMarker,
-              { left: `${Math.min((thisWeek.amount / expense.amount) * 100, 96)}%` as any }
-            ]} />
-          )}
-        </View>
+        <FlowBar
+          ratio={isResolved ? 1 : 0}
+          state={isResolved ? resolvedConfig.state : 'flowing'}
+          height={5}
+        />
       </View>
     </View>
   );
@@ -390,14 +320,12 @@ const makeFlowRowStyles = (colors: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: colors.successLight,
     borderRadius: radius.full,
     paddingHorizontal: 7,
     paddingVertical: 2,
   },
   resolvedText: {
     fontSize: 10,
-    color: colors.success,
     fontWeight: typography.semibold,
   },
   weekAlloc: {
@@ -407,26 +335,6 @@ const makeFlowRowStyles = (colors: any) => StyleSheet.create({
   weekAllocAmt: {
     fontWeight: typography.bold,
     color: colors.teal,
-  },
-  barTrack: {
-    height: 5,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
-    overflow: 'visible',
-    position: 'relative',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  sliceMarker: {
-    position: 'absolute',
-    top: -3,
-    width: 2,
-    height: 11,
-    borderRadius: 1,
-    backgroundColor: colors.teal,
-    opacity: 0.7,
   },
 });
 
@@ -456,29 +364,8 @@ export default function FlowScreen() {
   const weekCovered = weekNeeded * weekCoverage;
   const weekUnallocated = weekNeeded - weekCovered;
   const coveragePct = weekNeeded > 0 ? weekCoverage * 100 : 0;
-
-  // Hero bar animation
-  const heroAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(heroAnim, {
-      toValue: weekCoverage,
-      duration: 1000,
-      useNativeDriver: false,
-    }).start();
-  }, [weekCoverage]);
-
-  const heroBarWidth = heroAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-    extrapolate: 'clamp',
-  });
-
-  const heroBarColor =
-    coveragePct >= 90 ? colors.success :
-    coveragePct >= 50 ? colors.teal :
-    coveragePct >= 20 ? colors.warning :
-    colors.danger;
-  const heroPositive = coveragePct >= 50;
+  const energyState = useEnergyState();
+  const heroEnergyResult = energyState({ ratio: weekCoverage });
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -535,43 +422,25 @@ export default function FlowScreen() {
                         {dateRange(new Date(year, month - 1, currentWeekData.startDay), new Date(year, month - 1, currentWeekData.endDay))}
                       </Text>
                     </View>
-                    <View style={[styles.heroBadge, { backgroundColor: heroBarColor + '22' }]}>
-                      <View style={[styles.heroBadgeDot, { backgroundColor: heroBarColor }]} />
-                      <Text style={[styles.heroBadgeText, { color: heroBarColor }]}>
+                    <View style={[styles.heroBadge, { backgroundColor: heroEnergyResult.color + '22' }]}>
+                      <View style={[styles.heroBadgeDot, { backgroundColor: heroEnergyResult.color }]} />
+                      <Text style={[styles.heroBadgeText, { color: heroEnergyResult.color }]}>
                         {Math.round(coveragePct)}% {t('overview.covered')}
                       </Text>
                     </View>
                   </View>
 
                   {/* Amount */}
-                  <Text style={styles.heroAmount}>{formatCurrency(weekNeeded)}</Text>
+                  <GlowText intensity="subtle" style={styles.heroAmount}>{formatCurrency(weekNeeded)}</GlowText>
                   <Text style={styles.heroAmountLabel}>{t('flow.committedThisWeek').toLowerCase()}</Text>
 
-                  {/* Progress bar with glow */}
-                  <View style={styles.heroBarTrack}>
-                    {heroPositive ? (
-                      <Animated.View style={[styles.heroBarFill, { width: heroBarWidth }]}>
-                        <LinearGradient
-                          colors={gradient.brand}
-                          start={gradient.brandStart}
-                          end={gradient.brandEnd}
-                          style={StyleSheet.absoluteFill}
-                        />
-                      </Animated.View>
-                    ) : (
-                      <Animated.View style={[
-                        styles.heroBarFill,
-                        {
-                          width: heroBarWidth,
-                          backgroundColor: heroBarColor,
-                          shadowColor: heroBarColor,
-                          shadowOffset: { width: 0, height: 0 },
-                          shadowOpacity: 0.8,
-                          shadowRadius: 6,
-                        }
-                      ]} />
-                    )}
-                  </View>
+                  {/* Progress bar */}
+                  <FlowBar
+                    ratio={weekCoverage}
+                    state={heroEnergyResult.state}
+                    height={8}
+                    trackColor="rgba(250,250,247,0.10)"
+                  />
 
                   {/* Stats row */}
                   <View style={styles.heroStats}>
@@ -794,17 +663,6 @@ const makeStyles = (colors: any) => StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     marginTop: -8,
-  },
-  heroBarTrack: {
-    height: 8,
-    backgroundColor: 'rgba(250,250,247,0.10)',
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    marginTop: spacing.xs,
-  },
-  heroBarFill: {
-    height: '100%',
-    borderRadius: radius.full,
   },
   heroStats: {
     flexDirection: 'row',

@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { gradient, typography, spacing, radius, shadows } from '../theme';
+import { typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { MonthlySummary } from '../types';
 import { useFormatCurrency } from '../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
+import { useEnergyState } from '../utils/energyState';
+import { FlowBar } from './ui/FlowBar';
+import { GlowText } from './ui/GlowText';
 
 interface Props {
   summary: MonthlySummary;
@@ -16,8 +18,11 @@ export const SummaryCard = ({ summary }: Props) => {
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const progressPct =
-    summary.total > 0 ? (summary.totalPaid / summary.total) * 100 : 0;
+  const energyState = useEnergyState();
+
+  const ratio = summary.total > 0 ? summary.totalPaid / summary.total : 0;
+  const progressPct = ratio * 100;
+  const energyResult = energyState({ ratio });
 
   return (
     <View style={styles.card}>
@@ -25,21 +30,16 @@ export const SummaryCard = ({ summary }: Props) => {
       <View style={styles.totalRow}>
         <View>
           <Text style={styles.totalLabel}>{t('flow.totalFlow')}</Text>
-          <Text style={styles.totalAmount}>{formatCurrency(summary.total)}</Text>
+          <GlowText intensity="soft" style={styles.totalAmount}>{formatCurrency(summary.total)}</GlowText>
         </View>
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{t('common.commitments', { count: summary.expenseCount })}</Text>
         </View>
       </View>
 
-      {/* Progress bar — gradient fill */}
-      <View style={styles.progressTrack}>
-        <LinearGradient
-          colors={gradient.brand}
-          start={gradient.brandStart}
-          end={gradient.brandEnd}
-          style={[styles.progressFill, { width: `${progressPct}%` }]}
-        />
+      {/* Progress bar */}
+      <View style={styles.progressBarWrapper}>
+        <FlowBar ratio={ratio} state={energyResult.state} height={8} />
       </View>
       <Text style={styles.progressLabel}>
         {t('overview.progressLabel', { pct: progressPct.toFixed(0), paid: summary.paidCount, total: summary.expenseCount })}
@@ -125,15 +125,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: typography.xs,
     color: colors.primary,
     fontWeight: typography.semibold },
-  progressTrack: {
-    height: 8,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
-    overflow: 'hidden',
+  progressBarWrapper: {
     marginBottom: spacing.xs },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.full },
   progressLabel: {
     fontSize: typography.xs,
     color: colors.textSecondary,

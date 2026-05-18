@@ -13,6 +13,7 @@ import { useCategoryLabel } from '../utils/categories';
 import { useFormatCurrency,
   useFormatDate,
   getBillStatus } from '../utils/dateUtils';
+import { useEnergyState } from '../utils/energyState';
 import { useTranslation } from 'react-i18next';
 
 
@@ -26,14 +27,6 @@ interface Props {
   weeklyAllocation?: number;
 }
 
-// ── Status configuration — semantic, not decorative ──
-const getStatusConfig = (colors: any) => ({
-  paid:       { color: colors.success,       bg: colors.successLight, labelKey: 'status.completed', icon: 'checkmark-circle' },
-  waived:     { color: colors.accentMuted,   bg: colors.primaryLight, labelKey: 'status.waived',    icon: 'gift-outline' },
-  overdue:    { color: colors.danger,        bg: colors.dangerLight,  labelKey: 'status.overdue',   icon: 'alert-circle' },
-  'due-soon': { color: colors.warning,       bg: colors.warningLight, labelKey: 'status.dueSoon',   icon: 'time' },
-  upcoming:   { color: colors.textSecondary, bg: colors.surfaceAlt,   labelKey: 'status.upcoming',  icon: 'calendar-outline' },
-});
 
 
 export const ExpenseCard = ({
@@ -46,17 +39,17 @@ export const ExpenseCard = ({
   weeklyAllocation }: Props) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const energyState = useEnergyState();
   const formatCurrency = useFormatCurrency();
   const { monthYear, ordinalDay } = useFormatDate();
   const getCategoryLabel = useCategoryLabel();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const STATUS_CONFIG = useMemo(() => getStatusConfig(colors), [colors]);
 
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
   const isResolved = isPaid || isWaived;
   const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
-  const statusConfig = STATUS_CONFIG[status];
+  const statusConfig = energyState({ status });
   const categoryIcon = getCategoryIcon(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
 
@@ -68,12 +61,11 @@ export const ExpenseCard = ({
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;
 
-  // Amount color — status-aware
+  // Amount color — flows through energy state
   const amountColor =
-    isResolved ? colors.success :
-    status === 'overdue' ? colors.danger :
-    status === 'due-soon' ? colors.warning :
-    colors.textPrimary;
+    isResolved || status === 'overdue' || status === 'due-soon'
+      ? statusConfig.color
+      : colors.textPrimary;
 
   const handleLongPress = () => {
     Alert.alert(expense.name, t('commitments.whatToDo'), [
@@ -123,8 +115,8 @@ export const ExpenseCard = ({
     <TouchableOpacity
       style={[
         styles.card,
-        // Very subtle status tint on entire card for overdue/due-soon
-        status === 'overdue' && { backgroundColor: colors.dangerLight },
+        // Very subtle status tint on entire card for overdue
+        status === 'overdue' && { backgroundColor: statusConfig.bg },
         isResolved && { opacity: 0.88 },
       ]}
       onLongPress={handleLongPress}
@@ -209,7 +201,7 @@ export const ExpenseCard = ({
               color={statusConfig.color}
             />
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
-              {t(statusConfig.labelKey)}
+              {t(statusConfig.labelKey!)}
             </Text>
           </View>
           {expense.is_autopay && (
@@ -414,8 +406,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.success,
     borderColor: colors.success },
   checkBtnWaived: {
-    backgroundColor: colors.accentMuted,
-    borderColor: colors.accentMuted },
+    backgroundColor: colors.charged,
+    borderColor: colors.charged },
   checkBtnUnpaid: {
     backgroundColor: 'transparent',
     borderColor: colors.border } });

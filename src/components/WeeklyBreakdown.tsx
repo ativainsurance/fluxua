@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { typography, spacing, radius, shadows } from '../theme';
@@ -10,6 +10,8 @@ import { getWeeklyBreakdown,
   useFormatDate,
   getCurrentWeekIndex,
   getBillStatus } from '../utils/dateUtils';
+import { useEnergyState } from '../utils/energyState';
+import { FlowBar } from './ui/FlowBar';
 
 interface Props {
   expense: ExpenseWithRecord;
@@ -17,46 +19,20 @@ interface Props {
   year: number;
 }
 
-const getPressureBarColor = (
-  expense: ExpenseWithRecord,
-  weekIndex: number,
-  currentWeekIdx: number,
-  colors: any
-): string => {
-  const isPaid = expense.record?.is_paid ?? false;
-  if (isPaid) return colors.success;
-
-  const status = getBillStatus(expense.due_day, isPaid);
-  if (status === 'overdue' && weekIndex <= currentWeekIdx) return colors.danger;
-  if (status === 'due-soon' && weekIndex === currentWeekIdx) return colors.warning;
-  if (expense.type === 'personal') return colors.personal;
-  return colors.business;
-};
-
 export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { ordinalDay } = useFormatDate();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const energyState = useEnergyState();
   const weeks = getWeeklyBreakdown(expense.amount, month, year);
   const maxAmount = Math.max(...weeks.map((w) => w.amount));
   const currentWeekIdx = getCurrentWeekIndex(month, year);
   const isPaid = expense.record?.is_paid ?? false;
-
-  const barAnims = useRef(weeks.map(() => new Animated.Value(0))).current;
-
-  useEffect(() => {
-    const animations = weeks.map((week, i) => {
-      const pct = maxAmount > 0 ? week.amount / maxAmount : 0;
-      return Animated.timing(barAnims[i], {
-        toValue: pct,
-        duration: 550,
-        delay: i * 100,
-        useNativeDriver: false });
-    });
-    Animated.parallel(animations).start();
-  }, [expense.id, expense.amount]);
+  const billStatus = getBillStatus(expense.due_day, isPaid);
+  const currentWeekConfig = energyState({ status: isPaid ? 'paid' : billStatus });
+  const upcomingConfig = energyState({ status: 'upcoming' });
 
   return (
     <View style={styles.card}>
@@ -80,33 +56,20 @@ export const WeeklyBreakdown = ({ expense, month, year }: Props) => {
         <Text style={styles.totalAmount}>{formatCurrency(expense.amount)}</Text>
       </View>
 
-      {/* Animated bars with pressure coloring */}
+      {/* Flow bars — energy state coloring */}
       <View style={styles.bars}>
         {weeks.map((week, i) => {
           const pct = maxAmount > 0 ? week.amount / maxAmount : 0;
           const isCurrent = i === currentWeekIdx;
-          const barColor = getPressureBarColor(expense, i, currentWeekIdx, colors);
-
-          const barWidth = barAnims[i].interpolate({
-            inputRange: [0, 1],
-            outputRange: ['0%', '100%'],
-            extrapolate: 'clamp' });
+          const barConfig = isCurrent ? currentWeekConfig : upcomingConfig;
 
           return (
             <View key={week.week} style={styles.weekRow}>
               <Text style={[styles.weekLabel, isCurrent && styles.weekLabelActive]}>
                 W{week.week}
               </Text>
-              <View style={styles.barTrack}>
-                <Animated.View
-                  style={[
-                    styles.barFill,
-                    {
-                      width: barWidth,
-                      backgroundColor: barColor,
-                      opacity: isCurrent ? 1 : 0.6 },
-                  ]}
-                />
+              <View style={styles.barTrackWrapper}>
+                <FlowBar ratio={pct} state={barConfig.state} height={10} />
               </View>
               <Text style={[styles.weekAmount, isCurrent && styles.weekAmountActive]}>
                 {formatCurrency(week.amount)}
@@ -200,15 +163,8 @@ const makeStyles = (colors: any) => StyleSheet.create({
   weekLabelActive: {
     color: colors.primary,
     fontWeight: typography.semibold },
-  barTrack: {
-    flex: 1,
-    height: 10,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full,
-    overflow: 'hidden' },
-  barFill: {
-    height: '100%',
-    borderRadius: radius.full },
+  barTrackWrapper: {
+    flex: 1 },
   weekAmount: {
     fontSize: typography.xs,
     fontWeight: typography.medium,

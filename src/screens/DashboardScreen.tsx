@@ -12,6 +12,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { LinearGradient } from 'expo-linear-gradient';
+import RAnimated, {
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -28,6 +38,9 @@ import { typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, getCategoryIcon } from '../types';
 import { useCategoryLabel } from '../utils/categories';
+import { useEnergyState } from '../utils/energyState';
+import { FlowBar } from '../components/ui/FlowBar';
+import { GlowText } from '../components/ui/GlowText';
 
 // ─────────────────────────────────────────────
 // Module-level constants (no hook access here — hex only)
@@ -50,24 +63,6 @@ const CATEGORY_COLORS: Record<string, { accent: string; bg: string; darkBg: stri
 
 const getCategoryColor = (category: string) =>
   CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
-
-const STATUS_ACCENT_LIGHT: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
-  paid:       { accent: '#5A8260', bg: 'rgba(90,130,96,0.12)',   labelKey: 'status.completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#8B5CF6', bg: 'rgba(139,92,246,0.12)',  labelKey: 'status.waived',    icon: 'gift-outline'      },
-  overdue:    { accent: '#8E4530', bg: 'rgba(142,69,48,0.12)',   labelKey: 'status.overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#A85F40', bg: 'rgba(168,95,64,0.12)',   labelKey: 'status.dueSoon',   icon: 'time'              },
-  upcoming:   { accent: '#9C968D', bg: 'rgba(156,150,141,0.10)', labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
-};
-
-const STATUS_ACCENT_DARK: Record<string, { accent: string; bg: string; labelKey: string; icon: string }> = {
-  paid:       { accent: '#7FA582', bg: 'rgba(127,165,130,0.15)', labelKey: 'status.completed', icon: 'checkmark-circle'  },
-  waived:     { accent: '#A78BFA', bg: 'rgba(167,139,250,0.15)', labelKey: 'status.waived',    icon: 'gift-outline'      },
-  overdue:    { accent: '#B85C3F', bg: 'rgba(184,92,63,0.15)',   labelKey: 'status.overdue',   icon: 'alert-circle'      },
-  'due-soon': { accent: '#C97B5A', bg: 'rgba(201,123,90,0.15)',  labelKey: 'status.dueSoon',   icon: 'time'              },
-  upcoming:   { accent: '#5C544C', bg: 'rgba(92,84,76,0.12)',    labelKey: 'status.upcoming',  icon: 'calendar-outline'  },
-};
-
-const getStatusAccent = (isDark: boolean) => isDark ? STATUS_ACCENT_DARK : STATUS_ACCENT_LIGHT;
 
 // ─────────────────────────────────────────────
 // MetricCard — kept for future use
@@ -442,24 +437,31 @@ const CommitmentRow = ({
   expense: ExpenseWithRecord;
   onTogglePaid: (expense: ExpenseWithRecord, isPaid: boolean) => void;
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { ordinalDay } = useFormatDate();
   const rowStyles = useMemo(() => makeRowStyles(colors), [colors]);
-  const STATUS_ACCENT = useMemo(() => getStatusAccent(isDark), [isDark]);
+  const energyState = useEnergyState();
 
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
   const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
-  const config = STATUS_ACCENT[status] ?? STATUS_ACCENT.upcoming;
+  const config = energyState({ status });
   const categoryIcon = getCategoryIcon(expense.category);
   const amount = expense.record?.actual_amount ?? expense.amount;
   const isResolved = isPaid || isWaived;
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const rippleAnim = useRef(new Animated.Value(0)).current;
 
   const handlePress = () => {
+    if (!isResolved) {
+      Animated.sequence([
+        Animated.timing(rippleAnim, { toValue: 0.28, duration: 150, useNativeDriver: true }),
+        Animated.timing(rippleAnim, { toValue: 0, duration: 270, useNativeDriver: true }),
+      ]).start();
+    }
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.97, duration: 70, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 140, useNativeDriver: true }),
@@ -468,17 +470,22 @@ const CommitmentRow = ({
 
   return (
     <Animated.View style={[rowStyles.wrapper, { transform: [{ scale: scaleAnim }] }]}>
-      <View style={[rowStyles.accentStrip, { backgroundColor: config.accent }]} />
+      {/* Discharge ripple overlay */}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { backgroundColor: config.color, opacity: rippleAnim, borderRadius: radius.xl }]}
+        pointerEvents="none"
+      />
+      <View style={[rowStyles.accentStrip, { backgroundColor: config.color }]} />
       <View style={rowStyles.body}>
         <View style={[rowStyles.iconCircle, { backgroundColor: config.bg }]}>
-          <Ionicons name={categoryIcon as any} size={19} color={config.accent} />
+          <Ionicons name={categoryIcon as any} size={19} color={config.color} />
         </View>
         <View style={rowStyles.info}>
           <Text style={[rowStyles.name, isResolved && { opacity: 0.6 }]} numberOfLines={1}>{expense.name}</Text>
           <View style={rowStyles.badgeRow}>
             <View style={[rowStyles.statusBadge, { backgroundColor: config.bg }]}>
-              <Ionicons name={config.icon as any} size={9} color={config.accent} />
-              <Text style={[rowStyles.statusText, { color: config.accent }]}>{t(config.labelKey)}</Text>
+              <Ionicons name={config.icon! as any} size={9} color={config.color} />
+              <Text style={[rowStyles.statusText, { color: config.color }]}>{t(config.labelKey!)}</Text>
             </View>
             {expense.due_day > 0 && (
               <Text style={rowStyles.dueDay}>{ordinalDay(expense.due_day)}</Text>
@@ -525,7 +532,7 @@ const makeRowStyles = (colors: any) => StyleSheet.create({
   amount: { fontSize: typography.lg, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.5 },
   checkBtn: { width: 30, height: 30, borderRadius: radius.full, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
   checkBtnDone: { backgroundColor: colors.success, borderColor: colors.success },
-  checkBtnWaived: { backgroundColor: colors.textTertiary, borderColor: colors.textTertiary },
+  checkBtnWaived: { backgroundColor: colors.charged, borderColor: colors.charged },
   checkBtnPending: { backgroundColor: 'transparent', borderColor: colors.border },
 });
 
@@ -559,16 +566,30 @@ const HeroCard = ({
   const formatCurrency = useFormatCurrency();
   const { monthYear } = useFormatDate();
   const heroStyles = useMemo(() => makeHeroStyles(colors), [colors]);
+  const energyState = useEnergyState();
+  const reduceMotion = useReducedMotion();
 
   const pct = total > 0 ? paid / total : 0;
+  const energyResult = energyState({ ratio: pct });
 
-  const barAnim = useRef(new Animated.Value(0)).current;
+  // Ambient gradient mesh — slow horizontal drift, frozen on reduce-motion
+  const meshX = useSharedValue(0);
+  const ambientStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: meshX.value }],
+  }));
   useEffect(() => {
-    Animated.timing(barAnim, { toValue: pct, duration: 1100, useNativeDriver: false }).start();
-  }, [pct]);
-
-  const barWidth = barAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  const barColor = pct >= 0.9 ? colors.success : pct >= 0.6 ? colors.teal : pct >= 0.3 ? colors.warning : colors.danger;
+    if (reduceMotion) {
+      cancelAnimation(meshX);
+      meshX.value = 0;
+    } else {
+      meshX.value = withRepeat(
+        withTiming(24, { duration: 7000, easing: Easing.inOut(Easing.ease) }),
+        -1,
+        true,
+      );
+    }
+    return () => cancelAnimation(meshX);
+  }, [reduceMotion]);
 
   const dueSoonCount = expenses.filter(e => {
     const s = getBillStatus(e.due_day, e.record?.is_paid ?? false);
@@ -577,6 +598,16 @@ const HeroCard = ({
 
   return (
     <View style={heroStyles.card}>
+      {/* Ambient gradient mesh */}
+      <RAnimated.View style={[StyleSheet.absoluteFill, ambientStyle]} pointerEvents="none">
+        <LinearGradient
+          colors={[colors.primary + '10', colors.flowEnd + '08', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      </RAnimated.View>
+
       <View style={heroStyles.content}>
         {/* Greeting */}
         <View style={heroStyles.headerRow}>
@@ -587,18 +618,12 @@ const HeroCard = ({
         {/* Amount */}
         <View style={heroStyles.amountBlock}>
           <Text style={heroStyles.amountLabel}>{monthYear(new Date(year, month - 1, 1))} · {t('overview.totalFlow')}</Text>
-          <Text style={heroStyles.amount}>{formatCurrency(total)}</Text>
+          <GlowText intensity="subtle" style={heroStyles.amount}>{formatCurrency(total)}</GlowText>
         </View>
 
         {/* Progress bar */}
         <View style={heroStyles.progressSection}>
-          <View style={heroStyles.progressTrack}>
-            <Animated.View style={[heroStyles.progressFill, {
-              width: barWidth, backgroundColor: barColor,
-              shadowColor: barColor, shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.7, shadowRadius: 6, elevation: 3,
-            }]} />
-          </View>
+          <FlowBar ratio={pct} state={energyResult.state} height={8} />
           <View style={heroStyles.progressLabels}>
             <Text style={heroStyles.progressLabelLeft}>{formatCurrency(paid)} {t('overview.settled').toLowerCase()}</Text>
             <Text style={heroStyles.progressLabelRight}>{paidCount}/{totalCount}</Text>
@@ -637,6 +662,7 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.xl,
+    overflow: 'hidden',
     ...shadows.card,
     borderWidth: 1,
     borderColor: colors.border,
@@ -658,11 +684,6 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
     color: colors.textPrimary, letterSpacing: -2, lineHeight: 54,
   },
   progressSection: { gap: spacing.xs },
-  progressTrack: {
-    height: 8, backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.full, overflow: 'hidden',
-  },
-  progressFill: { height: '100%', borderRadius: radius.full },
   progressLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   progressLabelLeft: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: typography.medium },
   progressLabelRight: { fontSize: typography.xs, color: colors.textTertiary, fontWeight: typography.medium },
@@ -697,23 +718,6 @@ const SplitSection = ({
   const personalPct = total > 0 ? personalTotal / total : 0;
   const businessPct = total > 0 ? businessTotal / total : 0;
 
-  const personalAnim = useRef(new Animated.Value(0)).current;
-  const businessAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.stagger(120, [
-      Animated.timing(personalAnim, { toValue: 1, duration: 900, useNativeDriver: false }),
-      Animated.timing(businessAnim, { toValue: 1, duration: 900, useNativeDriver: false }),
-    ]).start();
-  }, [personalPct, businessPct]);
-
-  const personalWidth = personalAnim.interpolate({
-    inputRange: [0, 1], outputRange: ['0%', `${Math.round(personalPct * 100)}%`], extrapolate: 'clamp',
-  });
-  const businessWidth = businessAnim.interpolate({
-    inputRange: [0, 1], outputRange: ['0%', `${Math.round(businessPct * 100)}%`], extrapolate: 'clamp',
-  });
-
   if (total === 0 || (personalTotal === 0 && businessTotal === 0)) return null;
 
   return (
@@ -740,9 +744,7 @@ const SplitSection = ({
               </Text>
             </View>
           </View>
-          <View style={{ height: 12, backgroundColor: colors.surfaceAlt, borderRadius: radius.full, overflow: 'hidden' }}>
-            <Animated.View style={{ width: personalWidth, height: '100%', backgroundColor: colors.personal, borderRadius: radius.full }} />
-          </View>
+          <FlowBar ratio={personalPct} state="flowing" height={12} />
         </View>
       )}
 
@@ -759,9 +761,7 @@ const SplitSection = ({
               </Text>
             </View>
           </View>
-          <View style={{ height: 12, backgroundColor: colors.surfaceAlt, borderRadius: radius.full, overflow: 'hidden' }}>
-            <Animated.View style={{ width: businessWidth, height: '100%', backgroundColor: colors.business, borderRadius: radius.full }} />
-          </View>
+          <FlowBar ratio={businessPct} state="charged" height={12} />
         </View>
       )}
     </View>

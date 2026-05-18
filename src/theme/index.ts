@@ -1,137 +1,157 @@
 // ─────────────────────────────────────────────
-// Fluxua Design System — Editorial Finance
-// Aesthetic: Mercury Bank × high-end print magazine
-// Philosophy: Warm, restrained, premium, confidence-inspiring
+// Fluxua Design System — Current
+// Aesthetic: energy-flow fintech / blue→teal
+// Philosophy: money is energy that flows with purpose or drains if unmanaged
 // ─────────────────────────────────────────────
 
 // ── Font families ──────────────────────────────────────────────────────────
 export const fonts = {
-  display: 'Fraunces',       // Editorial serif — headlines, hero numbers
-  body: 'Geist',             // Clean modern sans — body text, UI labels
-  mono: 'GeistMono',         // Monospaced — amounts, codes, data
+  display: 'Geist',           // Hero numerals — heaviest available Geist weight
+  body: 'Geist',              // Clean modern sans — body text, UI labels
+  mono: 'GeistMono',          // Monospaced — amounts, codes, data
 } as const;
 
-// ── Light palette — warm parchment editorial ──────────────────────────────
+// ── Light palette — cool blue-slate canvas ────────────────────────────────
 export const colors = {
-  // ── Backgrounds (warm paper layers) ──
-  background: '#FAFAF7',       // warm off-white — app canvas
-  surface: '#F2EFE9',          // warm parchment — standard card surface
-  surfaceAlt: '#EDE9E0',       // slightly deeper warm — tracks, icon bgs
-  surfaceRaised: '#FFFFFF',    // pure white — elevated elements, inputs
+  // ── Backgrounds ──
+  background: '#F4F7FA',        // cool blue-white — app canvas
+  surface: '#EDF2F7',           // cool card surface
+  surfaceAlt: '#E4ECF5',        // slightly deeper — tracks, icon bgs
+  surfaceRaised: '#FFFFFF',     // pure white — elevated elements, inputs
+  surfaceElevated: '#E4ECF5',   // alias for track/bar backgrounds
 
-  // ── Brand ── (amber accent, muted sage, warm charcoal)
-  primary: '#9C7142',          // amber — primary actions, links
-  primaryLight: 'rgba(156,113,66,0.10)',
-  primaryDark: '#7A5730',
-  teal: '#5A8260',             // sage green — flow/progress indicators
-  tealLight: 'rgba(90,130,96,0.12)',
-  tealDark: '#3D6347',
-  navy: '#1A1A18',             // warm charcoal — hero surfaces
-  navyMid: '#2A2A26',          // mid charcoal — sub-elements
+  // ── Brand ── (electric blue primary, deep teal accent)
+  primary: '#2563EB',           // electric blue — primary actions, links
+  primaryLight: 'rgba(37,99,235,0.08)',
+  primaryDark: '#1D4ED8',
+  teal: '#0D9488',              // deep teal — flow indicators, success
+  tealLight: 'rgba(13,148,136,0.10)',
+  tealDark: '#0F766E',
+  navy: '#0F172A',              // deep blue-black — hero surfaces
+  navyMid: '#1E293B',           // mid slate — sub-elements
 
   // ── Semantic ──
-  success: '#5A8260',
-  successLight: 'rgba(90,130,96,0.12)',
-  successDark: '#3D6347',
-  danger: '#8E4530',
-  dangerLight: 'rgba(142,69,48,0.12)',
-  warning: '#A85F40',
-  warningLight: 'rgba(168,95,64,0.12)',
+  success: '#0D9488',
+  successLight: 'rgba(13,148,136,0.10)',
+  successDark: '#0F766E',
+  danger: '#DC2626',
+  dangerLight: 'rgba(220,38,38,0.10)',
+  warning: '#D97706',
+  warningLight: 'rgba(217,119,6,0.10)',
 
   // ── Type tabs ──
-  personal: '#9C7142',         // amber = personal
-  personalLight: 'rgba(156,113,66,0.10)',
-  business: '#5C6E7A',         // muted blue-gray = business
-  businessLight: 'rgba(92,110,122,0.10)',
+  personal: '#2563EB',          // blue = personal
+  personalLight: 'rgba(37,99,235,0.08)',
+  business: '#0D9488',          // teal = business
+  businessLight: 'rgba(13,148,136,0.10)',
 
   // ── Text hierarchy ──
-  textPrimary: '#1A1A18',      // warm charcoal — max contrast
-  textSecondary: '#6B655D',    // warm mid-tone — second level
-  textTertiary: '#9C968D',     // warm muted — metadata, labels
-  textDisabled: '#C4BDB5',     // warm light — disabled
-  textInverse: '#FAFAF7',      // on dark surfaces
+  textPrimary: '#0F172A',       // deep blue-black — max contrast
+  textSecondary: '#475569',     // slate mid — second level
+  textTertiary: '#94A3B8',      // slate light — metadata, labels
+  textDisabled: '#CBD5E1',      // slate very light — disabled
+  textInverse: '#F8FAFC',       // on dark surfaces
 
   // ── Borders & dividers ──
-  border: '#E5E1D8',
-  borderFocus: '#9C7142',
-  divider: '#EDE9E0',
+  border: '#CBD5E1',
+  borderFocus: '#2563EB',
+  divider: '#E2E8F0',
 
   // ── Overlays ──
-  overlay: 'rgba(26,26,24,0.45)',
-  overlayLight: 'rgba(26,26,24,0.20)',
+  overlay: 'rgba(15,23,42,0.45)',
+  overlayLight: 'rgba(15,23,42,0.20)',
 
-  // ── Editorial extras ──
-  accent: '#9C7142',           // alias for primary
-  accentMuted: '#C9A77A',      // lighter amber — secondary highlights
+  // ── Accent aliases ──
+  accent: '#2563EB',
+  accentMuted: '#60A5FA',       // lighter blue — secondary highlights
+
+  // ── Energy flow tokens (new) ──
+  flowStart: '#2563EB',         // gradient origin — blue
+  flowEnd: '#0D9488',           // gradient terminus — teal
+  charged: '#0D9488',           // fully settled = teal
+  flowing: '#2563EB',           // active, on track = blue
+  thinning: '#60A5FA',          // due soon, waning = lighter blue
+  draining: '#78716C',          // overdue, depleted = desaturated stone
 } as const;
 
-// ── Dark palette — warm obsidian editorial ────────────────────────────────
+// ── Dark palette — deep blue-slate obsidian ───────────────────────────────
 export const darkColors = {
   // ── Backgrounds ──
-  background: '#0E0E0C',       // near-black warm — app canvas
-  surface: '#16161A',          // deep warm card surface
-  surfaceAlt: '#1E1E22',       // slightly lighter — tracks, icon bgs
-  surfaceRaised: '#26262A',    // raised elements, dropdowns
+  background: '#090E1A',        // deep blue-black — app canvas
+  surface: '#0F1629',           // dark blue card surface
+  surfaceAlt: '#161F38',        // slightly lighter dark blue
+  surfaceRaised: '#1E2D4A',     // raised elements, dropdowns
+  surfaceElevated: '#161F38',   // track/bar backgrounds
 
-  // ── Brand (warm amber brightened for dark) ──
-  primary: '#D4A574',
-  primaryLight: 'rgba(212,165,116,0.15)',
-  primaryDark: '#A8824E',
-  teal: '#7FA582',             // sage brightened for dark
-  tealLight: 'rgba(127,165,130,0.15)',
-  tealDark: '#5C8063',
-  navy: '#2A2A26',             // warm dark surface for hero cards
-  navyMid: '#1A1A18',
+  // ── Brand (brightened for dark) ──
+  primary: '#60A5FA',           // blue brightened
+  primaryLight: 'rgba(96,165,250,0.15)',
+  primaryDark: '#3B82F6',
+  teal: '#2DD4BF',              // teal brightened
+  tealLight: 'rgba(45,212,191,0.15)',
+  tealDark: '#14B8A6',
+  navy: '#1E293B',              // dark hero surfaces
+  navyMid: '#0F172A',
 
-  // ── Semantic (muted, warm for dark bg) ──
-  success: '#7FA582',
-  successLight: 'rgba(127,165,130,0.15)',
-  successDark: '#5C8063',
-  danger: '#B85C3F',
-  dangerLight: 'rgba(184,92,63,0.15)',
-  warning: '#C97B5A',
-  warningLight: 'rgba(201,123,90,0.15)',
+  // ── Semantic ──
+  success: '#2DD4BF',
+  successLight: 'rgba(45,212,191,0.15)',
+  successDark: '#14B8A6',
+  danger: '#F87171',
+  dangerLight: 'rgba(248,113,113,0.15)',
+  warning: '#FBBF24',
+  warningLight: 'rgba(251,191,36,0.15)',
 
   // ── Type tabs ──
-  personal: '#D4A574',
-  personalLight: 'rgba(212,165,116,0.15)',
-  business: '#7A9BB5',
-  businessLight: 'rgba(122,155,181,0.15)',
+  personal: '#60A5FA',          // blue brightened
+  personalLight: 'rgba(96,165,250,0.15)',
+  business: '#2DD4BF',          // teal brightened
+  businessLight: 'rgba(45,212,191,0.15)',
 
   // ── Text hierarchy ──
-  textPrimary: '#F4F1EA',      // warm near-white — max contrast on dark
-  textSecondary: '#A39B8E',    // warm mid — second level (bumped for WCAG AA)
-  textTertiary: '#5C544C',     // warm dim — metadata
-  textDisabled: '#3C3630',     // warm darkest — disabled
-  textInverse: '#F4F1EA',      // on dark surfaces (navy, gradient btns — always light)
+  textPrimary: '#F1F5F9',       // cool near-white — max contrast
+  textSecondary: '#94A3B8',     // slate mid-light (WCAG AA)
+  textTertiary: '#475569',      // slate dim — metadata
+  textDisabled: '#334155',      // darkest disabled
+  textInverse: '#F1F5F9',       // on dark surfaces
 
   // ── Borders & dividers ──
-  border: '#2A2A26',
-  borderFocus: '#D4A574',
-  divider: '#1E1E22',
+  border: '#1E293B',
+  borderFocus: '#60A5FA',
+  divider: '#161F38',
 
   // ── Overlays ──
   overlay: 'rgba(0,0,0,0.65)',
   overlayLight: 'rgba(0,0,0,0.35)',
 
-  // ── Editorial extras ──
-  accent: '#D4A574',
-  accentMuted: '#8A6F4C',
+  // ── Accent aliases ──
+  accent: '#60A5FA',
+  accentMuted: '#3B82F6',       // slightly deeper blue
+
+  // ── Energy flow tokens (new, brightened for dark) ──
+  flowStart: '#3B82F6',         // blue
+  flowEnd: '#2DD4BF',           // teal
+  charged: '#2DD4BF',           // fully settled = bright teal
+  flowing: '#60A5FA',           // active = blue
+  thinning: '#93C5FD',          // waning = lighter blue
+  draining: '#A8A29E',          // depleted = warm stone (desaturated)
 } as const;
 
-// ── Brand gradient: warm amber → golden ──────────────────────────────────
+// ── Brand gradient: blue → teal ───────────────────────────────────────────
 export const gradient = {
-  brand: ['#9C7142', '#C29055'] as [string, string],
+  brand: ['#2563EB', '#0D9488'] as [string, string],
   brandStart: { x: 0, y: 0 },
   brandEnd: { x: 1, y: 0 },
-  brandVertical: ['#9C7142', '#C29055'] as [string, string],
+  brandVertical: ['#2563EB', '#0D9488'] as [string, string],
   brandVerticalStart: { x: 0, y: 0 },
   brandVerticalEnd: { x: 0, y: 1 },
   // Auth screen background gradient
-  authBg: ['#FAFAF7', '#F2EFE9'] as [string, string],
+  authBg: ['#F4F7FA', '#EDF2F7'] as [string, string],
   authBgStart: { x: 0, y: 0 },
   authBgEnd: { x: 1, y: 1 },
-  authBgDark: ['#0E0E0C', '#16161A'] as [string, string],
+  authBgDark: ['#090E1A', '#0F1629'] as [string, string],
+  // Dark-mode brand gradient
+  brandDark: ['#3B82F6', '#2DD4BF'] as [string, string],
 } as const;
 
 // ── Typography ────────────────────────────────────────────────────────────
@@ -183,35 +203,35 @@ export const radius = {
 // ── Shadow system ─────────────────────────────────────────────────────────
 export const shadows = {
   sm: {
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 1,
   },
   md: {
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
     elevation: 2,
   },
   lg: {
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.10,
     shadowRadius: 24,
     elevation: 4,
   },
   card: {
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 20,
     elevation: 3,
   },
   hero: {
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 0.24,
     shadowRadius: 40,
@@ -222,10 +242,10 @@ export const shadows = {
 // ── Common styles ─────────────────────────────────────────────────────────
 export const commonStyles = {
   card: {
-    backgroundColor: '#F2EFE9',
+    backgroundColor: '#EDF2F7',
     borderRadius: 20,
     padding: 16,
-    shadowColor: '#1A1A18',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 20,

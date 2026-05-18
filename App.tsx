@@ -7,18 +7,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 
 import {
-  Fraunces_300Light,
-  Fraunces_400Regular,
-  Fraunces_500Medium,
-  Fraunces_600SemiBold,
-  Fraunces_700Bold,
-  Fraunces_300Light_Italic,
-  Fraunces_400Regular_Italic,
-} from '@expo-google-fonts/fraunces';
-import {
   Geist_400Regular,
   Geist_500Medium,
   Geist_600SemiBold,
+  Geist_700Bold,
+  Geist_800ExtraBold,
 } from '@expo-google-fonts/geist';
 import {
   GeistMono_400Regular,
@@ -44,16 +37,11 @@ function ThemedApp() {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    'Fraunces-Light': Fraunces_300Light,
-    'Fraunces-Regular': Fraunces_400Regular,
-    'Fraunces-Medium': Fraunces_500Medium,
-    'Fraunces-SemiBold': Fraunces_600SemiBold,
-    'Fraunces-Bold': Fraunces_700Bold,
-    'Fraunces-LightItalic': Fraunces_300Light_Italic,
-    'Fraunces-Italic': Fraunces_400Regular_Italic,
     'Geist-Regular': Geist_400Regular,
     'Geist-Medium': Geist_500Medium,
     'Geist-SemiBold': Geist_600SemiBold,
+    'Geist-Bold': Geist_700Bold,
+    'Geist-ExtraBold': Geist_800ExtraBold,
     'GeistMono-Regular': GeistMono_400Regular,
     'GeistMono-Medium': GeistMono_500Medium,
   });
