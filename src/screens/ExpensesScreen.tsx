@@ -24,6 +24,7 @@ import {
 import {typography, spacing, radius, shadows } from '../theme';
 import { ExpenseCard } from '../components/ExpenseCard';
 import { PaidAmountModal } from '../components/PaidAmountModal';
+import { CardPaymentsModal } from '../components/CardPaymentsModal';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, ExpenseType } from '../types';
 
@@ -46,8 +47,9 @@ export default function ExpensesScreen() {
   const [year, setYear] = useState(currentYear);
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [pendingPaid, setPendingPaid] = useState<PendingPaid | null>(null);
+  const [paymentModalExpense, setPaymentModalExpense] = useState<ExpenseWithRecord | null>(null);
 
-  const { expenses, summary, loading, reload, markAsPaid, removeExpense, excludeFromMonth, waiveExpense } =
+  const { expenses, summary, loading, reload, markAsPaid, removeExpense, excludeFromMonth, waiveExpense, addCardPayment, deleteCardPayment } =
     useExpenses(month, year);
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
@@ -61,13 +63,16 @@ export default function ExpensesScreen() {
 
   const handleTogglePaid = (expense: ExpenseWithRecord, isPaid: boolean) => {
     if (isPaid) {
-      // Marking as paid — open modal to enter actual amount
       setPendingPaid({ expense, isPaid });
     } else {
-      // Unchecking a paid expense — clear immediately (no dialog, works on web)
       markAsPaid(expense, false);
     }
   };
+
+  // Keep the modal expense in sync with live data from the hook
+  const currentModalExpense = paymentModalExpense
+    ? expenses.find((e) => e.id === paymentModalExpense.id) ?? paymentModalExpense
+    : null;
 
   /** Weekly allocation for a commitment in the current/selected week */
   const getWeeklyAllocation = (expense: ExpenseWithRecord): number | undefined => {
@@ -179,6 +184,7 @@ export default function ExpensesScreen() {
               onDelete={(e) => removeExpense(e.id)}
               onExcludeFromMonth={(e) => excludeFromMonth(e)}
               onWaive={(e) => waiveExpense(e)}
+              onManagePayments={(e) => setPaymentModalExpense(e)}
             />
           )}
           ListEmptyComponent={
@@ -228,6 +234,18 @@ export default function ExpensesScreen() {
         }}
         onCancel={() => setPendingPaid(null)}
       />
+
+      {currentModalExpense && (
+        <CardPaymentsModal
+          visible={paymentModalExpense !== null}
+          expense={currentModalExpense}
+          month={month}
+          year={year}
+          onClose={() => setPaymentModalExpense(null)}
+          onAddPayment={addCardPayment}
+          onDeletePayment={deleteCardPayment}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -119,11 +119,28 @@ export interface ExpenseRecord {
 }
 
 /**
+ * CardPayment — one payment made toward a credit card statement.
+ * Stored in the `card_payments` table.
+ */
+export interface CardPayment {
+  id: string;
+  statement_id: string;
+  expense_id: string;  // resolved via join with expense_records, not stored in DB
+  user_id: string;
+  amount: number;
+  payment_date: string;  // ISO YYYY-MM-DD
+  notes?: string;
+  created_at: string;
+}
+
+/**
  * ExpenseWithRecord — expense joined with its record for the current month.
  * Used in UI rendering.
  */
 export interface ExpenseWithRecord extends Expense {
   record?: ExpenseRecord;
+  /** Populated for is_variable_amount expenses when record exists */
+  cardPayments?: CardPayment[];
 }
 
 /**

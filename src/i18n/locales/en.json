@@ -95,7 +95,9 @@
     "needsBalanceTitle": "Needs your input",
     "needsBalanceSub": "Enter the statement balance for each card to update your flow:",
     "saveBalance": "Save",
-    "enterBalancePlaceholder": "Amount"
+    "enterBalancePlaceholder": "Amount",
+    "awaitingPaymentTitle": "Awaiting payment",
+    "awaitingPaymentSub": "These cards have a balance but aren't fully paid yet:"
   },
   "commitments": {
     "title": "Commitments",
@@ -131,6 +133,7 @@
     "feeLabel": "fee",
     "cards": "Cards",
     "noCardsCommitments": "No credit cards added yet",
+    "ofLabel": "of",
     "statementBalance": "Statement balance",
     "needsBalance": "Balance needed",
     "enterBalance": "Enter balance",
@@ -385,6 +388,28 @@
     "stillNeedHelp": "Still need help?",
     "contactMessage": "Can't find your answer? Send us a message and we'll get back to you within 24 hours.",
     "contactSupport": "Contact Support"
+  },
+  "cardPayments": {
+    "title": "Card Payments",
+    "statementFor": "{{month}} Statement",
+    "progress": "{{paid}} paid of {{total}}",
+    "remaining": "{{amount}} remaining",
+    "fullyPaid": "Fully paid",
+    "paymentsHistory": "Payments",
+    "noPayments": "No payments recorded yet",
+    "addPayment": "Add Payment",
+    "amountLabel": "AMOUNT",
+    "paymentDateLabel": "PAYMENT DATE",
+    "applyTo": "APPLY TO STATEMENT",
+    "currentStatement": "Current ({{month}})",
+    "nextStatement": "Next ({{month}})",
+    "notesLabel": "NOTES",
+    "notesPlaceholder": "e.g., partial payment, rewards used…",
+    "markFullyPaid": "Mark fully paid",
+    "savePayment": "Save payment",
+    "deletePaymentConfirm": "Remove this payment of {{amount}}?",
+    "paidOn": "Paid {{date}}",
+    "saving": "Saving…"
   },
   "notifications": {
     "activeCount_one": "{{count}} notification active",

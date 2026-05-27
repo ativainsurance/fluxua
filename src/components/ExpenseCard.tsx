@@ -24,6 +24,7 @@ interface Props {
   onDelete?: (expense: ExpenseWithRecord) => void;
   onExcludeFromMonth?: (expense: ExpenseWithRecord) => void;
   onWaive?: (expense: ExpenseWithRecord) => void;
+  onManagePayments?: (expense: ExpenseWithRecord) => void;
   weeklyAllocation?: number;
 }
 
@@ -36,6 +37,7 @@ export const ExpenseCard = ({
   onDelete,
   onExcludeFromMonth,
   onWaive,
+  onManagePayments,
   weeklyAllocation }: Props) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -45,24 +47,36 @@ export const ExpenseCard = ({
   const getCategoryLabel = useCategoryLabel();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const isPaid = expense.record?.is_paid ?? false;
+  const isPaidFlag = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
+
+  // For credit cards, settlement is computed from payments rather than the boolean flag
+  const paymentTotal = expense.is_variable_amount
+    ? (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0)
+    : 0;
+  const plannedAmountForSettlement = expense.is_variable_amount
+    ? (expense.record?.statement_balance ?? expense.amount)
+    : expense.amount;
+  const isCardSettled = expense.is_variable_amount && plannedAmountForSettlement > 0
+    ? paymentTotal >= plannedAmountForSettlement
+    : false;
+  const isPaid = expense.is_variable_amount ? isCardSettled : isPaidFlag;
+
   const isResolved = isPaid || isWaived;
   const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
   const statusConfig = energyState({ status });
   const categoryIcon = getCategoryIcon(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
 
-  const plannedAmount = expense.is_variable_amount
-    ? (expense.record?.statement_balance ?? expense.amount)
-    : expense.amount;
+  const plannedAmount = plannedAmountForSettlement;
   const actualAmount = expense.record?.actual_amount;
   const lateFee = expense.record?.late_fee;
   const creditAmount = expense.record?.credit_amount;
   const needsBalance = expense.is_variable_amount && !expense.record?.statement_balance && !isResolved;
-  const hasActualDiff = isPaid && actualAmount !== undefined && actualAmount !== plannedAmount;
+  const hasActualDiff = isPaid && !expense.is_variable_amount && actualAmount !== undefined && actualAmount !== plannedAmount;
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;
+  const hasPartialPayment = expense.is_variable_amount && paymentTotal > 0 && !isCardSettled;
 
   // Amount color — flows through energy state
   const amountColor =
@@ -241,6 +255,11 @@ export const ExpenseCard = ({
             {formatCurrency(plannedAmount)}
           </Text>
         )}
+        {hasPartialPayment && (
+          <Text style={styles.partialPayment}>
+            {formatCurrency(paymentTotal)} {t('commitments.ofLabel')} {formatCurrency(plannedAmount)}
+          </Text>
+        )}
         {hasCredit && (
           <Text style={styles.creditAmt}>-{formatCurrency(creditAmount!)} {t('commitments.creditLabel')}</Text>
         )}
@@ -262,7 +281,9 @@ export const ExpenseCard = ({
             isResolved ? styles.checkBtnPaid : styles.checkBtnUnpaid,
             isWaived && styles.checkBtnWaived,
           ]}
-          onPress={() => onTogglePaid(expense, !isResolved)}
+          onPress={() => expense.is_variable_amount
+            ? onManagePayments?.(expense)
+            : onTogglePaid(expense, !isResolved)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
@@ -391,6 +412,10 @@ const makeStyles = (colors: any) => StyleSheet.create({
     fontSize: typography.xs,
     color: colors.textDisabled,
     textDecorationLine: 'line-through' },
+  partialPayment: {
+    fontSize: typography.xs,
+    color: colors.charged,
+    fontWeight: typography.medium },
   creditAmt: {
     fontSize: typography.xs,
     color: colors.accentMuted,

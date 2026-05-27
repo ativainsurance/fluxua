@@ -95,7 +95,9 @@
     "needsBalanceTitle": "Necesita tu entrada",
     "needsBalanceSub": "Ingresa el saldo de cada tarjeta para actualizar tu flujo:",
     "saveBalance": "Guardar",
-    "enterBalancePlaceholder": "Monto"
+    "enterBalancePlaceholder": "Monto",
+    "awaitingPaymentTitle": "En espera de pago",
+    "awaitingPaymentSub": "Estas tarjetas tienen saldo pero aún no están completamente pagadas:"
   },
   "commitments": {
     "title": "Compromisos",
@@ -131,6 +133,7 @@
     "feeLabel": "cargo",
     "cards": "Tarjetas",
     "noCardsCommitments": "Sin tarjetas de crédito",
+    "ofLabel": "de",
     "statementBalance": "Saldo del estado de cuenta",
     "needsBalance": "Saldo pendiente",
     "enterBalance": "Ingresar saldo",
@@ -385,6 +388,28 @@
     "stillNeedHelp": "¿Aún necesitas ayuda?",
     "contactMessage": "¿No encontraste tu respuesta? Envíanos un mensaje y te responderemos en 24 horas.",
     "contactSupport": "Contactar soporte"
+  },
+  "cardPayments": {
+    "title": "Pagos de tarjeta",
+    "statementFor": "Estado de {{month}}",
+    "progress": "{{paid}} pagado de {{total}}",
+    "remaining": "{{amount}} pendiente",
+    "fullyPaid": "Completamente pagado",
+    "paymentsHistory": "Pagos",
+    "noPayments": "Sin pagos registrados",
+    "addPayment": "Agregar pago",
+    "amountLabel": "MONTO",
+    "paymentDateLabel": "FECHA DE PAGO",
+    "applyTo": "APLICAR AL ESTADO",
+    "currentStatement": "Actual ({{month}})",
+    "nextStatement": "Próximo ({{month}})",
+    "notesLabel": "NOTAS",
+    "notesPlaceholder": "p.ej., pago parcial, recompensas usadas…",
+    "markFullyPaid": "Marcar como pagado",
+    "savePayment": "Guardar pago",
+    "deletePaymentConfirm": "¿Eliminar este pago de {{amount}}?",
+    "paidOn": "Pagado {{date}}",
+    "saving": "Guardando…"
   },
   "notifications": {
     "activeCount_one": "{{count}} notificación activa",

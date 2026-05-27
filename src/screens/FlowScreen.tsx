@@ -28,13 +28,14 @@ import { useEnergyState } from '../utils/energyState';
 import { FlowBar } from '../components/ui/FlowBar';
 import { GlowText } from '../components/ui/GlowText';
 import { MonthSelector } from '../components/MonthSelector';
-import { ExpenseWithRecord, getCategoryIcon } from '../types';
+import { ExpenseWithRecord, CardPayment, getCategoryIcon } from '../types';
 
 const getWeekCoverage = (
   expenses: ExpenseWithRecord[],
   weekIndex: number,
   month: number,
-  year: number
+  year: number,
+  allCardPayments: CardPayment[] = []
 ): number => {
   let needed = 0;
   let covered = 0;
@@ -46,7 +47,18 @@ const getWeekCoverage = (
     const wk = weeks[weekIndex];
     if (!wk) return;
     needed += wk.amount;
-    if (exp.record?.is_paid) covered += wk.amount;
+
+    if (exp.is_variable_amount) {
+      // Coverage based on payments made during that week's date range
+      const weekStart = new Date(year, month - 1, wk.startDay).toISOString().slice(0, 10);
+      const weekEnd = new Date(year, month - 1, wk.endDay).toISOString().slice(0, 10);
+      const weekPayments = allCardPayments.filter(
+        (p) => p.expense_id === exp.id && p.payment_date >= weekStart && p.payment_date <= weekEnd
+      );
+      covered += Math.min(weekPayments.reduce((s, p) => s + p.amount, 0), wk.amount);
+    } else {
+      if (exp.record?.is_paid) covered += wk.amount;
+    }
   });
   return needed > 0 ? covered / needed : 1;
 };
@@ -340,8 +352,10 @@ const CommitmentFlowRow = ({
     : expense.amount;
   const weeks = getWeeklyBreakdown(effectiveAmount, month, year);
   const thisWeek = weeks[weekIndex];
-  const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
+  const isPaid = expense.is_variable_amount
+    ? (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0) >= effectiveAmount && effectiveAmount > 0
+    : expense.record?.is_paid ?? false;
   const isResolved = isPaid || isWaived;
   const categoryIcon = getCategoryIcon(expense.category);
 
@@ -491,18 +505,27 @@ export default function FlowScreen() {
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
 
-  const { expenses, summary, loading, reload, enterStatementBalance } = useExpenses(month, year);
+  const { expenses, summary, loading, reload, enterStatementBalance, allCardPayments } = useExpenses(month, year);
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = isCurrentMonth ? getCurrentWeekIndex(month, year) : 0;
+
   const cardsNeedingBalance = isCurrentMonth
-    ? expenses.filter((e) => e.is_variable_amount && !e.record?.statement_balance && !e.record?.is_paid && !e.record?.is_waived)
+    ? expenses.filter((e) => e.is_variable_amount && !e.record?.statement_balance && !e.record?.is_waived)
     : [];
+  const cardsAwaitingPayment = isCurrentMonth
+    ? expenses.filter((e) => {
+        if (!e.is_variable_amount || !e.record?.statement_balance || e.record?.is_waived) return false;
+        const paymentTotal = (e.cardPayments ?? []).reduce((s, p) => s + p.amount, 0);
+        return paymentTotal < e.record.statement_balance;
+      })
+    : [];
+
   const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year);
 
   const currentWeekData = totalWeeklyBreakdown[currentWeekIdx];
   const weekNeeded = currentWeekData?.amount ?? 0;
-  const weekCoverage = getWeekCoverage(expenses, currentWeekIdx, month, year);
+  const weekCoverage = getWeekCoverage(expenses, currentWeekIdx, month, year, allCardPayments);
   const weekCovered = weekNeeded * weekCoverage;
   const weekUnallocated = weekNeeded - weekCovered;
   const coveragePct = weekNeeded > 0 ? weekCoverage * 100 : 0;
@@ -561,6 +584,33 @@ export default function FlowScreen() {
                     onSave={enterStatementBalance}
                   />
                 ))}
+              </View>
+            )}
+
+            {/* ── Awaiting payment — cards with balance but not fully paid ── */}
+            {cardsAwaitingPayment.length > 0 && (
+              <View style={[styles.balanceSection, styles.awaitingSection]}>
+                <View style={styles.balanceSectionHeader}>
+                  <Ionicons name="time-outline" size={14} color={colors.charged} />
+                  <Text style={styles.balanceSectionTitle}>{t('flow.awaitingPaymentTitle')}</Text>
+                </View>
+                <Text style={styles.balanceSectionSub}>{t('flow.awaitingPaymentSub')}</Text>
+                {cardsAwaitingPayment.map((expense) => {
+                  const stmtBalance = expense.record?.statement_balance ?? 0;
+                  const pmtTotal = (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0);
+                  const remaining = Math.max(0, stmtBalance - pmtTotal);
+                  return (
+                    <View key={expense.id} style={styles.awaitingRow}>
+                      <Ionicons name="card-outline" size={16} color={colors.charged} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.awaitingCardName}>{expense.name}</Text>
+                        <Text style={styles.awaitingProgress}>
+                          {formatCurrency(pmtTotal)} / {formatCurrency(stmtBalance)} · {formatCurrency(remaining)} remaining
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             )}
 
@@ -635,7 +685,7 @@ export default function FlowScreen() {
               <Text style={styles.sectionLabel}>{shortMonth(new Date(year, month - 1, 1))} {t('nav.flow')}</Text>
               <View style={styles.weekGrid}>
                 {totalWeeklyBreakdown.map((week, i) => {
-                  const coverage = getWeekCoverage(expenses, i, month, year);
+                  const coverage = getWeekCoverage(expenses, i, month, year, allCardPayments);
                   const isPastOrCurrent = isCurrentMonth ? i <= currentWeekIdx : true;
                   const isCurrent = isCurrentMonth && i === currentWeekIdx;
                   return (
@@ -878,6 +928,27 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 16,
     marginBottom: spacing.xs,
+  },
+  awaitingSection: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.charged,
+  },
+  awaitingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  awaitingCardName: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+  },
+  awaitingProgress: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
   },
 
   // ── Sections ──

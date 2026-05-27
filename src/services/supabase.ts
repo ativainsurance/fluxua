@@ -39,6 +39,7 @@ import {
   Expense,
   ExpenseRecord,
   ExpenseFormData,
+  CardPayment,
 } from '../types';
 
 /** Fetch all expenses for the current user */
@@ -271,6 +272,93 @@ export const setStatementBalance = async (
     .single();
   if (error) throw error;
   return data;
+};
+
+// ─────────────────────────────────────────────
+// Card Payment Helpers
+// ─────────────────────────────────────────────
+
+type CardPaymentRow = {
+  id: string;
+  statement_id: string;
+  user_id: string;
+  amount: number;
+  payment_date: string;
+  notes?: string | null;
+  created_at: string;
+  expense_records: { expense_id: string } | null;
+};
+
+const mapPaymentRow = (row: CardPaymentRow): CardPayment => ({
+  id: row.id,
+  statement_id: row.statement_id,
+  expense_id: row.expense_records?.expense_id ?? '',
+  user_id: row.user_id,
+  amount: row.amount,
+  payment_date: row.payment_date,
+  notes: row.notes ?? undefined,
+  created_at: row.created_at,
+});
+
+/** Fetch all card payments for a given set of statement (expense_record) IDs */
+export const fetchCardPaymentsForStatements = async (
+  statementIds: string[]
+): Promise<CardPayment[]> => {
+  if (statementIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('card_payments')
+    .select('*, expense_records!statement_id(expense_id)')
+    .in('statement_id', statementIds);
+  if (error) throw error;
+  return (data ?? []).map(mapPaymentRow);
+};
+
+/** Fetch all card payments made within a calendar month (by payment_date) */
+export const fetchCardPaymentsByMonth = async (
+  userId: string,
+  month: number,
+  year: number
+): Promise<CardPayment[]> => {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const { data, error } = await supabase
+    .from('card_payments')
+    .select('*, expense_records!statement_id(expense_id)')
+    .eq('user_id', userId)
+    .gte('payment_date', startDate)
+    .lte('payment_date', endDate);
+  if (error) throw error;
+  return (data ?? []).map(mapPaymentRow);
+};
+
+/** Record a new payment toward a card statement */
+export const addCardPaymentRecord = async (
+  userId: string,
+  statementId: string,
+  amount: number,
+  paymentDate: string,
+  notes?: string
+): Promise<CardPayment> => {
+  const { data, error } = await supabase
+    .from('card_payments')
+    .insert({
+      user_id: userId,
+      statement_id: statementId,
+      amount,
+      payment_date: paymentDate,
+      notes: notes ?? null,
+    })
+    .select('*, expense_records!statement_id(expense_id)')
+    .single();
+  if (error) throw error;
+  return mapPaymentRow(data as CardPaymentRow);
+};
+
+/** Delete a card payment record */
+export const deleteCardPaymentRecord = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('card_payments').delete().eq('id', id);
+  if (error) throw error;
 };
 
 /** Update the actual_amount and optional late_fee on an existing record */

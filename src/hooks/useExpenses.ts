@@ -11,6 +11,10 @@ import {
   excludeExpenseRecord,
   waiveExpenseRecord,
   setStatementBalance,
+  fetchCardPaymentsForStatements,
+  fetchCardPaymentsByMonth,
+  addCardPaymentRecord,
+  deleteCardPaymentRecord,
 } from '../services/supabase';
 import {
   Expense,
@@ -18,6 +22,7 @@ import {
   ExpenseWithRecord,
   MonthlySummary,
   ExpenseFormData,
+  CardPayment,
 } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -25,11 +30,6 @@ import { useAuth } from '../contexts/AuthContext';
 // Helpers
 // ─────────────────────────────────────────────
 
-/**
- * Returns true if the expense is active during the given month/year.
- * For quarterly/semiannual recurrences the start_date month is used as the
- * cycle anchor — the expense only appears every 3 or 6 months from there.
- */
 const isExpenseActive = (expense: Expense, month: number, year: number): boolean => {
   const interval =
     expense.recurrence_type === 'quarterly' ? 3
@@ -44,7 +44,6 @@ const isExpenseActive = (expense: Expense, month: number, year: number): boolean
       if (monthsElapsed % interval !== 0) return false;
     }
   } else if (interval !== null) {
-    // No start_date: anchor cycle to January
     if ((month - 1) % interval !== 0) return false;
   }
 
@@ -55,6 +54,9 @@ const isExpenseActive = (expense: Expense, month: number, year: number): boolean
   return true;
 };
 
+const mergePayments = (a: CardPayment[], b: CardPayment[]): CardPayment[] =>
+  [...new Map([...a, ...b].map((p) => [p.id, p])).values()];
+
 // ─────────────────────────────────────────────
 // useExpenses — main data hook
 // ─────────────────────────────────────────────
@@ -63,6 +65,7 @@ export const useExpenses = (month: number, year: number) => {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
+  const [cardPayments, setCardPayments] = useState<CardPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +80,17 @@ export const useExpenses = (month: number, year: number) => {
       ]);
       setExpenses(expenseData);
       setRecords(recordData);
+
+      // Fetch card payments: by statement_id (for settlement) + by payment_date (for cash-flow)
+      const statementIds = recordData
+        .filter((r) => expenseData.find((e) => e.id === r.expense_id)?.is_variable_amount)
+        .map((r) => r.id);
+
+      const [byStatement, byDate] = await Promise.all([
+        fetchCardPaymentsForStatements(statementIds),
+        fetchCardPaymentsByMonth(user.id, month, year),
+      ]);
+      setCardPayments(mergePayments(byStatement, byDate));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load expenses');
     } finally {
@@ -88,36 +102,31 @@ export const useExpenses = (month: number, year: number) => {
     load();
   }, [load]);
 
-  /** Join expenses with their monthly records, filtered to those active and not excluded this month */
+  /** Join expenses with their monthly records and card payments */
   const expensesWithRecords: ExpenseWithRecord[] = expenses
     .filter((expense) => isExpenseActive(expense, month, year))
     .filter((expense) => {
       const record = records.find((r) => r.expense_id === expense.id);
       return !record?.is_excluded;
     })
-    .map((expense) => ({
-      ...expense,
-      record: records.find((r) => r.expense_id === expense.id),
-    }));
+    .map((expense) => {
+      const record = records.find((r) => r.expense_id === expense.id);
+      const payments = expense.is_variable_amount && record
+        ? cardPayments.filter((p) => p.statement_id === record.id)
+        : undefined;
+      return { ...expense, record, cardPayments: payments };
+    });
 
-  /** Mark an expense as paid/unpaid for the current month */
+  /** Mark a non-card expense as paid/unpaid for the current month */
   const markAsPaid = useCallback(
     async (expense: Expense, isPaid: boolean, actualAmount?: number, lateFee?: number, creditAmount?: number) => {
       if (!user) return;
       try {
-        const record = await getOrCreateExpenseRecord(
-          user.id,
-          expense.id,
-          month,
-          year
-        );
+        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
         const updated = await toggleExpensePaid(record.id, isPaid, actualAmount, lateFee, creditAmount);
-
         setRecords((prev) => {
           const exists = prev.find((r) => r.id === updated.id);
-          if (exists) {
-            return prev.map((r) => (r.id === updated.id ? updated : r));
-          }
+          if (exists) return prev.map((r) => (r.id === updated.id ? updated : r));
           return [...prev, updated];
         });
       } catch (err) {
@@ -149,7 +158,7 @@ export const useExpenses = (month: number, year: number) => {
     [user, month, year]
   );
 
-  /** Mark an expense as waived for the current month — resolved at $0, no payment needed */
+  /** Mark an expense as waived for the current month */
   const waiveExpense = useCallback(
     async (expense: Expense) => {
       if (!user) return;
@@ -169,14 +178,11 @@ export const useExpenses = (month: number, year: number) => {
     [user, month, year]
   );
 
-  /** Update only the actual amount for an already-paid record */
   const updateRecordActualAmount = useCallback(
     async (recordId: string, actualAmount: number) => {
       try {
         const updated = await updateActualAmount(recordId, actualAmount);
-        setRecords((prev) =>
-          prev.map((r) => (r.id === updated.id ? updated : r))
-        );
+        setRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update amount');
       }
@@ -184,7 +190,6 @@ export const useExpenses = (month: number, year: number) => {
     []
   );
 
-  /** Add a new expense */
   const addExpense = useCallback(
     async (formData: ExpenseFormData) => {
       if (!user) return;
@@ -199,14 +204,11 @@ export const useExpenses = (month: number, year: number) => {
     [user]
   );
 
-  /** Edit an existing expense */
   const editExpense = useCallback(
     async (id: string, formData: Partial<ExpenseFormData>) => {
       try {
         const updated = await updateExpense(id, formData);
-        setExpenses((prev) =>
-          prev.map((e) => (e.id === updated.id ? updated : e))
-        );
+        setExpenses((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update');
         throw err;
@@ -235,7 +237,49 @@ export const useExpenses = (month: number, year: number) => {
     [user, month, year]
   );
 
-  /** Remove an expense */
+  /**
+   * Add a payment toward a card statement.
+   * statementMonth/Year: which cycle's statement to pay toward (defaults to current).
+   */
+  const addCardPayment = useCallback(
+    async (
+      expense: ExpenseWithRecord,
+      amount: number,
+      paymentDate: string,
+      statementMonth: number,
+      statementYear: number,
+      notes?: string
+    ) => {
+      if (!user) return;
+      try {
+        const record = await getOrCreateExpenseRecord(user.id, expense.id, statementMonth, statementYear);
+        const newPayment = await addCardPaymentRecord(user.id, record.id, amount, paymentDate, notes);
+        setCardPayments((prev) => mergePayments(prev, [newPayment]));
+        // Ensure the statement record is tracked locally if it was just created
+        setRecords((prev) => {
+          const exists = prev.find((r) => r.id === record.id);
+          if (exists) return prev;
+          return [...prev, record];
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to add payment');
+        throw err;
+      }
+    },
+    [user]
+  );
+
+  /** Delete a card payment */
+  const deleteCardPayment = useCallback(async (paymentId: string) => {
+    try {
+      await deleteCardPaymentRecord(paymentId);
+      setCardPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete payment');
+      throw err;
+    }
+  }, []);
+
   const removeExpense = useCallback(async (id: string) => {
     try {
       await deleteExpense(id);
@@ -247,29 +291,41 @@ export const useExpenses = (month: number, year: number) => {
     }
   }, []);
 
-  /** Compute monthly summary — uses actual_amount when available */
+  /** Compute monthly summary — card settlement based on payment totals */
   const summary: MonthlySummary = expensesWithRecords.reduce(
     (acc, expense) => {
-      const isPaid = expense.record?.is_paid ?? false;
       const isWaived = expense.record?.is_waived ?? false;
-      const isResolved = isPaid || isWaived;
       const plannedAmount = expense.is_variable_amount
         ? (expense.record?.statement_balance ?? expense.amount)
         : expense.amount;
-      const baseAmount = isPaid
-        ? (expense.record?.actual_amount ?? plannedAmount)
-        : plannedAmount;
-      const lateFee = (isPaid && expense.record?.late_fee) ? expense.record.late_fee : 0;
-      const effectiveAmount = baseAmount + lateFee;
+
+      let isSettled: boolean;
+      let effectiveAmount: number;
+
+      if (expense.is_variable_amount) {
+        const paymentTotal = (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0);
+        isSettled = isWaived || (plannedAmount > 0 && paymentTotal >= plannedAmount);
+        effectiveAmount = Math.min(paymentTotal, plannedAmount);
+      } else {
+        const isPaid = expense.record?.is_paid ?? false;
+        isSettled = isPaid || isWaived;
+        const baseAmount = isPaid ? (expense.record?.actual_amount ?? plannedAmount) : plannedAmount;
+        const lateFee = (isPaid && expense.record?.late_fee) ? expense.record.late_fee : 0;
+        effectiveAmount = baseAmount + lateFee;
+      }
 
       acc.total += plannedAmount;
       acc.expenseCount++;
-      if (isResolved) {
+      if (isSettled) {
         acc.paidCount++;
-        if (isPaid) acc.totalPaid += effectiveAmount;
-        // waived: $0 out of pocket, nothing added to totalPaid
+        if (!isWaived) acc.totalPaid += effectiveAmount;
       } else {
-        acc.totalUnpaid += plannedAmount;
+        if (expense.is_variable_amount) {
+          const paymentTotal = (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0);
+          acc.totalUnpaid += Math.max(0, plannedAmount - paymentTotal);
+        } else {
+          acc.totalUnpaid += plannedAmount;
+        }
       }
       if (expense.type === 'personal') acc.personalTotal += plannedAmount;
       if (expense.type === 'business') acc.businessTotal += plannedAmount;
@@ -300,5 +356,8 @@ export const useExpenses = (month: number, year: number) => {
     editExpense,
     removeExpense,
     enterStatementBalance,
+    addCardPayment,
+    deleteCardPayment,
+    allCardPayments: cardPayments,
   };
 };
