@@ -10,6 +10,7 @@ import {
   updateActualAmount,
   excludeExpenseRecord,
   waiveExpenseRecord,
+  setStatementBalance,
 } from '../services/supabase';
 import {
   Expense,
@@ -214,6 +215,26 @@ export const useExpenses = (month: number, year: number) => {
     []
   );
 
+  /** Save this month's statement balance for a variable-amount expense (credit card) */
+  const enterStatementBalance = useCallback(
+    async (expense: ExpenseWithRecord, balance: number) => {
+      if (!user) return;
+      try {
+        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
+        const updated = await setStatementBalance(record.id, balance);
+        setRecords((prev) => {
+          const exists = prev.find((r) => r.id === updated.id);
+          if (exists) return prev.map((r) => (r.id === updated.id ? updated : r));
+          return [...prev, updated];
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save balance');
+        throw err;
+      }
+    },
+    [user, month, year]
+  );
+
   /** Remove an expense */
   const removeExpense = useCallback(async (id: string) => {
     try {
@@ -232,7 +253,9 @@ export const useExpenses = (month: number, year: number) => {
       const isPaid = expense.record?.is_paid ?? false;
       const isWaived = expense.record?.is_waived ?? false;
       const isResolved = isPaid || isWaived;
-      const plannedAmount = expense.amount;
+      const plannedAmount = expense.is_variable_amount
+        ? (expense.record?.statement_balance ?? expense.amount)
+        : expense.amount;
       const baseAmount = isPaid
         ? (expense.record?.actual_amount ?? plannedAmount)
         : plannedAmount;
@@ -276,5 +299,6 @@ export const useExpenses = (month: number, year: number) => {
     addExpense,
     editExpense,
     removeExpense,
+    enterStatementBalance,
   };
 };

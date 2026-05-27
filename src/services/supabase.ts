@@ -87,6 +87,7 @@ export const createExpense = async (
       is_autopay: formData.is_autopay,
       autopay_method: formData.is_autopay ? formData.autopay_method : null,
       autopay_last4: formData.is_autopay && formData.autopay_last4 ? formData.autopay_last4 : null,
+      is_variable_amount: formData.is_variable_amount ?? false,
     })
     .select()
     .single();
@@ -119,6 +120,7 @@ export const updateExpense = async (
     updates.autopay_method = formData.is_autopay ? (formData.autopay_method ?? null) : null;
     updates.autopay_last4 = formData.is_autopay && formData.autopay_last4 ? formData.autopay_last4 : null;
   }
+  if (formData.is_variable_amount !== undefined) updates.is_variable_amount = formData.is_variable_amount;
 
   const { data, error } = await supabase
     .from('expenses')
@@ -249,6 +251,21 @@ export const waiveExpenseRecord = async (recordId: string): Promise<ExpenseRecor
       late_fee: null,
       credit_amount: null,
     })
+    .eq('id', recordId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Set the statement balance for a variable-amount expense record (credit card cycle entry) */
+export const setStatementBalance = async (
+  recordId: string,
+  balance: number
+): Promise<ExpenseRecord> => {
+  const { data, error } = await supabase
+    .from('expense_records')
+    .update({ statement_balance: balance })
     .eq('id', recordId)
     .select()
     .single();

@@ -53,10 +53,13 @@ export const ExpenseCard = ({
   const categoryIcon = getCategoryIcon(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
 
-  const plannedAmount = expense.amount;
+  const plannedAmount = expense.is_variable_amount
+    ? (expense.record?.statement_balance ?? expense.amount)
+    : expense.amount;
   const actualAmount = expense.record?.actual_amount;
   const lateFee = expense.record?.late_fee;
   const creditAmount = expense.record?.credit_amount;
+  const needsBalance = expense.is_variable_amount && !expense.record?.statement_balance && !isResolved;
   const hasActualDiff = isPaid && actualAmount !== undefined && actualAmount !== plannedAmount;
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;
@@ -204,6 +207,14 @@ export const ExpenseCard = ({
               {t(statusConfig.labelKey!)}
             </Text>
           </View>
+          {needsBalance && (
+            <View style={[styles.statusBadge, { backgroundColor: colors.warningLight ?? colors.warning + '18' }]}>
+              <Ionicons name="alert-circle-outline" size={10} color={colors.warning} />
+              <Text style={[styles.statusText, { color: colors.warning }]}>
+                {t('commitments.needsBalance')}
+              </Text>
+            </View>
+          )}
           {expense.is_autopay && (
             <View style={styles.autopayBadge}>
               <Ionicons name="flash" size={9} color={colors.primary} />

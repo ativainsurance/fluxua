@@ -61,6 +61,7 @@ const defaultForm: ExpenseFormData = {
   is_autopay: false,
   autopay_method: 'card',
   autopay_last4: '',
+  is_variable_amount: false,
 };
 
 // ─────────────────────────────────────────────
@@ -105,6 +106,7 @@ export default function AddExpenseScreen() {
         is_autopay: existingExpense.is_autopay ?? false,
         autopay_method: existingExpense.autopay_method ?? 'card',
         autopay_last4: existingExpense.autopay_last4 ?? '',
+        is_variable_amount: existingExpense.is_variable_amount ?? false,
       });
     }
   }, [existingExpense]);
@@ -208,7 +210,9 @@ export default function AddExpenseScreen() {
 
           {/* Amount */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('addExpense.amount')}</Text>
+            <Text style={styles.sectionLabel}>
+              {form.is_variable_amount ? t('addExpense.fallbackAmount') : t('addExpense.amount')}
+            </Text>
             <View style={styles.amountWrapper}>
               <Text style={styles.currencySymbol}>{currencySymbol}</Text>
               <TextInput
@@ -220,7 +224,23 @@ export default function AddExpenseScreen() {
                 keyboardType="decimal-pad"
               />
             </View>
-            <Text style={styles.fieldHint}>{t('addExpense.amountHint')}</Text>
+            <Text style={styles.fieldHint}>
+              {form.is_variable_amount ? t('addExpense.variableAmountFieldHint') : t('addExpense.amountHint')}
+            </Text>
+          </View>
+
+          {/* Variable Amount toggle */}
+          <View style={[styles.section, styles.row]}>
+            <View style={styles.flex}>
+              <Text style={styles.toggleLabel}>{t('addExpense.variableAmount')}</Text>
+              <Text style={styles.toggleSub}>{t('addExpense.variableAmountHint')}</Text>
+            </View>
+            <Switch
+              value={form.is_variable_amount}
+              onValueChange={(v) => set('is_variable_amount', v)}
+              trackColor={{ false: colors.border, true: colors.primaryLight }}
+              thumbColor={form.is_variable_amount ? colors.primary : colors.textInverse}
+            />
           </View>
 
           {/* Start Date */}

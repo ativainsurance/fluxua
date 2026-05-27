@@ -91,7 +91,11 @@
     "committedThisWeek": "Comprometido esta semana",
     "thisWeek": "Esta semana",
     "committed": "COMPROMETIDO",
-    "dueOnThe": "Vence no dia {{day}}"
+    "dueOnThe": "Vence no dia {{day}}",
+    "needsBalanceTitle": "Precisa da sua entrada",
+    "needsBalanceSub": "Insira o saldo de cada cartão para atualizar seu fluxo:",
+    "saveBalance": "Salvar",
+    "enterBalancePlaceholder": "Valor"
   },
   "commitments": {
     "title": "Compromissos",
@@ -124,7 +128,13 @@
     "dateInputHelper": "Digite diretamente ou toque no ícone do calendário",
     "addCategory": "Adicionar categoria",
     "creditLabel": "crédito",
-    "feeLabel": "multa"
+    "feeLabel": "multa",
+    "cards": "Cartões",
+    "noCardsCommitments": "Nenhum cartão de crédito adicionado",
+    "statementBalance": "Saldo da fatura",
+    "needsBalance": "Saldo necessário",
+    "enterBalance": "Inserir saldo",
+    "balanceEntered": "Saldo registrado"
   },
   "status": {
     "completed": "Concluído",
@@ -271,7 +281,11 @@
     "errorAmountZero": "O valor deve ser maior que 0.",
     "errorDueDayRange": "O dia de vencimento deve estar entre 1 e 31.",
     "errorStartDateRequired": "Por favor insira uma data de início.",
-    "errorEndDateOrder": "A data de fim deve ser posterior à de início."
+    "errorEndDateOrder": "A data de fim deve ser posterior à de início.",
+    "variableAmount": "Valor variável (cartão de crédito)",
+    "variableAmountHint": "O saldo da fatura varia cada mês. Insira o saldo real na aba Fluxo quando sua fatura fechar.",
+    "fallbackAmount": "VALOR PADRÃO / SUBSTITUTO",
+    "variableAmountFieldHint": "Usado para planejamento de fluxo até que o saldo real seja inserido a cada ciclo."
   },
   "dateInput": {
     "placeholder": "MM/DD/AAAA",

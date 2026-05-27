@@ -91,7 +91,11 @@
     "committedThisWeek": "Committed this week",
     "thisWeek": "This week",
     "committed": "COMMITTED",
-    "dueOnThe": "Due on the {{day}}"
+    "dueOnThe": "Due on the {{day}}",
+    "needsBalanceTitle": "Needs your input",
+    "needsBalanceSub": "Enter the statement balance for each card to update your flow:",
+    "saveBalance": "Save",
+    "enterBalancePlaceholder": "Amount"
   },
   "commitments": {
     "title": "Commitments",
@@ -124,7 +128,13 @@
     "dateInputHelper": "Type directly or tap the calendar icon",
     "addCategory": "Add category",
     "creditLabel": "credit",
-    "feeLabel": "fee"
+    "feeLabel": "fee",
+    "cards": "Cards",
+    "noCardsCommitments": "No credit cards added yet",
+    "statementBalance": "Statement balance",
+    "needsBalance": "Balance needed",
+    "enterBalance": "Enter balance",
+    "balanceEntered": "Balance set"
   },
   "status": {
     "completed": "Completed",
@@ -271,7 +281,11 @@
     "errorAmountZero": "Amount must be greater than 0.",
     "errorDueDayRange": "Due day must be between 1 and 31.",
     "errorStartDateRequired": "Please enter a start date.",
-    "errorEndDateOrder": "End date must be after the start date."
+    "errorEndDateOrder": "End date must be after the start date.",
+    "variableAmount": "Variable amount (credit card)",
+    "variableAmountHint": "Statement balance varies each month. Enter the actual balance on the Flow tab when your statement closes.",
+    "fallbackAmount": "DEFAULT / FALLBACK AMOUNT",
+    "variableAmountFieldHint": "Used for flow planning until the real statement balance is entered each cycle."
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

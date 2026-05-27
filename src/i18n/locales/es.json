@@ -91,7 +91,11 @@
     "committedThisWeek": "Comprometido esta semana",
     "thisWeek": "Esta semana",
     "committed": "COMPROMETIDO",
-    "dueOnThe": "Vence el {{day}}"
+    "dueOnThe": "Vence el {{day}}",
+    "needsBalanceTitle": "Necesita tu entrada",
+    "needsBalanceSub": "Ingresa el saldo de cada tarjeta para actualizar tu flujo:",
+    "saveBalance": "Guardar",
+    "enterBalancePlaceholder": "Monto"
   },
   "commitments": {
     "title": "Compromisos",
@@ -124,7 +128,13 @@
     "dateInputHelper": "Escribe directamente o toca el ícono del calendario",
     "addCategory": "Agregar categoría",
     "creditLabel": "crédito",
-    "feeLabel": "cargo"
+    "feeLabel": "cargo",
+    "cards": "Tarjetas",
+    "noCardsCommitments": "Sin tarjetas de crédito",
+    "statementBalance": "Saldo del estado de cuenta",
+    "needsBalance": "Saldo pendiente",
+    "enterBalance": "Ingresar saldo",
+    "balanceEntered": "Saldo registrado"
   },
   "status": {
     "completed": "Completado",
@@ -271,7 +281,11 @@
     "errorAmountZero": "El monto debe ser mayor a 0.",
     "errorDueDayRange": "El día de vencimiento debe estar entre 1 y 31.",
     "errorStartDateRequired": "Por favor ingresa una fecha de inicio.",
-    "errorEndDateOrder": "La fecha de fin debe ser posterior a la de inicio."
+    "errorEndDateOrder": "La fecha de fin debe ser posterior a la de inicio.",
+    "variableAmount": "Monto variable (tarjeta de crédito)",
+    "variableAmountHint": "El saldo varía cada mes. Ingresa el saldo real en la pestaña Flujo cuando cierre tu estado de cuenta.",
+    "fallbackAmount": "MONTO PREDETERMINADO / DE RESPALDO",
+    "variableAmountFieldHint": "Se usa para planificar el flujo hasta que se ingrese el saldo real cada ciclo."
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

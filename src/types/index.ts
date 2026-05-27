@@ -85,6 +85,8 @@ export interface Expense {
   autopay_method?: AutopayMethod;
   /** Last 4 digits of the card or bank account number used for autopay */
   autopay_last4?: string;
+  /** True when this expense's amount changes each cycle (e.g. credit card statement balance) */
+  is_variable_amount: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -111,6 +113,8 @@ export interface ExpenseRecord {
   is_waived?: boolean;
   /** True when the expense is manually excluded from this specific month */
   is_excluded?: boolean;
+  /** Pre-payment statement balance for variable-amount expenses (credit cards) */
+  statement_balance?: number;
   created_at: string;
 }
 
@@ -170,6 +174,8 @@ export interface ExpenseFormData {
   autopay_method: AutopayMethod;
   /** Last 4 digits of the card or bank account used for autopay */
   autopay_last4: string;
+  /** True when this expense's amount changes each cycle (e.g. credit card statement balance) */
+  is_variable_amount: boolean;
 }
 
 // ─────────────────────────────────────────────

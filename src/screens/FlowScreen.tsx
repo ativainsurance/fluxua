@@ -6,12 +6,15 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
@@ -36,7 +39,10 @@ const getWeekCoverage = (
   let needed = 0;
   let covered = 0;
   expenses.forEach((exp) => {
-    const weeks = getWeeklyBreakdown(exp.amount, month, year);
+    const effectiveAmount = exp.is_variable_amount
+      ? (exp.record?.statement_balance ?? exp.amount)
+      : exp.amount;
+    const weeks = getWeeklyBreakdown(effectiveAmount, month, year);
     const wk = weeks[weekIndex];
     if (!wk) return;
     needed += wk.amount;
@@ -44,6 +50,136 @@ const getWeekCoverage = (
   });
   return needed > 0 ? covered / needed : 1;
 };
+
+// ─────────────────────────────────────────────
+// Card Balance Entry — inline statement input
+// ─────────────────────────────────────────────
+
+const CardBalanceEntry = ({
+  expense,
+  onSave,
+}: {
+  expense: ExpenseWithRecord;
+  onSave: (expense: ExpenseWithRecord, balance: number) => Promise<void>;
+}) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { currencySymbol } = useSettings();
+  const [value, setValue] = useState('');
+  const [saving, setSaving] = useState(false);
+  const entryStyles = useMemo(() => makeEntryStyles(colors), [colors]);
+
+  const handleSave = async () => {
+    const num = parseFloat(value);
+    if (!num || num <= 0) return;
+    setSaving(true);
+    try {
+      await onSave(expense, num);
+      setValue('');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View style={entryStyles.row}>
+      <View style={entryStyles.cardIcon}>
+        <Ionicons name="card-outline" size={18} color={colors.primary} />
+      </View>
+      <View style={entryStyles.cardInfo}>
+        <Text style={entryStyles.cardName} numberOfLines={1}>{expense.name}</Text>
+        {expense.autopay_last4 ? (
+          <Text style={entryStyles.cardLast4}>···· {expense.autopay_last4}</Text>
+        ) : null}
+      </View>
+      <Text style={entryStyles.currencyPrefix}>{currencySymbol}</Text>
+      <TextInput
+        style={entryStyles.balanceInput}
+        value={value}
+        onChangeText={setValue}
+        placeholder={t('flow.enterBalancePlaceholder')}
+        placeholderTextColor={colors.textDisabled}
+        keyboardType="decimal-pad"
+      />
+      <TouchableOpacity
+        style={[entryStyles.saveBtn, (!value || saving) && entryStyles.saveBtnDisabled]}
+        onPress={handleSave}
+        disabled={!value || saving}
+      >
+        {saving
+          ? <ActivityIndicator size="small" color={colors.textInverse} />
+          : <Text style={entryStyles.saveBtnText}>{t('flow.saveBalance')}</Text>
+        }
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const makeEntryStyles = (colors: any) => StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  cardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  cardInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  cardName: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+  },
+  cardLast4: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+  },
+  currencyPrefix: {
+    fontSize: typography.base,
+    color: colors.textSecondary,
+    fontWeight: typography.medium,
+  },
+  balanceInput: {
+    width: 90,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    fontSize: typography.base,
+    color: colors.textPrimary,
+    backgroundColor: colors.background,
+    textAlign: 'right',
+  },
+  saveBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    minWidth: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 34,
+  },
+  saveBtnDisabled: { opacity: 0.4 },
+  saveBtnText: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    color: colors.textInverse,
+  },
+});
 
 // ─────────────────────────────────────────────
 // Week Bar Card — sophisticated grid tiles
@@ -199,7 +335,10 @@ const CommitmentFlowRow = ({
   const flowRowStyles = useMemo(() => makeFlowRowStyles(colors), [colors]);
   const energyState = useEnergyState();
 
-  const weeks = getWeeklyBreakdown(expense.amount, month, year);
+  const effectiveAmount = expense.is_variable_amount
+    ? (expense.record?.statement_balance ?? expense.amount)
+    : expense.amount;
+  const weeks = getWeeklyBreakdown(effectiveAmount, month, year);
   const thisWeek = weeks[weekIndex];
   const isPaid = expense.record?.is_paid ?? false;
   const isWaived = expense.record?.is_waived ?? false;
@@ -234,7 +373,7 @@ const CommitmentFlowRow = ({
               flowRowStyles.amount,
               { color: isResolved ? resolvedConfig.color : colors.textPrimary }
             ]}>
-              {formatCurrency(expense.amount)}
+              {formatCurrency(effectiveAmount)}
             </Text>
             {isResolved ? (
               <View style={[flowRowStyles.resolvedChip, { backgroundColor: resolvedConfig.bg }]}>
@@ -352,10 +491,13 @@ export default function FlowScreen() {
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
 
-  const { expenses, summary, loading, reload } = useExpenses(month, year);
+  const { expenses, summary, loading, reload, enterStatementBalance } = useExpenses(month, year);
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = isCurrentMonth ? getCurrentWeekIndex(month, year) : 0;
+  const cardsNeedingBalance = isCurrentMonth
+    ? expenses.filter((e) => e.is_variable_amount && !e.record?.statement_balance && !e.record?.is_paid && !e.record?.is_waived)
+    : [];
   const totalWeeklyBreakdown = getWeeklyBreakdown(summary.total, month, year);
 
   const currentWeekData = totalWeeklyBreakdown[currentWeekIdx];
@@ -404,6 +546,24 @@ export default function FlowScreen() {
           </View>
         ) : (
           <>
+            {/* ── Needs your input — cards without statement balance ── */}
+            {cardsNeedingBalance.length > 0 && (
+              <View style={styles.balanceSection}>
+                <View style={styles.balanceSectionHeader}>
+                  <Ionicons name="card-outline" size={14} color={colors.warning} />
+                  <Text style={styles.balanceSectionTitle}>{t('flow.needsBalanceTitle')}</Text>
+                </View>
+                <Text style={styles.balanceSectionSub}>{t('flow.needsBalanceSub')}</Text>
+                {cardsNeedingBalance.map((expense) => (
+                  <CardBalanceEntry
+                    key={expense.id}
+                    expense={expense}
+                    onSave={enterStatementBalance}
+                  />
+                ))}
+              </View>
+            )}
+
             {/* ── Dark Hero Card — matches Dashboard aesthetic ── */}
             {isCurrentMonth && currentWeekData && (
               <View style={styles.heroCard}>
@@ -693,6 +853,31 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: 'rgba(244,241,234,0.55)',
     fontWeight: typography.semibold,
     letterSpacing: 0.8,
+  },
+
+  // ── Balance input section ──
+  balanceSection: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    ...shadows.sm,
+    gap: spacing.xs,
+  },
+  balanceSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  balanceSectionTitle: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textPrimary,
+  },
+  balanceSectionSub: {
+    fontSize: typography.xs,
+    color: colors.textSecondary,
+    lineHeight: 16,
+    marginBottom: spacing.xs,
   },
 
   // ── Sections ──

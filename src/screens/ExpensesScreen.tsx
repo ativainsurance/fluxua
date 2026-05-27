@@ -27,7 +27,7 @@ import { PaidAmountModal } from '../components/PaidAmountModal';
 import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, ExpenseType } from '../types';
 
-type TabType = 'all' | ExpenseType;
+type TabType = 'all' | ExpenseType | 'cards';
 
 interface PendingPaid {
   expense: ExpenseWithRecord;
@@ -53,9 +53,11 @@ export default function ExpensesScreen() {
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = getCurrentWeekIndex(month, year);
 
-  const filtered = expenses.filter((e) =>
-    activeTab === 'all' ? true : e.type === activeTab
-  );
+  const filtered = expenses.filter((e) => {
+    if (activeTab === 'cards') return e.is_variable_amount;
+    if (activeTab === 'all') return true;
+    return e.type === activeTab;
+  });
 
   const handleTogglePaid = (expense: ExpenseWithRecord, isPaid: boolean) => {
     if (isPaid) {
@@ -70,7 +72,10 @@ export default function ExpensesScreen() {
   /** Weekly allocation for a commitment in the current/selected week */
   const getWeeklyAllocation = (expense: ExpenseWithRecord): number | undefined => {
     if (currentWeekIdx < 0) return undefined;
-    const weeks = getWeeklyBreakdown(expense.amount, month, year);
+    const effectiveAmount = expense.is_variable_amount
+      ? (expense.record?.statement_balance ?? expense.amount)
+      : expense.amount;
+    const weeks = getWeeklyBreakdown(effectiveAmount, month, year);
     return weeks[currentWeekIdx]?.amount;
   };
 
@@ -78,11 +83,13 @@ export default function ExpensesScreen() {
     { key: 'all', label: t('commitments.all') },
     { key: 'personal', label: t('commitments.personal') },
     { key: 'business', label: t('commitments.business') },
+    { key: 'cards', label: t('commitments.cards') },
   ];
 
   const tabColor = (tab: TabType) => {
     if (tab === 'personal') return colors.personal;
     if (tab === 'business') return colors.business;
+    if (tab === 'cards') return colors.charged;
     return colors.primary;
   };
 
@@ -182,7 +189,9 @@ export default function ExpensesScreen() {
                   ? t('commitments.noCommitmentsTitle')
                   : activeTab === 'personal'
                     ? t('commitments.noPersonalCommitments')
-                    : t('commitments.noBusinessCommitments')}
+                    : activeTab === 'cards'
+                      ? t('commitments.noCardsCommitments')
+                      : t('commitments.noBusinessCommitments')}
               </Text>
               <TouchableOpacity
                 style={styles.emptyBtn}
@@ -198,14 +207,23 @@ export default function ExpensesScreen() {
       <PaidAmountModal
         visible={pendingPaid !== null}
         expenseName={pendingPaid?.expense.name ?? ''}
-        plannedAmount={pendingPaid?.expense.amount ?? 0}
+        plannedAmount={
+          pendingPaid?.expense.is_variable_amount
+            ? (pendingPaid?.expense.record?.statement_balance ?? pendingPaid?.expense.amount ?? 0)
+            : (pendingPaid?.expense.amount ?? 0)
+        }
         monthLabel={monthYear(new Date(year, month - 1, 1))}
         onConfirm={(actualAmount, lateFee, creditAmount) => {
           if (pendingPaid) markAsPaid(pendingPaid.expense, true, actualAmount, lateFee, creditAmount);
           setPendingPaid(null);
         }}
         onSkip={() => {
-          if (pendingPaid) markAsPaid(pendingPaid.expense, true, pendingPaid.expense.amount);
+          if (pendingPaid) {
+            const effectiveAmt = pendingPaid.expense.is_variable_amount
+              ? (pendingPaid.expense.record?.statement_balance ?? pendingPaid.expense.amount)
+              : pendingPaid.expense.amount;
+            markAsPaid(pendingPaid.expense, true, effectiveAmt);
+          }
           setPendingPaid(null);
         }}
         onCancel={() => setPendingPaid(null)}
