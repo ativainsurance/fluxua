@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { typography, spacing, radius, shadows } from '../theme';
@@ -66,6 +67,7 @@ export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { t } = useTranslation();
   const { language: lang, currency: curr } = useSettings();
+  const { household, members } = useHousehold();
   const [loading, setLoading] = useState(false);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signOutError, setSignOutError] = useState('');
@@ -112,6 +114,32 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={16} color="rgba(250,250,247,0.4)" />
           </View>
         </TouchableOpacity>
+
+        {/* Household */}
+        <Section label={t('settings.household')}>
+          <SettingsRow
+            icon="people-outline"
+            iconColor={colors.teal}
+            iconBg={colors.tealLight}
+            label={t('settings.householdLabel')}
+            right={{
+              type: 'value',
+              text: household?.name ?? t('settings.householdNotSetUp'),
+            }}
+            onPress={() => navigation.navigate('Household')}
+            isFirst
+          />
+          {members.length > 0 && (
+            <SettingsRow
+              icon="person-add-outline"
+              iconColor={colors.primary}
+              iconBg={colors.primaryLight}
+              label={t('settings.householdMembers', { count: members.length })}
+              right={{ type: 'chevron' }}
+              onPress={() => navigation.navigate('Household')}
+            />
+          )}
+        </Section>
 
         {/* Account */}
         <Section label={t('settings.account')}>

@@ -41,14 +41,90 @@ import {
   ExpenseFormData,
   CardPayment,
   FinancialProfile,
+  Household,
+  HouseholdMember,
+  CustomCategory,
 } from '../types';
 
-/** Fetch all expenses for the current user */
-export const fetchExpenses = async (userId: string): Promise<Expense[]> => {
+// ─────────────────────────────────────────────
+// Household Helpers
+// ─────────────────────────────────────────────
+
+/** Fetch the household that the current user belongs to (null if none). */
+export const fetchUserHousehold = async (userId: string): Promise<Household | null> => {
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const { data: household, error: hErr } = await supabase
+    .from('households')
+    .select('*')
+    .eq('id', data.household_id)
+    .maybeSingle();
+
+  if (hErr) throw hErr;
+  return household;
+};
+
+/** Fetch all members of a household, joined with their profile display_name / email. */
+export const fetchHouseholdMembers = async (householdId: string): Promise<HouseholdMember[]> => {
+  const { data, error } = await supabase
+    .from('household_members')
+    .select('household_id, user_id, role, joined_at')
+    .eq('household_id', householdId);
+
+  if (error) throw error;
+  if (!data?.length) return [];
+
+  // Enrich with profile display names
+  const userIds = data.map((m) => m.user_id);
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, first_name')
+    .in('id', userIds);
+
+  const profileMap: Record<string, string | undefined> = {};
+  (profiles ?? []).forEach((p: { id: string; first_name: string | null }) => {
+    if (p.first_name) profileMap[p.id] = p.first_name;
+  });
+
+  return data.map((m) => ({
+    household_id: m.household_id,
+    user_id: m.user_id,
+    role: m.role as 'owner' | 'member',
+    joined_at: m.joined_at,
+    display_name: profileMap[m.user_id],
+  }));
+};
+
+/** Create a new household (calls SECURITY DEFINER RPC). */
+export const callCreateHousehold = async (name: string): Promise<Household> => {
+  const { data, error } = await supabase.rpc('create_household', { household_name: name });
+  if (error) throw error;
+  return data as Household;
+};
+
+/** Join an existing household by join code (calls SECURITY DEFINER RPC). */
+export const callJoinHousehold = async (joinCode: string): Promise<Household> => {
+  const { data, error } = await supabase.rpc('join_household', { join_code_input: joinCode });
+  if (error) throw error;
+  return data as Household;
+};
+
+// ─────────────────────────────────────────────
+// Expense Helpers
+// ─────────────────────────────────────────────
+
+/** Fetch all expenses for the current household */
+export const fetchExpenses = async (householdId: string): Promise<Expense[]> => {
   const { data, error } = await supabase
     .from('expenses')
     .select('*')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .order('due_day', { ascending: true });
 
   if (error) throw error;
@@ -70,12 +146,14 @@ export const fetchExpenseById = async (id: string): Promise<Expense | null> => {
 /** Create a new expense */
 export const createExpense = async (
   userId: string,
+  householdId: string,
   formData: ExpenseFormData
 ): Promise<Expense> => {
   const { data, error } = await supabase
     .from('expenses')
     .insert({
       user_id: userId,
+      household_id: householdId,
       name: formData.name,
       amount: parseFloat(formData.amount),
       category: formData.category,
@@ -149,16 +227,16 @@ export const deleteExpense = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
-/** Fetch all expense records for a given month/year */
+/** Fetch all expense records for a given household/month/year */
 export const fetchExpenseRecords = async (
-  userId: string,
+  householdId: string,
   month: number,
   year: number
 ): Promise<ExpenseRecord[]> => {
   const { data, error } = await supabase
     .from('expense_records')
     .select('*')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .eq('month', month)
     .eq('year', year);
 
@@ -171,6 +249,7 @@ export const fetchExpenseRecords = async (
  */
 export const getOrCreateExpenseRecord = async (
   userId: string,
+  householdId: string,
   expenseId: string,
   month: number,
   year: number
@@ -179,7 +258,7 @@ export const getOrCreateExpenseRecord = async (
     .from('expense_records')
     .select('*')
     .eq('expense_id', expenseId)
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .eq('month', month)
     .eq('year', year)
     .single();
@@ -191,6 +270,7 @@ export const getOrCreateExpenseRecord = async (
     .insert({
       expense_id: expenseId,
       user_id: userId,
+      household_id: householdId,
       month,
       year,
       is_paid: false,
@@ -287,6 +367,7 @@ type CardPaymentRow = {
   id: string;
   statement_id: string;
   user_id: string;
+  household_id: string;
   amount: number;
   payment_date: string;
   notes?: string | null;
@@ -320,7 +401,7 @@ export const fetchCardPaymentsForStatements = async (
 
 /** Fetch all card payments made within a calendar month (by payment_date) */
 export const fetchCardPaymentsByMonth = async (
-  userId: string,
+  householdId: string,
   month: number,
   year: number
 ): Promise<CardPayment[]> => {
@@ -330,7 +411,7 @@ export const fetchCardPaymentsByMonth = async (
   const { data, error } = await supabase
     .from('card_payments')
     .select('*, expense_records!statement_id(expense_id)')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .gte('payment_date', startDate)
     .lte('payment_date', endDate);
   if (error) throw error;
@@ -340,6 +421,7 @@ export const fetchCardPaymentsByMonth = async (
 /** Record a new payment toward a card statement */
 export const addCardPaymentRecord = async (
   userId: string,
+  householdId: string,
   statementId: string,
   amount: number,
   paymentDate: string,
@@ -349,6 +431,7 @@ export const addCardPaymentRecord = async (
     .from('card_payments')
     .insert({
       user_id: userId,
+      household_id: householdId,
       statement_id: statementId,
       amount,
       payment_date: paymentDate,
@@ -396,14 +479,14 @@ export const updateActualAmount = async (
  * Returns 0 if no statements found.
  */
 export const fetchAutoCCDebt = async (
-  userId: string,
+  householdId: string,
   month: number,
   year: number
 ): Promise<number> => {
   const { data: expenses } = await supabase
     .from('expenses')
     .select('id')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .eq('is_variable_amount', true);
 
   if (!expenses?.length) return 0;
@@ -411,7 +494,7 @@ export const fetchAutoCCDebt = async (
   const { data: records } = await supabase
     .from('expense_records')
     .select('id, statement_balance')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .eq('month', month)
     .eq('year', year)
     .in('expense_id', expenses.map((e) => e.id))
@@ -433,30 +516,79 @@ export const fetchAutoCCDebt = async (
   }, 0);
 };
 
-/** Fetch the financial profile for the current user (null if not yet created) */
-export const fetchFinancialProfile = async (userId: string): Promise<FinancialProfile | null> => {
+/** Fetch the financial profile for the current household (null if not yet created) */
+export const fetchFinancialProfile = async (householdId: string): Promise<FinancialProfile | null> => {
   const { data, error } = await supabase
     .from('financial_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('household_id', householdId)
     .maybeSingle();
   if (error) throw error;
   return data;
 };
 
-/** Create or update the financial profile for the current user */
+/** Create or update the financial profile for the current household */
 export const upsertFinancialProfile = async (
   userId: string,
+  householdId: string,
   updates: Partial<Omit<FinancialProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<FinancialProfile> => {
   const { data, error } = await supabase
     .from('financial_profiles')
     .upsert(
-      { ...updates, user_id: userId, updated_at: new Date().toISOString() },
-      { onConflict: 'user_id' }
+      { ...updates, user_id: userId, household_id: householdId, updated_at: new Date().toISOString() },
+      { onConflict: 'household_id' }
     )
     .select()
     .single();
   if (error) throw error;
   return data;
+};
+
+// ─────────────────────────────────────────────
+// Custom Category Helpers
+// ─────────────────────────────────────────────
+
+/** Fetch all custom categories for a household */
+export const fetchCustomCategories = async (householdId: string): Promise<CustomCategory[]> => {
+  const { data, error } = await supabase
+    .from('custom_categories')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+};
+
+/** Add a custom category to a household */
+export const addCustomCategory = async (
+  userId: string,
+  householdId: string,
+  key: string,
+  label: string,
+  emoji?: string
+): Promise<CustomCategory> => {
+  const { data, error } = await supabase
+    .from('custom_categories')
+    .upsert(
+      { created_by: userId, household_id: householdId, key, label, emoji: emoji ?? null },
+      { onConflict: 'household_id,key' }
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Remove a custom category from a household */
+export const removeCustomCategory = async (
+  householdId: string,
+  key: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('custom_categories')
+    .delete()
+    .eq('household_id', householdId)
+    .eq('key', key);
+  if (error) throw error;
 };

@@ -7,6 +7,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { isSupabaseConfigured } from '../services/supabase';
 import { typography, spacing, radius } from '../theme';
@@ -33,6 +34,8 @@ import CurrencyScreen from '../screens/settings/CurrencyScreen';
 import LanguageScreen from '../screens/settings/LanguageScreen';
 import HelpFaqScreen from '../screens/settings/HelpFaqScreen';
 import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
+import HouseholdScreen from '../screens/settings/HouseholdScreen';
+import HouseholdOnboardingScreen from '../screens/HouseholdOnboardingScreen';
 
 import {
   RootStackParamList,
@@ -75,6 +78,7 @@ const SettingsNavigator = () => (
     <SettingsStack.Screen name="Language" component={LanguageScreen} />
     <SettingsStack.Screen name="HelpFaq" component={HelpFaqScreen} />
     <SettingsStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+    <SettingsStack.Screen name="Household" component={HouseholdScreen} />
   </SettingsStack.Navigator>
 );
 
@@ -168,15 +172,18 @@ const SetupScreen = () => {
 /* eslint-enable i18next/no-literal-string */
 
 export const AppNavigator = () => {
-  const { session, loading } = useAuth();
+  const { session, loading: authLoading } = useAuth();
+  const { householdId, loading: householdLoading } = useHousehold();
 
   if (!isSupabaseConfigured) return <SetupScreen />;
-  if (loading) return <LoadingScreen />;
+  if (authLoading || (session && householdLoading)) return <LoadingScreen />;
 
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
+        {!session ? (
+          <RootStack.Screen name="Auth" component={AuthNavigator} />
+        ) : householdId ? (
           <>
             <RootStack.Screen name="Main" component={MainNavigator} />
             <RootStack.Screen
@@ -186,7 +193,7 @@ export const AppNavigator = () => {
             />
           </>
         ) : (
-          <RootStack.Screen name="Auth" component={AuthNavigator} />
+          <RootStack.Screen name="HouseholdOnboarding" component={HouseholdOnboardingScreen} />
         )}
       </RootStack.Navigator>
     </NavigationContainer>

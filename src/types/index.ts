@@ -277,6 +277,42 @@ export interface BudgetSnapshot {
 }
 
 // ─────────────────────────────────────────────
+// Household Types
+// ─────────────────────────────────────────────
+
+export interface Household {
+  id: string;
+  name: string;
+  join_code: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HouseholdMember {
+  household_id: string;
+  user_id: string;
+  display_name?: string;
+  email?: string;
+  role: 'owner' | 'member';
+  joined_at: string;
+}
+
+// ─────────────────────────────────────────────
+// Custom Category Type (shared via Supabase)
+// ─────────────────────────────────────────────
+
+export interface CustomCategory {
+  id: string;
+  household_id: string;
+  created_by: string | null;
+  key: string;
+  label: string;
+  emoji?: string;
+  created_at: string;
+}
+
+// ─────────────────────────────────────────────
 // Auth Types
 // ─────────────────────────────────────────────
 

@@ -26,6 +26,7 @@ import {
   BudgetBucket,
 } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -64,6 +65,7 @@ const mergePayments = (a: CardPayment[], b: CardPayment[]): CardPayment[] =>
 
 export const useExpenses = (month: number, year: number) => {
   const { user } = useAuth();
+  const { householdId } = useHousehold();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
   const [cardPayments, setCardPayments] = useState<CardPayment[]>([]);
@@ -71,13 +73,13 @@ export const useExpenses = (month: number, year: number) => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!user || !householdId) return;
     setLoading(true);
     setError(null);
     try {
       const [expenseData, recordData] = await Promise.all([
-        fetchExpenses(user.id),
-        fetchExpenseRecords(user.id, month, year),
+        fetchExpenses(householdId),
+        fetchExpenseRecords(householdId, month, year),
       ]);
       setExpenses(expenseData);
       setRecords(recordData);
@@ -89,7 +91,7 @@ export const useExpenses = (month: number, year: number) => {
 
       const [byStatement, byDate] = await Promise.all([
         fetchCardPaymentsForStatements(statementIds),
-        fetchCardPaymentsByMonth(user.id, month, year),
+        fetchCardPaymentsByMonth(householdId, month, year),
       ]);
       setCardPayments(mergePayments(byStatement, byDate));
     } catch (err) {
@@ -97,7 +99,7 @@ export const useExpenses = (month: number, year: number) => {
     } finally {
       setLoading(false);
     }
-  }, [user, month, year]);
+  }, [user, householdId, month, year]);
 
   useEffect(() => {
     load();
@@ -121,9 +123,9 @@ export const useExpenses = (month: number, year: number) => {
   /** Mark a non-card expense as paid/unpaid for the current month */
   const markAsPaid = useCallback(
     async (expense: Expense, isPaid: boolean, actualAmount?: number, lateFee?: number, creditAmount?: number) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, month, year);
         const updated = await toggleExpensePaid(record.id, isPaid, actualAmount, lateFee, creditAmount);
         setRecords((prev) => {
           const exists = prev.find((r) => r.id === updated.id);
@@ -134,15 +136,15 @@ export const useExpenses = (month: number, year: number) => {
         setError(err instanceof Error ? err.message : 'Failed to update');
       }
     },
-    [user, month, year]
+    [user, householdId, month, year]
   );
 
   /** Remove an expense from a specific month without deleting the expense template */
   const excludeFromMonth = useCallback(
     async (expense: Expense) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, month, year);
         await excludeExpenseRecord(record.id);
         setRecords((prev) =>
           prev.map((r) =>
@@ -156,15 +158,15 @@ export const useExpenses = (month: number, year: number) => {
         throw err;
       }
     },
-    [user, month, year]
+    [user, householdId, month, year]
   );
 
   /** Mark an expense as waived for the current month */
   const waiveExpense = useCallback(
     async (expense: Expense) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, month, year);
         const updated = await waiveExpenseRecord(record.id);
         setRecords((prev) => {
           const exists = prev.find((r) => r.id === updated.id);
@@ -176,7 +178,7 @@ export const useExpenses = (month: number, year: number) => {
         throw err;
       }
     },
-    [user, month, year]
+    [user, householdId, month, year]
   );
 
   const updateRecordActualAmount = useCallback(
@@ -193,16 +195,16 @@ export const useExpenses = (month: number, year: number) => {
 
   const addExpense = useCallback(
     async (formData: ExpenseFormData) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const newExpense = await createExpense(user.id, formData);
+        const newExpense = await createExpense(user.id, householdId, formData);
         setExpenses((prev) => [...prev, newExpense]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to create');
         throw err;
       }
     },
-    [user]
+    [user, householdId]
   );
 
   const editExpense = useCallback(
@@ -221,9 +223,9 @@ export const useExpenses = (month: number, year: number) => {
   /** Save this month's statement balance for a variable-amount expense (credit card) */
   const enterStatementBalance = useCallback(
     async (expense: ExpenseWithRecord, balance: number) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, expense.id, month, year);
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, month, year);
         const updated = await setStatementBalance(record.id, balance);
         setRecords((prev) => {
           const exists = prev.find((r) => r.id === updated.id);
@@ -235,7 +237,7 @@ export const useExpenses = (month: number, year: number) => {
         throw err;
       }
     },
-    [user, month, year]
+    [user, householdId, month, year]
   );
 
   /**
@@ -251,10 +253,10 @@ export const useExpenses = (month: number, year: number) => {
       statementYear: number,
       notes?: string
     ) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, expense.id, statementMonth, statementYear);
-        const newPayment = await addCardPaymentRecord(user.id, record.id, amount, paymentDate, notes);
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, statementMonth, statementYear);
+        const newPayment = await addCardPaymentRecord(user.id, householdId, record.id, amount, paymentDate, notes);
         setCardPayments((prev) => mergePayments(prev, [newPayment]));
         // Ensure the statement record is tracked locally if it was just created
         setRecords((prev) => {
@@ -267,7 +269,7 @@ export const useExpenses = (month: number, year: number) => {
         throw err;
       }
     },
-    [user]
+    [user, householdId]
   );
 
   /** Delete a card payment */

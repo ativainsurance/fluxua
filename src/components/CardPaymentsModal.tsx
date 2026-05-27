@@ -17,6 +17,8 @@ import { typography, spacing, radius, shadows } from '../theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useFormatCurrency, useFormatDate, navigateMonth } from '../utils/dateUtils';
 import { useSettings } from '../contexts/SettingsContext';
+import { useHousehold } from '../contexts/HouseholdContext';
+import { useAuth } from '../contexts/AuthContext';
 import { FlowBar } from './ui/FlowBar';
 import { useEnergyState } from '../utils/energyState';
 import { ExpenseWithRecord, CardPayment } from '../types';
@@ -59,6 +61,14 @@ export const CardPaymentsModal = ({
   const formatCurrency = useFormatCurrency();
   const { monthYear } = useFormatDate();
   const energyState = useEnergyState();
+  const { members } = useHousehold();
+  const { user } = useAuth();
+
+  const getMemberName = (userId: string): string => {
+    if (userId === user?.id) return t('household.you');
+    const member = members.find((m) => m.user_id === userId);
+    return member?.display_name ?? t('household.unknownMember');
+  };
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const stmtBalance = expense.record?.statement_balance ?? expense.amount;
@@ -204,6 +214,7 @@ export const CardPaymentsModal = ({
                     <Text style={styles.paymentAmount}>{formatCurrency(p.amount)}</Text>
                     <Text style={styles.paymentDate}>
                       {t('cardPayments.paidOn', { date: p.payment_date })}
+                      {members.length > 1 && ` · ${getMemberName(p.user_id)}`}
                     </Text>
                     {p.notes && <Text style={styles.paymentNotes}>{p.notes}</Text>}
                   </View>

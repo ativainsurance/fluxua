@@ -28,6 +28,7 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
   AddExpense: { expense?: import('../types').Expense } | undefined;
+  HouseholdOnboarding: undefined;
 };
 
 // ─────────────────────────────────────────────
@@ -44,4 +45,5 @@ export type SettingsStackParamList = {
   Language: undefined;
   HelpFaq: undefined;
   PrivacyPolicy: undefined;
+  Household: undefined;
 };

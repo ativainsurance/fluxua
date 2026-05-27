@@ -6,6 +6,7 @@ import {
 } from '../services/supabase';
 import { FinancialProfile, BudgetSnapshot } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
 import { getCurrentMonthYear } from '../utils/dateUtils';
 
 // ─────────────────────────────────────────────
@@ -55,6 +56,7 @@ export const computeSnapshot = (
 
 export const useBudget = () => {
   const { user } = useAuth();
+  const { householdId } = useHousehold();
   const { month, year } = getCurrentMonthYear();
 
   const [profile, setProfile] = useState<FinancialProfile | null>(null);
@@ -64,13 +66,13 @@ export const useBudget = () => {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    if (!user || !householdId) return;
     setLoading(true);
     setError(null);
     try {
       const [profileData, ccDebt] = await Promise.all([
-        fetchFinancialProfile(user.id),
-        fetchAutoCCDebt(user.id, month, year),
+        fetchFinancialProfile(householdId),
+        fetchAutoCCDebt(householdId, month, year),
       ]);
       setProfile(profileData);
       setAutoCCDebt(ccDebt);
@@ -79,7 +81,7 @@ export const useBudget = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, month, year]);
+  }, [user, householdId, month, year]);
 
   useEffect(() => {
     load();
@@ -89,11 +91,11 @@ export const useBudget = () => {
     async (
       updates: Partial<Omit<FinancialProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
     ) => {
-      if (!user) return;
+      if (!user || !householdId) return;
       setSaving(true);
       setError(null);
       try {
-        const updated = await upsertFinancialProfile(user.id, updates);
+        const updated = await upsertFinancialProfile(user.id, householdId, updates);
         setProfile(updated);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save profile');
@@ -102,7 +104,7 @@ export const useBudget = () => {
         setSaving(false);
       }
     },
-    [user]
+    [user, householdId]
   );
 
   const snapshot = computeSnapshot(profile, autoCCDebt);

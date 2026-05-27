@@ -29,6 +29,8 @@
       "shortName": "Fluxua",
       "description": "Track your monthly commitments and stay ahead of every bill."
     },
-    "plugins": []
+    "plugins": [
+      "expo-localization"
+    ]
   }
 }

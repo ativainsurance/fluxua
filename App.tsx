@@ -19,6 +19,7 @@ import {
 } from '@expo-google-fonts/geist-mono';
 
 import { AuthProvider } from './src/contexts/AuthContext';
+import { HouseholdProvider } from './src/contexts/HouseholdContext';
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { SettingsProvider, useSettings } from './src/contexts/SettingsContext';
 import { AppNavigator } from './src/navigation';
@@ -55,7 +56,9 @@ export default function App() {
         <SettingsProvider>
           <ThemeProvider>
             <AuthProvider>
-              <ThemedApp />
+              <HouseholdProvider>
+                <ThemedApp />
+              </HouseholdProvider>
             </AuthProvider>
           </ThemeProvider>
         </SettingsProvider>
