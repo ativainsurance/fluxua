@@ -5,8 +5,9 @@ import { BUILT_IN_CATEGORIES, CATEGORY_LABELS, CATEGORY_ICONS } from '../types';
 const STORAGE_KEY = '@expense_tracker/custom_categories';
 
 export interface CustomCategory {
-  key: string;   // stored as expense.category
-  label: string; // display name
+  key: string;    // stored as expense.category
+  label: string;  // display name
+  emoji?: string; // optional visual identity
 }
 
 export const useCustomCategories = () => {
@@ -24,22 +25,21 @@ export const useCustomCategories = () => {
     });
   }, []);
 
-  const addCategory = useCallback(async (label: string): Promise<string | null> => {
+  const addCategory = useCallback(async (label: string, emoji?: string): Promise<string | null> => {
     const trimmed = label.trim();
     if (!trimmed) return null;
 
-    // Derive a key from the label (lowercase, hyphens)
     const key = trimmed.toLowerCase().replace(/\s+/g, '-');
 
-    // Don't add if it already exists as built-in or custom
     const isBuiltIn = (BUILT_IN_CATEGORIES as readonly string[]).includes(key);
     if (isBuiltIn) return key;
 
     setCustomCategories((prev) => {
-      if (prev.find((c) => c.key === key)) return prev;
-      const next = [...prev, { key, label: trimmed }];
+      const existing = prev.find((c) => c.key === key);
+      if (existing) return prev;
+      const entry: CustomCategory = { key, label: trimmed, ...(emoji ? { emoji } : {}) };
+      const next = [...prev, entry];
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      // Register the new category in the shared label/icon maps
       CATEGORY_LABELS[key] = trimmed;
       CATEGORY_ICONS[key] = 'tag-outline';
       return next;
@@ -56,5 +56,12 @@ export const useCustomCategories = () => {
     });
   }, []);
 
-  return { customCategories, addCategory, removeCategory };
+  /** Returns the emoji for a custom category key, or undefined if not set. */
+  const getCategoryEmoji = useCallback(
+    (key: string): string | undefined =>
+      customCategories.find((c) => c.key === key)?.emoji,
+    [customCategories]
+  );
+
+  return { customCategories, addCategory, removeCategory, getCategoryEmoji };
 };

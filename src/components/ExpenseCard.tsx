@@ -142,9 +142,13 @@ export const ExpenseCard = ({
       {/* Left accent strip — 5px, full height */}
       <View style={[styles.accentStrip, { backgroundColor: statusConfig.color }]} />
 
-      {/* Category icon */}
-      <View style={[styles.iconWrapper, { backgroundColor: statusConfig.bg }]}>
-        <Ionicons name={categoryIcon as any} size={20} color={statusConfig.color} />
+      {/* Leading icon — emoji if set, otherwise category Ionicons */}
+      <View style={[styles.iconWrapper, { backgroundColor: expense.emoji ? colors.surfaceAlt : statusConfig.bg }]}>
+        {expense.emoji ? (
+          <Text style={styles.emojiIcon}>{expense.emoji}</Text>
+        ) : (
+          <Ionicons name={categoryIcon as any} size={20} color={statusConfig.color} />
+        )}
       </View>
 
       {/* Info column */}
@@ -320,6 +324,9 @@ const makeStyles = (colors: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0 },
+  emojiIcon: {
+    fontSize: 22,
+    lineHeight: 26 },
   info: {
     flex: 1,
     gap: 4 },

@@ -120,6 +120,8 @@ export interface Expense {
   is_variable_amount: boolean;
   /** Which 50/30/20 bucket this commitment belongs to */
   budget_bucket: BudgetBucket;
+  /** Optional emoji displayed as the commitment's leading icon */
+  emoji?: string;
   created_at: string;
   updated_at: string;
 }
@@ -228,6 +230,8 @@ export interface ExpenseFormData {
   is_variable_amount: boolean;
   /** Which 50/30/20 bucket this commitment belongs to */
   budget_bucket: BudgetBucket;
+  /** Optional emoji icon — empty string means none */
+  emoji: string;
 }
 
 // ─────────────────────────────────────────────

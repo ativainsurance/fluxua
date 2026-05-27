@@ -24,6 +24,7 @@ import { useCustomCategories } from '../hooks/useCustomCategories';
 import { getCurrentMonthYear } from '../utils/dateUtils';
 import {typography, spacing, radius, shadows } from '../theme';
 import { DateInput } from '../components/DateInput';
+import { EmojiPicker } from '../components/EmojiPicker';
 import {
   ExpenseFormData,
   ExpenseType,
@@ -65,6 +66,7 @@ const defaultForm: ExpenseFormData = {
   autopay_last4: '',
   is_variable_amount: false,
   budget_bucket: 'needs',
+  emoji: '',
 };
 
 const BUCKET_COLORS: Record<string, string> = {
@@ -89,7 +91,7 @@ export default function AddExpenseScreen() {
 
   const { month, year } = getCurrentMonthYear();
   const { addExpense, editExpense } = useExpenses(month, year);
-  const { customCategories, addCategory } = useCustomCategories();
+  const { customCategories, addCategory, getCategoryEmoji } = useCustomCategories();
   const getCategoryLabel = useCategoryLabel();
 
   const [form, setForm] = useState<ExpenseFormData>(defaultForm);
@@ -97,6 +99,9 @@ export default function AddExpenseScreen() {
   const [showCategories, setShowCategories] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryLabel, setNewCategoryLabel] = useState('');
+  const [newCategoryEmoji, setNewCategoryEmoji] = useState('');
+  const [showCategoryEmojiPicker, setShowCategoryEmojiPicker] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -117,6 +122,7 @@ export default function AddExpenseScreen() {
         autopay_last4: existingExpense.autopay_last4 ?? '',
         is_variable_amount: existingExpense.is_variable_amount ?? false,
         budget_bucket: existingExpense.budget_bucket ?? defaultBudgetBucket(existingExpense.category, existingExpense.is_variable_amount),
+        emoji: existingExpense.emoji ?? '',
       });
     }
   }, [existingExpense]);
@@ -174,12 +180,14 @@ export default function AddExpenseScreen() {
 
   const handleAddCustomCategory = async () => {
     if (!newCategoryLabel.trim()) return;
-    const key = await addCategory(newCategoryLabel);
+    const key = await addCategory(newCategoryLabel, newCategoryEmoji || undefined);
     if (key) {
       set('category', key);
       setShowCategories(false);
     }
     setNewCategoryLabel('');
+    setNewCategoryEmoji('');
+    setShowCategoryEmojiPicker(false);
     setShowAddCategory(false);
   };
 
@@ -220,16 +228,48 @@ export default function AddExpenseScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Name */}
+          {/* Name + Emoji */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{t('addExpense.name')}</Text>
-            <TextInput
-              style={styles.input}
-              value={form.name}
-              onChangeText={(v) => set('name', v)}
-              placeholder={t('addExpense.namePlaceholder')}
-              placeholderTextColor={colors.textDisabled}
-            />
+            <View style={styles.nameEmojiRow}>
+              <TouchableOpacity
+                style={[styles.emojiBtn, form.emoji ? styles.emojiBtnActive : undefined]}
+                onPress={() => setShowEmojiPicker((v) => !v)}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                {form.emoji ? (
+                  <Text style={styles.emojiBtnText}>{form.emoji}</Text>
+                ) : (
+                  <Ionicons name="happy-outline" size={20} color={colors.textSecondary} />
+                )}
+              </TouchableOpacity>
+              <TextInput
+                style={[styles.input, styles.nameInput]}
+                value={form.name}
+                onChangeText={(v) => set('name', v)}
+                placeholder={t('addExpense.namePlaceholder')}
+                placeholderTextColor={colors.textDisabled}
+              />
+            </View>
+            {form.emoji ? (
+              <TouchableOpacity
+                style={styles.emojiClearBtn}
+                onPress={() => { set('emoji', ''); setShowEmojiPicker(false); }}
+              >
+                <Text style={styles.emojiClearText}>{t('addExpense.emojiClear')}</Text>
+              </TouchableOpacity>
+            ) : null}
+            {showEmojiPicker && (
+              <View style={styles.emojiPickerWrap}>
+                <EmojiPicker
+                  selected={form.emoji}
+                  onSelect={(emoji) => {
+                    set('emoji', emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                />
+              </View>
+            )}
           </View>
 
           {/* Amount */}
@@ -352,66 +392,90 @@ export default function AddExpenseScreen() {
 
             {showCategories && (
               <View style={styles.categoryGrid}>
-                {allCategories.map((cat) => (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[
-                      styles.catItem,
-                      form.category === cat && styles.catItemActive,
-                    ]}
-                    onPress={() => {
-                      setCategory(cat);
-                      setShowCategories(false);
-                    }}
-                  >
-                    <Ionicons
-                      name={getCategoryIcon(cat) as any}
-                      size={16}
-                      color={
-                        form.category === cat ? colors.primary : colors.textSecondary
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.catItemText,
-                        form.category === cat && {
-                          color: colors.primary,
-                          fontWeight: typography.semibold,
-                        },
-                      ]}
+                {allCategories.map((cat) => {
+                  const catEmoji = getCategoryEmoji(cat);
+                  const isActive = form.category === cat;
+                  return (
+                    <TouchableOpacity
+                      key={cat}
+                      style={[styles.catItem, isActive && styles.catItemActive]}
+                      onPress={() => {
+                        setCategory(cat);
+                        setShowCategories(false);
+                      }}
                     >
-                      {getCategoryLabel(cat)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      {catEmoji ? (
+                        <Text style={styles.catItemEmoji}>{catEmoji}</Text>
+                      ) : (
+                        <Ionicons
+                          name={getCategoryIcon(cat) as any}
+                          size={16}
+                          color={isActive ? colors.primary : colors.textSecondary}
+                        />
+                      )}
+                      <Text
+                        style={[
+                          styles.catItemText,
+                          isActive && { color: colors.primary, fontWeight: typography.semibold },
+                        ]}
+                      >
+                        {getCategoryLabel(cat)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
 
                 {/* Add custom category */}
                 {showAddCategory ? (
-                  <View style={styles.addCategoryRow}>
-                    <TextInput
-                      style={styles.addCategoryInput}
-                      value={newCategoryLabel}
-                      onChangeText={setNewCategoryLabel}
-                      placeholder={t('addExpense.categoryNamePlaceholder')}
-                      placeholderTextColor={colors.textDisabled}
-                      autoFocus
-                      returnKeyType="done"
-                      onSubmitEditing={handleAddCustomCategory}
-                    />
-                    <TouchableOpacity
-                      style={styles.addCategoryConfirm}
-                      onPress={handleAddCustomCategory}
-                    >
-                      <Ionicons name="checkmark" size={18} color={colors.textInverse} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setShowAddCategory(false);
-                        setNewCategoryLabel('');
-                      }}
-                    >
-                      <Ionicons name="close" size={20} color={colors.textSecondary} />
-                    </TouchableOpacity>
+                  <View style={styles.addCategoryBlock}>
+                    <View style={styles.addCategoryRow}>
+                      <TouchableOpacity
+                        style={styles.catEmojiBtn}
+                        onPress={() => setShowCategoryEmojiPicker((v) => !v)}
+                      >
+                        {newCategoryEmoji ? (
+                          <Text style={{ fontSize: 18 }}>{newCategoryEmoji}</Text>
+                        ) : (
+                          <Ionicons name="happy-outline" size={18} color={colors.textSecondary} />
+                        )}
+                      </TouchableOpacity>
+                      <TextInput
+                        style={styles.addCategoryInput}
+                        value={newCategoryLabel}
+                        onChangeText={setNewCategoryLabel}
+                        placeholder={t('addExpense.categoryNamePlaceholder')}
+                        placeholderTextColor={colors.textDisabled}
+                        autoFocus
+                        returnKeyType="done"
+                        onSubmitEditing={handleAddCustomCategory}
+                      />
+                      <TouchableOpacity
+                        style={styles.addCategoryConfirm}
+                        onPress={handleAddCustomCategory}
+                      >
+                        <Ionicons name="checkmark" size={18} color={colors.textInverse} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowAddCategory(false);
+                          setNewCategoryLabel('');
+                          setNewCategoryEmoji('');
+                          setShowCategoryEmojiPicker(false);
+                        }}
+                      >
+                        <Ionicons name="close" size={20} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                    {showCategoryEmojiPicker && (
+                      <EmojiPicker
+                        compact
+                        selected={newCategoryEmoji}
+                        onSelect={(emoji) => {
+                          setNewCategoryEmoji(emoji);
+                          setShowCategoryEmojiPicker(false);
+                        }}
+                      />
+                    )}
                   </View>
                 ) : (
                   <TouchableOpacity
@@ -665,6 +729,49 @@ const makeStyles = (colors: any) => StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: spacing.sm,
   },
+  nameEmojiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  nameInput: {
+    flex: 1,
+  },
+  emojiBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  emojiBtnActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  emojiBtnText: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  emojiClearBtn: {
+    marginTop: spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  emojiClearText: {
+    fontSize: typography.xs,
+    color: colors.danger,
+    fontWeight: typography.medium,
+  },
+  emojiPickerWrap: {
+    marginTop: spacing.sm,
+  },
+  catItemEmoji: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
   optionalLabel: {
     fontWeight: typography.regular,
     color: colors.textDisabled,
@@ -778,12 +885,27 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.medium,
   },
+  addCategoryBlock: {
+    width: '100%',
+    marginTop: spacing.xs,
+    gap: spacing.xs,
+  },
   addCategoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     width: '100%',
-    marginTop: spacing.xs,
+  },
+  catEmojiBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
   },
   addCategoryInput: {
     flex: 1,
