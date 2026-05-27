@@ -138,7 +138,11 @@
     "statementBalance": "Statement balance",
     "needsBalance": "Balance needed",
     "enterBalance": "Enter balance",
-    "balanceEntered": "Balance set"
+    "balanceEntered": "Balance set",
+    "bucketNeeds": "Needs",
+    "bucketWants": "Wants",
+    "bucketDebt": "Debt & Savings",
+    "tabTotalLabel": "Monthly total"
   },
   "status": {
     "completed": "Completed",
@@ -289,7 +293,12 @@
     "variableAmount": "Variable amount (credit card)",
     "variableAmountHint": "Statement balance varies each month. Enter the actual balance on the Flow tab when your statement closes.",
     "fallbackAmount": "DEFAULT / FALLBACK AMOUNT",
-    "variableAmountFieldHint": "Used for flow planning until the real statement balance is entered each cycle."
+    "variableAmountFieldHint": "Used for flow planning until the real statement balance is entered each cycle.",
+    "budgetBucket": "BUDGET BUCKET",
+    "budgetBucketHint": "Which 50/30/20 bucket does this belong to? Auto-set from category — always overrideable.",
+    "bucket_needs": "Needs",
+    "bucket_wants": "Wants",
+    "bucket_debt": "Debt"
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

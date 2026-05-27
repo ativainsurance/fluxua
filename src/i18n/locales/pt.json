@@ -138,7 +138,11 @@
     "statementBalance": "Saldo da fatura",
     "needsBalance": "Saldo necessário",
     "enterBalance": "Inserir saldo",
-    "balanceEntered": "Saldo registrado"
+    "balanceEntered": "Saldo registrado",
+    "bucketNeeds": "Necessidades",
+    "bucketWants": "Desejos",
+    "bucketDebt": "Dívida e poupança",
+    "tabTotalLabel": "Total mensal"
   },
   "status": {
     "completed": "Concluído",
@@ -289,7 +293,12 @@
     "variableAmount": "Valor variável (cartão de crédito)",
     "variableAmountHint": "O saldo da fatura varia cada mês. Insira o saldo real na aba Fluxo quando sua fatura fechar.",
     "fallbackAmount": "VALOR PADRÃO / SUBSTITUTO",
-    "variableAmountFieldHint": "Usado para planejamento de fluxo até que o saldo real seja inserido a cada ciclo."
+    "variableAmountFieldHint": "Usado para planejamento de fluxo até que o saldo real seja inserido a cada ciclo.",
+    "budgetBucket": "CATEGORIA 50/30/20",
+    "budgetBucketHint": "A qual grupo este compromisso pertence? Definido automaticamente pela categoria — sempre editável.",
+    "bucket_needs": "Necessidades",
+    "bucket_wants": "Desejos",
+    "bucket_debt": "Dívida"
   },
   "dateInput": {
     "placeholder": "MM/DD/AAAA",

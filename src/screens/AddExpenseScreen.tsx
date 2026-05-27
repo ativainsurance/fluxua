@@ -29,8 +29,10 @@ import {
   ExpenseType,
   RecurrenceType,
   AutopayMethod,
+  BudgetBucket,
   BUILT_IN_CATEGORIES,
   getCategoryIcon,
+  defaultBudgetBucket,
   Expense,
 } from '../types';
 import { useCategoryLabel } from '../utils/categories';
@@ -62,6 +64,13 @@ const defaultForm: ExpenseFormData = {
   autopay_method: 'card',
   autopay_last4: '',
   is_variable_amount: false,
+  budget_bucket: 'needs',
+};
+
+const BUCKET_COLORS: Record<string, string> = {
+  needs: '#2563EB',
+  wants: '#0D9488',
+  debt:  '#D97706',
 };
 
 // ─────────────────────────────────────────────
@@ -107,12 +116,27 @@ export default function AddExpenseScreen() {
         autopay_method: existingExpense.autopay_method ?? 'card',
         autopay_last4: existingExpense.autopay_last4 ?? '',
         is_variable_amount: existingExpense.is_variable_amount ?? false,
+        budget_bucket: existingExpense.budget_bucket ?? defaultBudgetBucket(existingExpense.category, existingExpense.is_variable_amount),
       });
     }
   }, [existingExpense]);
 
   const set = (key: keyof ExpenseFormData, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const setCategory = (cat: string) =>
+    setForm((prev) => ({
+      ...prev,
+      category: cat,
+      budget_bucket: defaultBudgetBucket(cat, prev.is_variable_amount),
+    }));
+
+  const setVariableAmount = (v: boolean) =>
+    setForm((prev) => ({
+      ...prev,
+      is_variable_amount: v,
+      budget_bucket: defaultBudgetBucket(prev.category, v),
+    }));
 
   const validate = (): string | null => {
     if (!form.name.trim()) return t('addExpense.errorNameRequired');
@@ -237,7 +261,7 @@ export default function AddExpenseScreen() {
             </View>
             <Switch
               value={form.is_variable_amount}
-              onValueChange={(v) => set('is_variable_amount', v)}
+              onValueChange={setVariableAmount}
               trackColor={{ false: colors.border, true: colors.primaryLight }}
               thumbColor={form.is_variable_amount ? colors.primary : colors.textInverse}
             />
@@ -336,7 +360,7 @@ export default function AddExpenseScreen() {
                       form.category === cat && styles.catItemActive,
                     ]}
                     onPress={() => {
-                      set('category', cat);
+                      setCategory(cat);
                       setShowCategories(false);
                     }}
                   >
@@ -400,6 +424,36 @@ export default function AddExpenseScreen() {
                 )}
               </View>
             )}
+          </View>
+
+          {/* Budget Bucket */}
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{t('addExpense.budgetBucket')}</Text>
+            <Text style={styles.fieldHint}>{t('addExpense.budgetBucketHint')}</Text>
+            <View style={styles.typeRow}>
+              {(['needs', 'wants', 'debt'] as BudgetBucket[]).map((bucket) => (
+                <TouchableOpacity
+                  key={bucket}
+                  style={[
+                    styles.typeBtn,
+                    form.budget_bucket === bucket && {
+                      backgroundColor: BUCKET_COLORS[bucket],
+                      borderColor: BUCKET_COLORS[bucket],
+                    },
+                  ]}
+                  onPress={() => set('budget_bucket', bucket)}
+                >
+                  <Text
+                    style={[
+                      styles.typeBtnText,
+                      form.budget_bucket === bucket && { color: colors.textInverse },
+                    ]}
+                  >
+                    {t(`addExpense.bucket_${bucket}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Due Day */}

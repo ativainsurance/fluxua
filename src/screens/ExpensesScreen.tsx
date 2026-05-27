@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  SectionList,
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
@@ -18,15 +18,16 @@ import { useExpenses } from '../hooks/useExpenses';
 import {
   getCurrentMonthYear,
   useFormatDate,
+  useFormatCurrency,
   getWeeklyBreakdown,
   getCurrentWeekIndex,
 } from '../utils/dateUtils';
-import {typography, spacing, radius, shadows } from '../theme';
+import { typography, spacing, radius, shadows } from '../theme';
 import { ExpenseCard } from '../components/ExpenseCard';
 import { PaidAmountModal } from '../components/PaidAmountModal';
 import { CardPaymentsModal } from '../components/CardPaymentsModal';
 import { MonthSelector } from '../components/MonthSelector';
-import { ExpenseWithRecord, ExpenseType } from '../types';
+import { ExpenseWithRecord, ExpenseType, BudgetBucket } from '../types';
 
 type TabType = 'all' | ExpenseType | 'cards';
 
@@ -35,10 +36,25 @@ interface PendingPaid {
   isPaid: boolean;
 }
 
+const BUCKETS: BudgetBucket[] = ['needs', 'wants', 'debt'];
+
+const BUCKET_COLORS: Record<BudgetBucket, string> = {
+  needs: '#2563EB',
+  wants: '#0D9488',
+  debt:  '#D97706',
+};
+
+const BUCKET_ICON: Record<BudgetBucket, string> = {
+  needs: 'home-outline',
+  wants: 'heart-outline',
+  debt:  'trending-up-outline',
+};
+
 export default function ExpensesScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { monthYear } = useFormatDate();
+  const formatCurrency = useFormatCurrency();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
 
@@ -49,17 +65,55 @@ export default function ExpensesScreen() {
   const [pendingPaid, setPendingPaid] = useState<PendingPaid | null>(null);
   const [paymentModalExpense, setPaymentModalExpense] = useState<ExpenseWithRecord | null>(null);
 
-  const { expenses, summary, loading, reload, markAsPaid, removeExpense, excludeFromMonth, waiveExpense, addCardPayment, deleteCardPayment } =
+  const { expenses, summary, bucketTotals, loading, reload, markAsPaid, removeExpense, excludeFromMonth, waiveExpense, addCardPayment, deleteCardPayment } =
     useExpenses(month, year);
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = getCurrentWeekIndex(month, year);
 
+  // Filter by active tab
   const filtered = expenses.filter((e) => {
     if (activeTab === 'cards') return e.is_variable_amount;
     if (activeTab === 'all') return true;
     return e.type === activeTab;
   });
+
+  // Compute per-tab total (planned amounts for the filtered set)
+  const tabTotal = useMemo(
+    () => filtered.reduce((sum, e) => {
+      const planned = e.is_variable_amount
+        ? (e.record?.statement_balance ?? e.amount)
+        : e.amount;
+      return sum + planned;
+    }, 0),
+    [filtered]
+  );
+
+  // Build sections: group filtered expenses by bucket, skip empty buckets
+  const sections = useMemo(() => {
+    const byBucket: Record<BudgetBucket, ExpenseWithRecord[]> = {
+      needs: [],
+      wants: [],
+      debt: [],
+    };
+    filtered.forEach((e) => {
+      const bucket = (e.budget_bucket ?? 'needs') as BudgetBucket;
+      byBucket[bucket].push(e);
+    });
+
+    return BUCKETS
+      .map((bucket) => ({
+        bucket,
+        data: byBucket[bucket],
+        subtotal: byBucket[bucket].reduce((sum, e) => {
+          const planned = e.is_variable_amount
+            ? (e.record?.statement_balance ?? e.amount)
+            : e.amount;
+          return sum + planned;
+        }, 0),
+      }))
+      .filter((s) => s.data.length > 0);
+  }, [filtered]);
 
   const handleTogglePaid = (expense: ExpenseWithRecord, isPaid: boolean) => {
     if (isPaid) {
@@ -69,12 +123,10 @@ export default function ExpensesScreen() {
     }
   };
 
-  // Keep the modal expense in sync with live data from the hook
   const currentModalExpense = paymentModalExpense
     ? expenses.find((e) => e.id === paymentModalExpense.id) ?? paymentModalExpense
     : null;
 
-  /** Weekly allocation for a commitment in the current/selected week */
   const getWeeklyAllocation = (expense: ExpenseWithRecord): number | undefined => {
     if (currentWeekIdx < 0) return undefined;
     const effectiveAmount = expense.is_variable_amount
@@ -96,6 +148,12 @@ export default function ExpensesScreen() {
     if (tab === 'business') return colors.business;
     if (tab === 'cards') return colors.charged;
     return colors.primary;
+  };
+
+  const bucketLabel = (bucket: BudgetBucket) => {
+    if (bucket === 'needs') return t('commitments.bucketNeeds');
+    if (bucket === 'wants') return t('commitments.bucketWants');
+    return t('commitments.bucketDebt');
   };
 
   return (
@@ -132,7 +190,7 @@ export default function ExpensesScreen() {
         </View>
       </View>
 
-      {/* Tabs: All / Personal / Business */}
+      {/* Tabs: All / Personal / Business / Cards */}
       <View style={styles.tabs}>
         {tabs.map((tab) => {
           const active = activeTab === tab.key;
@@ -161,20 +219,52 @@ export default function ExpensesScreen() {
         })}
       </View>
 
-      {/* List */}
+      {/* Tab-level total */}
+      {!loading && filtered.length > 0 && (
+        <View style={styles.tabTotalRow}>
+          <Text style={styles.tabTotalLabel}>{t('commitments.tabTotalLabel')}</Text>
+          <Text style={styles.tabTotalAmount}>{formatCurrency(tabTotal)}</Text>
+        </View>
+      )}
+
+      {/* Sectioned list */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : (
-        <FlatList
-          data={filtered}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            sections.length === 0 && styles.listEmpty,
+          ]}
           showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={reload} tintColor={colors.primary} />
           }
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderLeft}>
+                <View style={[styles.bucketDot, { backgroundColor: BUCKET_COLORS[section.bucket] }]} />
+                <Ionicons
+                  name={BUCKET_ICON[section.bucket] as any}
+                  size={14}
+                  color={BUCKET_COLORS[section.bucket]}
+                />
+                <Text style={[styles.sectionHeaderLabel, { color: BUCKET_COLORS[section.bucket] }]}>
+                  {bucketLabel(section.bucket).toUpperCase()}
+                </Text>
+              </View>
+              {section.subtotal > 0 && (
+                <Text style={styles.sectionHeaderSubtotal}>
+                  {formatCurrency(section.subtotal)}
+                </Text>
+              )}
+            </View>
+          )}
           renderItem={({ item }) => (
             <ExpenseCard
               expense={item}
@@ -313,9 +403,60 @@ const makeStyles = (colors: any) => StyleSheet.create({
     color: colors.textInverse,
     fontWeight: typography.semibold,
   },
+  tabTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  tabTotalLabel: {
+    fontSize: typography.xs,
+    fontWeight: typography.semibold,
+    color: colors.textSecondary,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  tabTotalAmount: {
+    fontSize: typography.base,
+    fontWeight: typography.bold,
+    color: colors.textPrimary,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xs,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  bucketDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionHeaderLabel: {
+    fontSize: typography.xs,
+    fontWeight: typography.bold,
+    letterSpacing: 1.0,
+  },
+  sectionHeaderSubtotal: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textSecondary,
+  },
   list: {
     paddingHorizontal: spacing.base,
     paddingBottom: spacing.xxxl,
+  },
+  listEmpty: {
+    flexGrow: 1,
   },
   center: {
     flex: 1,

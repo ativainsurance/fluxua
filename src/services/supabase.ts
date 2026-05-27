@@ -90,6 +90,7 @@ export const createExpense = async (
       autopay_method: formData.is_autopay ? formData.autopay_method : null,
       autopay_last4: formData.is_autopay && formData.autopay_last4 ? formData.autopay_last4 : null,
       is_variable_amount: formData.is_variable_amount ?? false,
+      budget_bucket: formData.budget_bucket ?? 'needs',
     })
     .select()
     .single();
@@ -123,6 +124,7 @@ export const updateExpense = async (
     updates.autopay_last4 = formData.is_autopay && formData.autopay_last4 ? formData.autopay_last4 : null;
   }
   if (formData.is_variable_amount !== undefined) updates.is_variable_amount = formData.is_variable_amount;
+  if (formData.budget_bucket !== undefined) updates.budget_bucket = formData.budget_bucket;
 
   const { data, error } = await supabase
     .from('expenses')

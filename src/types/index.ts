@@ -4,6 +4,37 @@
 
 export type ExpenseType = 'personal' | 'business';
 
+/** The three fixed 50/30/20 budget buckets. Never user-editable as a set. */
+export type BudgetBucket = 'needs' | 'wants' | 'debt';
+
+/**
+ * Default bucket for each built-in category.
+ * Credit cards (is_variable_amount) always override to 'debt' regardless of category.
+ */
+export const CATEGORY_BUCKET_DEFAULT: Record<string, BudgetBucket> = {
+  housing:       'needs',
+  utilities:     'needs',
+  transport:     'needs',
+  food:          'needs',
+  health:        'needs',
+  insurance:     'needs',
+  education:     'needs',
+  subscriptions: 'wants',
+  entertainment: 'wants',
+  savings:       'debt',
+  business:      'needs',
+  other:         'needs',
+};
+
+/** Smart default bucket for a new or edited commitment. */
+export const defaultBudgetBucket = (
+  category: string,
+  isVariableAmount: boolean
+): BudgetBucket => {
+  if (isVariableAmount) return 'debt';
+  return CATEGORY_BUCKET_DEFAULT[category] ?? 'needs';
+};
+
 export type RecurrenceType = 'monthly' | 'weekly' | 'quarterly' | 'semiannual' | 'yearly' | 'one-time';
 
 export const RECURRENCE_LABELS: Record<RecurrenceType, string> = {
@@ -87,6 +118,8 @@ export interface Expense {
   autopay_last4?: string;
   /** True when this expense's amount changes each cycle (e.g. credit card statement balance) */
   is_variable_amount: boolean;
+  /** Which 50/30/20 bucket this commitment belongs to */
+  budget_bucket: BudgetBucket;
   created_at: string;
   updated_at: string;
 }
@@ -193,6 +226,8 @@ export interface ExpenseFormData {
   autopay_last4: string;
   /** True when this expense's amount changes each cycle (e.g. credit card statement balance) */
   is_variable_amount: boolean;
+  /** Which 50/30/20 bucket this commitment belongs to */
+  budget_bucket: BudgetBucket;
 }
 
 // ─────────────────────────────────────────────

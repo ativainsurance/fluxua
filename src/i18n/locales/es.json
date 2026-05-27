@@ -138,7 +138,11 @@
     "statementBalance": "Saldo del estado de cuenta",
     "needsBalance": "Saldo pendiente",
     "enterBalance": "Ingresar saldo",
-    "balanceEntered": "Saldo registrado"
+    "balanceEntered": "Saldo registrado",
+    "bucketNeeds": "Necesidades",
+    "bucketWants": "Deseos",
+    "bucketDebt": "Deuda y ahorro",
+    "tabTotalLabel": "Total mensual"
   },
   "status": {
     "completed": "Completado",
@@ -289,7 +293,12 @@
     "variableAmount": "Monto variable (tarjeta de crédito)",
     "variableAmountHint": "El saldo varía cada mes. Ingresa el saldo real en la pestaña Flujo cuando cierre tu estado de cuenta.",
     "fallbackAmount": "MONTO PREDETERMINADO / DE RESPALDO",
-    "variableAmountFieldHint": "Se usa para planificar el flujo hasta que se ingrese el saldo real cada ciclo."
+    "variableAmountFieldHint": "Se usa para planificar el flujo hasta que se ingrese el saldo real cada ciclo.",
+    "budgetBucket": "CATEGORÍA 50/30/20",
+    "budgetBucketHint": "¿A qué grupo pertenece? Se asigna automáticamente por categoría — siempre editable.",
+    "bucket_needs": "Necesidades",
+    "bucket_wants": "Deseos",
+    "bucket_debt": "Deuda"
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

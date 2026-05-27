@@ -23,6 +23,7 @@ import {
   MonthlySummary,
   ExpenseFormData,
   CardPayment,
+  BudgetBucket,
 } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -291,8 +292,8 @@ export const useExpenses = (month: number, year: number) => {
     }
   }, []);
 
-  /** Compute monthly summary — card settlement based on payment totals */
-  const summary: MonthlySummary = expensesWithRecords.reduce(
+  /** Compute monthly summary and bucket totals — card settlement based on payment totals */
+  const { summary, bucketTotals } = expensesWithRecords.reduce(
     (acc, expense) => {
       const isWaived = expense.record?.is_waived ?? false;
       const plannedAmount = expense.is_variable_amount
@@ -314,37 +315,45 @@ export const useExpenses = (month: number, year: number) => {
         effectiveAmount = baseAmount + lateFee;
       }
 
-      acc.total += plannedAmount;
-      acc.expenseCount++;
+      acc.summary.total += plannedAmount;
+      acc.summary.expenseCount++;
       if (isSettled) {
-        acc.paidCount++;
-        if (!isWaived) acc.totalPaid += effectiveAmount;
+        acc.summary.paidCount++;
+        if (!isWaived) acc.summary.totalPaid += effectiveAmount;
       } else {
         if (expense.is_variable_amount) {
           const paymentTotal = (expense.cardPayments ?? []).reduce((s, p) => s + p.amount, 0);
-          acc.totalUnpaid += Math.max(0, plannedAmount - paymentTotal);
+          acc.summary.totalUnpaid += Math.max(0, plannedAmount - paymentTotal);
         } else {
-          acc.totalUnpaid += plannedAmount;
+          acc.summary.totalUnpaid += plannedAmount;
         }
       }
-      if (expense.type === 'personal') acc.personalTotal += plannedAmount;
-      if (expense.type === 'business') acc.businessTotal += plannedAmount;
+      if (expense.type === 'personal') acc.summary.personalTotal += plannedAmount;
+      if (expense.type === 'business') acc.summary.businessTotal += plannedAmount;
+
+      const bucket = expense.budget_bucket ?? 'needs';
+      acc.bucketTotals[bucket as BudgetBucket] += plannedAmount;
+
       return acc;
     },
     {
-      total: 0,
-      totalPaid: 0,
-      totalUnpaid: 0,
-      personalTotal: 0,
-      businessTotal: 0,
-      expenseCount: 0,
-      paidCount: 0,
-    } as MonthlySummary
+      summary: {
+        total: 0,
+        totalPaid: 0,
+        totalUnpaid: 0,
+        personalTotal: 0,
+        businessTotal: 0,
+        expenseCount: 0,
+        paidCount: 0,
+      } as MonthlySummary,
+      bucketTotals: { needs: 0, wants: 0, debt: 0 } as Record<BudgetBucket, number>,
+    }
   );
 
   return {
     expenses: expensesWithRecords,
     summary,
+    bucketTotals,
     loading,
     error,
     reload: load,
