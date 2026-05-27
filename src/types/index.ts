@@ -196,6 +196,48 @@ export interface ExpenseFormData {
 }
 
 // ─────────────────────────────────────────────
+// Budget / Financial Profile Types
+// ─────────────────────────────────────────────
+
+/**
+ * FinancialProfile — one row per user, stores manual inputs for the 50/30/20 snapshot.
+ * cc_debt_override: null = auto-derive from active card statements.
+ * household_id: reserved for Phase 3 shared household budgets.
+ */
+export interface FinancialProfile {
+  id: string;
+  user_id: string;
+  household_id?: string;
+  annual_after_tax_income: number | null;
+  total_assets: number | null;
+  total_other_loans_balance: number | null;
+  cc_debt_override: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * BudgetSnapshot — all computed 50/30/20 outputs. Never stored, always derived.
+ */
+export interface BudgetSnapshot {
+  monthly: number;
+  needs: number;
+  wants: number;
+  savings: number;
+  emergencyTarget: number;
+  /** null when savings === 0 */
+  monthsToFundEmergency: number | null;
+  /** null when savings === 0 or no CC debt */
+  monthsToPayoffCC: number | null;
+  /** null when savings === 0 or no other loans */
+  yearsToPayoffLoans: number | null;
+  retirementMonthly: number;
+  effectiveCCDebt: number;
+  liabilities: number;
+  netWorth: number;
+}
+
+// ─────────────────────────────────────────────
 // Auth Types
 // ─────────────────────────────────────────────
 

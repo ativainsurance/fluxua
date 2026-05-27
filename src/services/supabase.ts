@@ -40,6 +40,7 @@ import {
   ExpenseRecord,
   ExpenseFormData,
   CardPayment,
+  FinancialProfile,
 } from '../types';
 
 /** Fetch all expenses for the current user */
@@ -377,6 +378,81 @@ export const updateActualAmount = async (
     .select()
     .single();
 
+  if (error) throw error;
+  return data;
+};
+
+// ─────────────────────────────────────────────
+// Financial Profile Helpers
+// ─────────────────────────────────────────────
+
+/**
+ * Compute the auto-derived outstanding credit-card debt for the current month.
+ * Outstanding = sum over each variable expense of max(0, statement_balance - payments).
+ * Returns 0 if no statements found.
+ */
+export const fetchAutoCCDebt = async (
+  userId: string,
+  month: number,
+  year: number
+): Promise<number> => {
+  const { data: expenses } = await supabase
+    .from('expenses')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('is_variable_amount', true);
+
+  if (!expenses?.length) return 0;
+
+  const { data: records } = await supabase
+    .from('expense_records')
+    .select('id, statement_balance')
+    .eq('user_id', userId)
+    .eq('month', month)
+    .eq('year', year)
+    .in('expense_id', expenses.map((e) => e.id))
+    .not('statement_balance', 'is', null)
+    .gt('statement_balance', 0);
+
+  if (!records?.length) return 0;
+
+  const { data: payments } = await supabase
+    .from('card_payments')
+    .select('statement_id, amount')
+    .in('statement_id', records.map((r) => r.id));
+
+  return records.reduce((total, record) => {
+    const paid = (payments ?? [])
+      .filter((p) => p.statement_id === record.id)
+      .reduce((s, p) => s + p.amount, 0);
+    return total + Math.max(0, (record.statement_balance ?? 0) - paid);
+  }, 0);
+};
+
+/** Fetch the financial profile for the current user (null if not yet created) */
+export const fetchFinancialProfile = async (userId: string): Promise<FinancialProfile | null> => {
+  const { data, error } = await supabase
+    .from('financial_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+/** Create or update the financial profile for the current user */
+export const upsertFinancialProfile = async (
+  userId: string,
+  updates: Partial<Omit<FinancialProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+): Promise<FinancialProfile> => {
+  const { data, error } = await supabase
+    .from('financial_profiles')
+    .upsert(
+      { ...updates, user_id: userId, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    )
+    .select()
+    .single();
   if (error) throw error;
   return data;
 };

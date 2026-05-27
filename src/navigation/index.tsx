@@ -20,6 +20,7 @@ import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import FlowScreen from '../screens/FlowScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import BudgetScreen from '../screens/BudgetScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 
@@ -110,6 +111,7 @@ const MainNavigator = () => {
             Flow: { active: 'pulse', inactive: 'pulse-outline' },
             Commitments: { active: 'receipt', inactive: 'receipt-outline' },
             Overview: { active: 'grid', inactive: 'grid-outline' },
+            Budget: { active: 'pie-chart', inactive: 'pie-chart-outline' },
             Settings: { active: 'settings', inactive: 'settings-outline' },
           };
           const icon = icons[route.name];
@@ -121,6 +123,7 @@ const MainNavigator = () => {
       <MainTab.Screen name="Flow" component={FlowScreen} options={{ tabBarLabel: t('nav.flow') }} />
       <MainTab.Screen name="Commitments" component={ExpensesScreen} options={{ tabBarLabel: t('nav.commitments') }} />
       <MainTab.Screen name="Overview" component={DashboardScreen} options={{ tabBarLabel: t('nav.overview') }} />
+      <MainTab.Screen name="Budget" component={BudgetScreen} options={{ tabBarLabel: t('nav.budget') }} />
       <MainTab.Screen name="Settings" component={SettingsNavigator} options={{ tabBarLabel: t('nav.settings') }} />
     </MainTab.Navigator>
   );

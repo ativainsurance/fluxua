@@ -14,6 +14,7 @@ export type MainTabParamList = {
   Flow: undefined;
   Commitments: undefined;
   Overview: undefined;
+  Budget: undefined;
   Settings: undefined;
 };
 
