@@ -306,7 +306,10 @@
     "budgetBucketHint": "A qual grupo este compromisso pertence? Definido automaticamente pela categoria — sempre editável.",
     "bucket_needs": "Necessidades",
     "bucket_wants": "Desejos",
-    "bucket_debt": "Dívida"
+    "bucket_debt": "Dívida",
+    "assignTo": "ATRIBUIR A",
+    "assignAll": "Todos",
+    "assignYou": "Eu"
   },
   "dateInput": {
     "placeholder": "MM/DD/AAAA",
@@ -485,10 +488,56 @@
     "saving": "Salvando…"
   },
   "notifications": {
+    "title": "Notificações",
     "activeCount_one": "{{count}} notificação ativa",
     "activeCount_other": "{{count}} notificações ativas",
     "stayInformed": "Fique informado sobre seus compromissos",
-    "permissionNote": "A entrega de notificações depende das configurações do seu dispositivo. Certifique-se de que o Fluxua tem permissão para enviar notificações."
+    "permissionNote": "A entrega de notificações depende das configurações do seu dispositivo. Certifique-se de que o Fluxua tem permissão para enviar notificações.",
+    "sectionPush": "Notificações push",
+    "sectionEmail": "Resumo por e-mail",
+    "stmtReminderLabel": "Lembrete de saldo",
+    "stmtReminderDesc": "Me lembre 3 dias antes do vencimento de um cartão autopago para inserir o saldo",
+    "stmtReminderTitle": "Insira o saldo da fatura",
+    "stmtReminderBody": "{{name}} tem autopagamento em 3 dias — abra o Fluxua para inserir o saldo deste mês",
+    "pay3dayLabel": "Alerta: vence em 3 dias",
+    "pay3dayDesc": "Me avise quando uma conta manual vence em 3 dias",
+    "pay3dayTitle": "Conta vence em 3 dias",
+    "pay3dayBody": "{{name}} vence em 3 dias — não se esqueça de pagar",
+    "payTodayLabel": "Lembrete do dia do vencimento",
+    "payTodayDesc": "Lembrete matinal no dia em que uma conta manual vence e ainda não foi paga",
+    "payTodayTitle": "Conta vence hoje",
+    "payTodayBody": "{{name}} vence hoje — marque como pago depois de efetuar o pagamento",
+    "autopayWarnLabel": "Autopagamento sem saldo registrado",
+    "autopayWarnDesc": "Me avise na manhã em que um autopagamento for cobrado sem saldo registrado",
+    "autopayWarnTitle": "Autopagamento hoje — saldo ausente",
+    "autopayWarnBody": "{{name}} será autopago hoje, mas nenhum saldo foi registrado",
+    "emailDigestLabel": "Resumo semanal por e-mail",
+    "emailDigestDesc": "Receba um resumo semanal de contas próximas e saldos pendentes",
+    "digestDay": "Enviar no",
+    "digestTime": "Enviar às",
+    "days": {
+      "sun": "Dom",
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb"
+    },
+    "hour_9": "9h",
+    "hour_12": "Meio-dia",
+    "hour_15": "15h",
+    "hour_18": "18h",
+    "hour_21": "21h",
+    "permModal": {
+      "title": "Fique à frente de cada conta",
+      "body": "O Fluxua pode enviar lembretes oportunos para que você nunca perca uma data de vencimento ou esqueça de inserir um saldo.",
+      "bullet_stmt": "Insira saldos antes do autopagamento",
+      "bullet_pay": "Pague contas manuais em dia",
+      "bullet_autopay": "Saiba quando o autopagamento é cobrado sem saldo registrado",
+      "allow": "Ativar notificações",
+      "skip": "Talvez depois"
+    }
   },
   "household": {
     "title": "Residência",

@@ -30,7 +30,15 @@
       "description": "Track your monthly commitments and stay ahead of every bill."
     },
     "plugins": [
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1a56db",
+          "sounds": []
+        }
+      ]
     ]
   }
 }

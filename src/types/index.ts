@@ -97,6 +97,8 @@ export type AutopayMethod = 'card' | 'ach';
 export interface Expense {
   id: string;
   user_id: string;
+  /** Household member who "owns" this commitment — null = all members notified */
+  holder_user_id?: string | null;
   name: string;
   amount: number;
   category: string;
@@ -232,6 +234,8 @@ export interface ExpenseFormData {
   budget_bucket: BudgetBucket;
   /** Optional emoji icon — empty string means none */
   emoji: string;
+  /** User ID of the household member responsible for this commitment (empty = all) */
+  holder_user_id: string;
 }
 
 // ─────────────────────────────────────────────
@@ -310,6 +314,25 @@ export interface CustomCategory {
   label: string;
   emoji?: string;
   created_at: string;
+}
+
+// ─────────────────────────────────────────────
+// Notification Types
+// ─────────────────────────────────────────────
+
+export interface NotificationPreferences {
+  user_id: string;
+  push_stmt_reminder: boolean;
+  push_pay_3day: boolean;
+  push_pay_today: boolean;
+  push_autopay_warn: boolean;
+  email_weekly_digest: boolean;
+  /** 0 = Sunday … 6 = Saturday */
+  email_digest_day: number;
+  /** 0–23 hour of day (local) */
+  email_digest_hour: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─────────────────────────────────────────────

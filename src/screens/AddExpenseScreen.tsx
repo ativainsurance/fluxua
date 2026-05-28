@@ -19,6 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useHousehold } from '../contexts/HouseholdContext';
 import { useExpenses } from '../hooks/useExpenses';
 import { useCustomCategories } from '../hooks/useCustomCategories';
 import { getCurrentMonthYear } from '../utils/dateUtils';
@@ -67,6 +69,7 @@ const defaultForm: ExpenseFormData = {
   is_variable_amount: false,
   budget_bucket: 'needs',
   emoji: '',
+  holder_user_id: '',
 };
 
 const BUCKET_COLORS: Record<string, string> = {
@@ -83,6 +86,8 @@ export default function AddExpenseScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { currencySymbol } = useSettings();
+  const { user } = useAuth();
+  const { members } = useHousehold();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const navigation = useNavigation<any>();
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
@@ -123,6 +128,7 @@ export default function AddExpenseScreen() {
         is_variable_amount: existingExpense.is_variable_amount ?? false,
         budget_bucket: existingExpense.budget_bucket ?? defaultBudgetBucket(existingExpense.category, existingExpense.is_variable_amount),
         emoji: existingExpense.emoji ?? '',
+        holder_user_id: existingExpense.holder_user_id ?? '',
       });
     }
   }, [existingExpense]);
@@ -658,6 +664,43 @@ export default function AddExpenseScreen() {
               </>
             )}
           </View>
+
+          {/* Assign to — only when household has 2+ members */}
+          {members.length > 1 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>{t('addExpense.assignTo')}</Text>
+              <View style={styles.typeRow}>
+                {[
+                  { id: '', label: t('addExpense.assignAll') },
+                  ...members.map(m => ({
+                    id: m.user_id,
+                    label: m.user_id === user?.id
+                      ? t('addExpense.assignYou')
+                      : (m.display_name ?? t('household.unknownMember')),
+                  })),
+                ].map(opt => (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.typeBtn,
+                      form.holder_user_id === opt.id && {
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary,
+                      },
+                    ]}
+                    onPress={() => set('holder_user_id', opt.id)}
+                  >
+                    <Text style={[
+                      styles.typeBtnText,
+                      form.holder_user_id === opt.id && { color: colors.textInverse },
+                    ]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Notes */}
           <View style={styles.section}>

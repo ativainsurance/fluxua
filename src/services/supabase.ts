@@ -44,6 +44,7 @@ import {
   Household,
   HouseholdMember,
   CustomCategory,
+  NotificationPreferences,
 } from '../types';
 
 // ─────────────────────────────────────────────
@@ -170,6 +171,7 @@ export const createExpense = async (
       is_variable_amount: formData.is_variable_amount ?? false,
       budget_bucket: formData.budget_bucket ?? 'needs',
       emoji: formData.emoji || null,
+      holder_user_id: formData.holder_user_id || null,
     })
     .select()
     .single();
@@ -205,6 +207,7 @@ export const updateExpense = async (
   if (formData.is_variable_amount !== undefined) updates.is_variable_amount = formData.is_variable_amount;
   if (formData.budget_bucket !== undefined) updates.budget_bucket = formData.budget_bucket;
   if (formData.emoji !== undefined) updates.emoji = formData.emoji || null;
+  if (formData.holder_user_id !== undefined) updates.holder_user_id = formData.holder_user_id || null;
 
   const { data, error } = await supabase
     .from('expenses')
@@ -591,4 +594,35 @@ export const removeCustomCategory = async (
     .eq('household_id', householdId)
     .eq('key', key);
   if (error) throw error;
+};
+
+// ─────────────────────────────────────────────
+// Notification Preferences Helpers
+// ─────────────────────────────────────────────
+
+/** Fetch notification preferences for the current user; returns null if none saved yet */
+export const fetchNotificationPrefs = async (
+  userId: string
+): Promise<NotificationPreferences | null> => {
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+/** Upsert notification preferences for the current user */
+export const upsertNotificationPrefs = async (
+  userId: string,
+  updates: Partial<Omit<NotificationPreferences, 'user_id' | 'created_at' | 'updated_at'>>
+): Promise<NotificationPreferences> => {
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .upsert({ user_id: userId, ...updates }, { onConflict: 'user_id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };

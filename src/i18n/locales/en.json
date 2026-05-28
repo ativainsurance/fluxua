@@ -306,7 +306,10 @@
     "budgetBucketHint": "Which 50/30/20 bucket does this belong to? Auto-set from category — always overrideable.",
     "bucket_needs": "Needs",
     "bucket_wants": "Wants",
-    "bucket_debt": "Debt"
+    "bucket_debt": "Debt",
+    "assignTo": "ASSIGN TO",
+    "assignAll": "All members",
+    "assignYou": "Me"
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",
@@ -485,10 +488,56 @@
     "saving": "Saving…"
   },
   "notifications": {
+    "title": "Notifications",
     "activeCount_one": "{{count}} notification active",
     "activeCount_other": "{{count}} notifications active",
     "stayInformed": "Stay informed about your commitments",
-    "permissionNote": "Notification delivery depends on your device settings. Ensure Fluxua has permission to send notifications."
+    "permissionNote": "Notification delivery depends on your device settings. Ensure Fluxua has permission to send notifications.",
+    "sectionPush": "Push Notifications",
+    "sectionEmail": "Email Digest",
+    "stmtReminderLabel": "Statement Balance Reminder",
+    "stmtReminderDesc": "Remind me 3 days before an autopay card is due to enter the statement balance",
+    "stmtReminderTitle": "Enter your statement balance",
+    "stmtReminderBody": "{{name}} autopays in 3 days — open Fluxua to enter this month's balance",
+    "pay3dayLabel": "Due in 3 Days Alert",
+    "pay3dayDesc": "Alert me when a manual bill is 3 days away from its due date",
+    "pay3dayTitle": "Bill due in 3 days",
+    "pay3dayBody": "{{name}} is due in 3 days — don't forget to pay it",
+    "payTodayLabel": "Due Today Reminder",
+    "payTodayDesc": "Morning reminder on the day a manual bill is due and still unpaid",
+    "payTodayTitle": "Bill due today",
+    "payTodayBody": "{{name}} is due today — mark it paid once you've sent the payment",
+    "autopayWarnLabel": "Autopay Missing Balance",
+    "autopayWarnDesc": "Alert me on the morning an autopay card fires without a recorded balance",
+    "autopayWarnTitle": "Autopay fires today — balance missing",
+    "autopayWarnBody": "{{name}} will autopay today but no statement balance is recorded",
+    "emailDigestLabel": "Weekly Email Digest",
+    "emailDigestDesc": "Receive a weekly summary of upcoming bills and missing balances by email",
+    "digestDay": "Send on",
+    "digestTime": "Send at",
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "hour_9": "9 AM",
+    "hour_12": "Noon",
+    "hour_15": "3 PM",
+    "hour_18": "6 PM",
+    "hour_21": "9 PM",
+    "permModal": {
+      "title": "Stay ahead of every bill",
+      "body": "Fluxua can send you timely reminders so you never miss a due date or forget to enter a statement balance.",
+      "bullet_stmt": "Enter statement balances before autopay fires",
+      "bullet_pay": "Pay manual bills on time",
+      "bullet_autopay": "Know when autopay charges without a recorded balance",
+      "allow": "Enable notifications",
+      "skip": "Maybe later"
+    }
   },
   "household": {
     "title": "Household",
