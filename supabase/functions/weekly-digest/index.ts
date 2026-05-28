@@ -1,6 +1,6 @@
-// Fluxua Weekly Email Digest — Supabase Edge Function
-// Triggered hourly by pg_cron. Sends a digest to users who opted in
-// and whose digest_day / digest_hour match the current UTC time.
+// Fluxua Bi-weekly Email Digest — Supabase Edge Function
+// Triggered hourly by pg_cron. Sends a cycle digest on the 8th and 22nd of each month
+// to users who opted in and whose digest_hour matches the current UTC hour.
 //
 // Required env vars (set in Supabase dashboard → Edge Functions → Secrets):
 //   RESEND_API_KEY   — Resend API key (resend.com)
@@ -143,15 +143,19 @@ function buildHtml(opts: {
 Deno.serve(async (_req) => {
   try {
     const now = new Date();
-    const currentDay = now.getUTCDay();   // 0=Sun … 6=Sat
+    const currentDayOfMonth = now.getUTCDate();  // 1–31
     const currentHour = now.getUTCHours();
+
+    // Only fire on the 8th and 22nd of the month
+    if (currentDayOfMonth !== 8 && currentDayOfMonth !== 22) {
+      return new Response(JSON.stringify({ sent: 0, reason: 'not a digest day' }), { status: 200 });
+    }
 
     // Fetch users whose digest is due this hour
     const { data: prefs, error: prefsError } = await supabase
       .from('notification_preferences')
-      .select('user_id, email_digest_day, email_digest_hour')
+      .select('user_id, email_digest_hour')
       .eq('email_weekly_digest', true)
-      .eq('email_digest_day', currentDay)
       .eq('email_digest_hour', currentHour);
 
     if (prefsError) throw prefsError;
@@ -236,6 +240,7 @@ Deno.serve(async (_req) => {
 
       const html = buildHtml({ userName, cashNeeded, missingBalances, nonAutopay, totalDue, totalPaid });
 
+      const cycleLabel = currentDayOfMonth === 8 ? 'Cycle 1 (10–22)' : 'Cycle 2 (23–9)';
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -245,7 +250,7 @@ Deno.serve(async (_req) => {
         body: JSON.stringify({
           from: FROM_EMAIL,
           to: email,
-          subject: `Your Fluxua weekly digest — ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`,
+          subject: `Fluxua transfer digest — ${cycleLabel} · ${now.toLocaleDateString('en-US', { month: 'long' })}`,
           html,
         }),
       });

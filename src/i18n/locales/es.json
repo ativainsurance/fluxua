@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Guardar",
+    "saving": "Guardando…",
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "remove": "Quitar",
@@ -22,10 +23,33 @@
   },
   "nav": {
     "flow": "Flujo",
+    "transfer": "Transferir",
     "commitments": "Compromisos",
     "overview": "Resumen",
     "budget": "Presupuesto",
     "settings": "Ajustes"
+  },
+  "transfer": {
+    "title": "Transferencia",
+    "cycleLabel": "Ciclo {{n}}",
+    "transferOnThe": "Transferir el día {{day}}",
+    "window": "Facturas {{range}}",
+    "transferNeeded": "Transferencia necesaria",
+    "covered": "Completamente cubierto",
+    "allCovered": "Todo cubierto",
+    "settled": "liquidado",
+    "income": "ingreso",
+    "mathTitle": "Desglose",
+    "mathCommitments": "Compromisos en la ventana",
+    "mathSettled": "Ya liquidado",
+    "mathTransfer": "Transferencia necesaria",
+    "dayShort": "día ",
+    "commitmentsTitle": "Compromisos en esta ventana",
+    "noCommitmentsInWindow": "No hay compromisos personales en esta ventana",
+    "monthTransfer": "Total a transferir este mes",
+    "totalPersonal": "Compromisos personales",
+    "footerNote": "Los compromisos empresariales se débitan automáticamente de la cuenta empresarial y no se incluyen en el cálculo.",
+    "incomeOffset": "{{amount}} compensado por ingresos"
   },
   "overview": {
     "title": "Resumen",
@@ -33,6 +57,7 @@
     "goodAfternoon": "Buenas tardes",
     "goodEvening": "Buenas noches",
     "totalFlow": "Flujo total",
+    "stillOwed": "Personal pendiente",
     "totalCovered": "Total cubierto",
     "remaining": "Restante",
     "dueSoon": "Vence pronto",
@@ -142,7 +167,8 @@
     "bucketNeeds": "Necesidades",
     "bucketWants": "Deseos",
     "bucketDebt": "Deuda y ahorro",
-    "tabTotalLabel": "Total mensual"
+    "tabTotalLabel": "Total mensual",
+    "remaining": "restante"
   },
   "status": {
     "completed": "Completado",
@@ -227,7 +253,9 @@
     "nameSectionLabel": "Nombre",
     "accountTypeSectionLabel": "Tipo de cuenta",
     "changesSaved": "Cambios guardados con éxito",
-    "saveChanges": "Guardar cambios"
+    "saveChanges": "Guardar cambios",
+    "recurringIncomeSection": "Ingresos",
+    "recurringIncome": "Ingresos recurrentes"
   },
   "language": {
     "title": "Idioma",
@@ -258,6 +286,7 @@
     "endDate": "FECHA DE FIN",
     "endDateHint": "Establece si este compromiso tiene una fecha de fin conocida — deja en blanco si es continuo.",
     "type": "TIPO",
+    "paidFrom": "PAGADO DESDE",
     "personal": "Personal",
     "business": "Negocio",
     "category": "CATEGORÍA",
@@ -524,6 +553,7 @@
       "fri": "Vie",
       "sat": "Sáb"
     },
+    "digestBiweeklyNote": "Enviado los días 8 y 22 de cada mes, antes de tu día de transferencia.",
     "hour_9": "9 AM",
     "hour_12": "Mediodía",
     "hour_15": "3 PM",
@@ -538,6 +568,24 @@
       "allow": "Activar notificaciones",
       "skip": "Quizás después"
     }
+  },
+  "recurringIncome": {
+    "title": "Ingresos recurrentes",
+    "subtitle": "Ingresos que llegan a tu cuenta personal cada mes",
+    "explainer": "Estos ingresos reducen cuánto necesitas transferir de la cuenta empresarial en cada ciclo. El sueldo en nómina el día 15 compensa el Ciclo 1.",
+    "nameLabel": "NOMBRE DEL INGRESO",
+    "namePlaceholder": "ej.: Nómina, Freelance, Dividendos",
+    "amountLabel": "MONTO MENSUAL",
+    "dayLabel": "DÍA DEL MES",
+    "activeLabel": "Activo",
+    "addIncome": "Agregar fuente de ingreso",
+    "emptyHint": "Aún no hay ingresos recurrentes. Agrega tu primera fuente arriba.",
+    "dayShort": "día {{day}} del mes",
+    "inactive": "inactivo",
+    "deleteTitle": "¿Eliminar ingreso?",
+    "deleteConfirm": "¿Eliminar \"{{name}}\" de tus fuentes de ingreso?",
+    "errorName": "Por favor, ingresa un nombre para este ingreso.",
+    "errorAmount": "Por favor, ingresa un monto válido mayor que cero."
   },
   "household": {
     "title": "Hogar",

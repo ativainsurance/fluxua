@@ -26,17 +26,17 @@ import RAnimated, {
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useExpenses } from '../hooks/useExpenses';
+import { useRecurringIncomes } from '../hooks/useRecurringIncomes';
+import { useTransferCycles, computeTransferCycles } from '../hooks/useTransferCycles';
 import {
   getCurrentMonthYear,
   useFormatCurrency,
   useFormatDate,
-  getWeeklyBreakdown,
-  getCurrentWeekIndex,
   getBillStatus,
 } from '../utils/dateUtils';
 import { typography, spacing, radius, shadows } from '../theme';
 import { MonthSelector } from '../components/MonthSelector';
-import { ExpenseWithRecord, getCategoryIcon } from '../types';
+import { ExpenseWithRecord, getCategoryIcon, TransferCycle } from '../types';
 import { useCategoryLabel } from '../utils/categories';
 import { useEnergyState } from '../utils/energyState';
 import { FlowBar } from '../components/ui/FlowBar';
@@ -543,8 +543,8 @@ const makeRowStyles = (colors: any) => StyleSheet.create({
 const HeroCard = ({
   greeting,
   userName,
-  total,
-  paid,
+  personalTotal,
+  personalPaid,
   paidCount,
   totalCount,
   month,
@@ -553,8 +553,10 @@ const HeroCard = ({
 }: {
   greeting: string;
   userName: string;
-  total: number;
-  paid: number;
+  /** Personal (non-business) commitments total */
+  personalTotal: number;
+  /** Personal paid amount */
+  personalPaid: number;
   paidCount: number;
   totalCount: number;
   month: number;
@@ -569,7 +571,8 @@ const HeroCard = ({
   const energyState = useEnergyState();
   const reduceMotion = useReducedMotion();
 
-  const pct = total > 0 ? paid / total : 0;
+  const pct = personalTotal > 0 ? personalPaid / personalTotal : 0;
+  const personalOwed = personalTotal - personalPaid;
   const energyResult = energyState({ ratio: pct });
 
   // Ambient gradient mesh — slow horizontal drift, frozen on reduce-motion
@@ -617,15 +620,20 @@ const HeroCard = ({
 
         {/* Amount */}
         <View style={heroStyles.amountBlock}>
-          <Text style={heroStyles.amountLabel}>{monthYear(new Date(year, month - 1, 1))} · {t('overview.totalFlow')}</Text>
-          <GlowText intensity="subtle" style={heroStyles.amount}>{formatCurrency(total)}</GlowText>
+          <Text style={heroStyles.amountLabel}>{monthYear(new Date(year, month - 1, 1))} · {t('overview.stillOwed')}</Text>
+          <GlowText
+            intensity={personalOwed > 0 ? 'subtle' : 'none'}
+            style={[heroStyles.amount, { color: personalOwed > 0 ? colors.textPrimary : colors.success }]}
+          >
+            {formatCurrency(personalOwed)}
+          </GlowText>
         </View>
 
         {/* Progress bar */}
         <View style={heroStyles.progressSection}>
           <FlowBar ratio={pct} state={energyResult.state} height={8} />
           <View style={heroStyles.progressLabels}>
-            <Text style={heroStyles.progressLabelLeft}>{formatCurrency(paid)} {t('overview.settled').toLowerCase()}</Text>
+            <Text style={heroStyles.progressLabelLeft}>{formatCurrency(personalPaid)} {t('overview.settled').toLowerCase()}</Text>
             <Text style={heroStyles.progressLabelRight}>{paidCount}/{totalCount}</Text>
           </View>
         </View>
@@ -633,13 +641,13 @@ const HeroCard = ({
         {/* Stats row with · separators */}
         <View style={heroStyles.statsRow}>
           <View style={heroStyles.stat}>
-            <Text style={[heroStyles.statValue, { color: colors.success }]}>{formatCurrency(paid)}</Text>
+            <Text style={[heroStyles.statValue, { color: colors.success }]}>{formatCurrency(personalPaid)}</Text>
             <Text style={heroStyles.statLabel}>{t('overview.settled')}</Text>
           </View>
           <Text style={heroStyles.statSep}>·</Text>
           <View style={heroStyles.stat}>
-            <Text style={[heroStyles.statValue, { color: total - paid > 0 ? colors.warning : colors.success }]}>
-              {formatCurrency(total - paid)}
+            <Text style={[heroStyles.statValue, { color: personalOwed > 0 ? colors.warning : colors.success }]}>
+              {formatCurrency(personalOwed)}
             </Text>
             <Text style={heroStyles.statLabel}>{t('overview.remainingUpper')}</Text>
           </View>
@@ -697,6 +705,42 @@ const makeHeroStyles = (colors: any) => StyleSheet.create({
   statValue: { fontSize: typography.base, fontWeight: typography.bold, color: colors.textPrimary, letterSpacing: -0.3 },
   statLabel: { fontSize: 9, color: colors.textTertiary, fontWeight: typography.semibold, letterSpacing: 0.8 },
 });
+
+// ─────────────────────────────────────────────
+// CycleMiniCards — compact cycle summary for Overview
+// ─────────────────────────────────────────────
+
+const CycleMiniCard = ({ cycle }: { cycle: TransferCycle }) => {
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const formatCurrency = useFormatCurrency();
+  const needed = cycle.manualTransfer > 0;
+
+  return (
+    <View style={{
+      flex: 1, backgroundColor: colors.surface, borderRadius: radius.xl,
+      padding: spacing.base, gap: spacing.xs, ...shadows.card, borderWidth: 1, borderColor: colors.border,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+        <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: needed ? colors.warning : colors.success }} />
+        <Text style={{ fontSize: 10, fontWeight: typography.bold, color: colors.textTertiary, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+          {t('transfer.cycleLabel', { n: cycle.cycleNumber })}
+        </Text>
+      </View>
+      <Text style={{ fontSize: typography.xs, color: colors.textSecondary }}>
+        {t('transfer.transferOnThe', { day: cycle.transferDay })}
+      </Text>
+      <Text style={{ fontSize: typography.lg, fontWeight: typography.bold, color: needed ? colors.warning : colors.success, letterSpacing: -0.5 }}>
+        {needed ? formatCurrency(cycle.manualTransfer) : t('transfer.allCovered')}
+      </Text>
+      {cycle.incomeTotal > 0 && (
+        <Text style={{ fontSize: 10, color: colors.textTertiary }}>
+          {t('transfer.incomeOffset', { amount: formatCurrency(cycle.incomeTotal) })}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 // ─────────────────────────────────────────────
 // SplitSection — personal / business bars
@@ -906,12 +950,40 @@ export default function DashboardScreen() {
   const [year, setYear] = useState(currentYear);
 
   const { expenses, summary, loading, reload } = useExpenses(month, year);
+  const { incomes } = useRecurringIncomes();
+  const { expenses: cycleExpenses, nextExpenses } =
+    useTransferCycles(month, year);
 
   const greetingHour = new Date().getHours();
   const greeting =
     greetingHour < 12 ? t('overview.goodMorning') :
     greetingHour < 18 ? t('overview.goodAfternoon') : t('overview.goodEvening');
   const userName = user?.email?.split('@')[0] ?? '';
+
+  // Personal (non-business) totals for the hero
+  const personalExpenses = useMemo(
+    () => expenses.filter((e) => e.type === 'personal'),
+    [expenses]
+  );
+  const personalTotal = useMemo(
+    () => personalExpenses.reduce((s, e) => {
+      if (e.record?.is_excluded || e.record?.is_waived) return s;
+      return s + (e.is_variable_amount ? (e.record?.statement_balance ?? e.amount) : e.amount);
+    }, 0),
+    [personalExpenses]
+  );
+  const personalPaid = useMemo(
+    () => personalExpenses
+      .filter((e) => e.record?.is_paid)
+      .reduce((s, e) => s + (e.record?.actual_amount ?? (e.is_variable_amount ? (e.record?.statement_balance ?? e.amount) : e.amount)), 0),
+    [personalExpenses]
+  );
+
+  // Cycle data for compact cards
+  const [cycle1, cycle2] = useMemo(() => {
+    if (cycleExpenses.length === 0 && nextExpenses.length === 0) return [null, null];
+    return computeTransferCycles(month, year, cycleExpenses, nextExpenses, incomes);
+  }, [cycleExpenses, nextExpenses, incomes, month, year]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -949,17 +1021,16 @@ export default function DashboardScreen() {
             <>
               <HeroCard
                 greeting={greeting} userName={userName}
-                total={summary.total} paid={summary.totalPaid}
+                personalTotal={personalTotal} personalPaid={personalPaid}
                 paidCount={summary.paidCount} totalCount={summary.expenseCount}
                 month={month} year={year} expenses={expenses}
               />
 
-              {(summary.personalTotal > 0 || summary.businessTotal > 0) && (
-                <SplitSection
-                  personalTotal={summary.personalTotal}
-                  businessTotal={summary.businessTotal}
-                  total={summary.total}
-                />
+              {(cycle1 || cycle2) && (
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  {cycle1 && <CycleMiniCard cycle={cycle1} />}
+                  {cycle2 && <CycleMiniCard cycle={cycle2} />}
+                </View>
               )}
 
               <UpcomingSection

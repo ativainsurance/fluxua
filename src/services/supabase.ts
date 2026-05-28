@@ -45,6 +45,8 @@ import {
   HouseholdMember,
   CustomCategory,
   NotificationPreferences,
+  RecurringIncome,
+  RecurringIncomeFormData,
 } from '../types';
 
 // ─────────────────────────────────────────────
@@ -625,4 +627,68 @@ export const upsertNotificationPrefs = async (
     .single();
   if (error) throw error;
   return data;
+};
+
+// ─────────────────────────────────────────────
+// Recurring Income Helpers
+// ─────────────────────────────────────────────
+
+/** Fetch all recurring incomes for a household */
+export const fetchRecurringIncomes = async (
+  householdId: string
+): Promise<RecurringIncome[]> => {
+  const { data, error } = await supabase
+    .from('recurring_incomes')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('day_of_month', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+};
+
+/** Create a new recurring income for a household */
+export const createRecurringIncome = async (
+  householdId: string,
+  formData: RecurringIncomeFormData
+): Promise<RecurringIncome> => {
+  const { data, error } = await supabase
+    .from('recurring_incomes')
+    .insert({
+      household_id: householdId,
+      name: formData.name,
+      amount: parseFloat(formData.amount),
+      day_of_month: formData.day_of_month,
+      is_active: formData.is_active,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Update an existing recurring income */
+export const updateRecurringIncome = async (
+  id: string,
+  updates: Partial<RecurringIncomeFormData>
+): Promise<RecurringIncome> => {
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (updates.name !== undefined) payload.name = updates.name;
+  if (updates.amount !== undefined) payload.amount = parseFloat(updates.amount);
+  if (updates.day_of_month !== undefined) payload.day_of_month = updates.day_of_month;
+  if (updates.is_active !== undefined) payload.is_active = updates.is_active;
+
+  const { data, error } = await supabase
+    .from('recurring_incomes')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+/** Delete a recurring income */
+export const deleteRecurringIncome = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('recurring_incomes').delete().eq('id', id);
+  if (error) throw error;
 };

@@ -270,14 +270,13 @@ export default function NotificationsScreen() {
           {prefs.email_weekly_digest && (
             <>
               <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: spacing.base + 40 + spacing.md }} />
-              <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.8, paddingHorizontal: spacing.base, paddingTop: spacing.md }}>
-                {t('notifications.digestDay')}
-              </Text>
-              <DigestDayPicker value={prefs.email_digest_day} onChange={d => set('email_digest_day', d)} />
               <Text style={{ fontSize: typography.xs, fontWeight: typography.semibold, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.8, paddingHorizontal: spacing.base }}>
                 {t('notifications.digestTime')}
               </Text>
               <DigestHourPicker value={prefs.email_digest_hour} onChange={h => set('email_digest_hour', h)} />
+              <Text style={{ fontSize: typography.xs, color: colors.textTertiary, paddingHorizontal: spacing.base, paddingBottom: spacing.sm, lineHeight: 16 }}>
+                {t('notifications.digestBiweeklyNote')}
+              </Text>
             </>
           )}
         </Section>

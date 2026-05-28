@@ -338,9 +338,9 @@ export default function AddExpenseScreen() {
             />
           </View>
 
-          {/* Type */}
+          {/* Paid From (formerly "Type") */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('addExpense.type')}</Text>
+            <Text style={styles.sectionLabel}>{t('addExpense.paidFrom')}</Text>
             <View style={styles.typeRow}>
               {(['personal', 'business'] as ExpenseType[]).map((typeKey) => (
                 <TouchableOpacity

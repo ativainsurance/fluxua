@@ -11,7 +11,7 @@ export type AuthStackParamList = {
 };
 
 export type MainTabParamList = {
-  Flow: undefined;
+  Transfer: undefined;
   Commitments: undefined;
   Overview: undefined;
   Budget: undefined;
@@ -46,4 +46,5 @@ export type SettingsStackParamList = {
   HelpFaq: undefined;
   PrivacyPolicy: undefined;
   Household: undefined;
+  RecurringIncome: undefined;
 };

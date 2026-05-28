@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Save",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "delete": "Delete",
     "remove": "Remove",
@@ -22,10 +23,33 @@
   },
   "nav": {
     "flow": "Flow",
+    "transfer": "Transfer",
     "commitments": "Commitments",
     "overview": "Overview",
     "budget": "Budget",
     "settings": "Settings"
+  },
+  "transfer": {
+    "title": "Transfer",
+    "cycleLabel": "Cycle {{n}}",
+    "transferOnThe": "Transfer on the {{day}}th",
+    "window": "Bills {{range}}",
+    "transferNeeded": "Transfer needed",
+    "covered": "Fully covered",
+    "allCovered": "All covered",
+    "settled": "settled",
+    "income": "income",
+    "mathTitle": "Math breakdown",
+    "mathCommitments": "Commitments in window",
+    "mathSettled": "Already settled",
+    "mathTransfer": "Transfer needed",
+    "dayShort": "day ",
+    "commitmentsTitle": "Commitments in this window",
+    "noCommitmentsInWindow": "No personal commitments in this window",
+    "monthTransfer": "Total transfer this month",
+    "totalPersonal": "Personal commitments",
+    "footerNote": "Business commitments are auto-debited from the business account and are not included in transfer math.",
+    "incomeOffset": "{{amount}} offset by income"
   },
   "overview": {
     "title": "Overview",
@@ -33,6 +57,7 @@
     "goodAfternoon": "Good afternoon",
     "goodEvening": "Good evening",
     "totalFlow": "Total Flow",
+    "stillOwed": "Personal still owed",
     "totalCovered": "Total Covered",
     "remaining": "Remaining",
     "dueSoon": "Due Soon",
@@ -142,7 +167,8 @@
     "bucketNeeds": "Needs",
     "bucketWants": "Wants",
     "bucketDebt": "Debt & Savings",
-    "tabTotalLabel": "Monthly total"
+    "tabTotalLabel": "Monthly total",
+    "remaining": "remaining"
   },
   "status": {
     "completed": "Completed",
@@ -227,7 +253,9 @@
     "nameSectionLabel": "Name",
     "accountTypeSectionLabel": "Account Type",
     "changesSaved": "Changes saved successfully",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "recurringIncomeSection": "Income",
+    "recurringIncome": "Recurring Income"
   },
   "language": {
     "title": "Language",
@@ -258,6 +286,7 @@
     "endDate": "END DATE",
     "endDateHint": "Set if this commitment has a known end date — leave blank for ongoing.",
     "type": "TYPE",
+    "paidFrom": "PAID FROM",
     "personal": "Personal",
     "business": "Business",
     "category": "CATEGORY",
@@ -524,6 +553,7 @@
       "fri": "Fri",
       "sat": "Sat"
     },
+    "digestBiweeklyNote": "Sent on the 8th and 22nd of each month before your transfer day.",
     "hour_9": "9 AM",
     "hour_12": "Noon",
     "hour_15": "3 PM",
@@ -538,6 +568,24 @@
       "allow": "Enable notifications",
       "skip": "Maybe later"
     }
+  },
+  "recurringIncome": {
+    "title": "Recurring Income",
+    "subtitle": "Income that arrives in your personal account each month",
+    "explainer": "These incomes reduce how much you need to transfer from your business account in each cycle. W-2 payroll on the 15th offsets Cycle 1.",
+    "nameLabel": "INCOME NAME",
+    "namePlaceholder": "e.g., W-2 Payroll, Freelance, Dividend",
+    "amountLabel": "MONTHLY AMOUNT",
+    "dayLabel": "DAY OF MONTH",
+    "activeLabel": "Active",
+    "addIncome": "Add income source",
+    "emptyHint": "No recurring income yet. Add your first source above.",
+    "dayShort": "day {{day}} of month",
+    "inactive": "inactive",
+    "deleteTitle": "Delete income?",
+    "deleteConfirm": "Remove \"{{name}}\" from your income sources?",
+    "errorName": "Please enter a name for this income.",
+    "errorAmount": "Please enter a valid amount greater than 0."
   },
   "household": {
     "title": "Household",

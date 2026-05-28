@@ -30,6 +30,7 @@ import { MonthSelector } from '../components/MonthSelector';
 import { ExpenseWithRecord, ExpenseType, BudgetBucket } from '../types';
 
 type TabType = 'all' | ExpenseType | 'cards';
+type CardSubFilter = 'all' | ExpenseType;
 
 interface PendingPaid {
   expense: ExpenseWithRecord;
@@ -62,6 +63,7 @@ export default function ExpensesScreen() {
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [cardSubFilter, setCardSubFilter] = useState<CardSubFilter>('all');
   const [pendingPaid, setPendingPaid] = useState<PendingPaid | null>(null);
   const [paymentModalExpense, setPaymentModalExpense] = useState<ExpenseWithRecord | null>(null);
 
@@ -71,9 +73,14 @@ export default function ExpensesScreen() {
   const isCurrentMonth = month === currentMonth && year === currentYear;
   const currentWeekIdx = getCurrentWeekIndex(month, year);
 
-  // Filter by active tab
+  // Filter by active tab — All/Personal/Business exclude cards; Cards has own sub-filter
   const filtered = expenses.filter((e) => {
-    if (activeTab === 'cards') return e.is_variable_amount;
+    if (activeTab === 'cards') {
+      if (!e.is_variable_amount) return false;
+      if (cardSubFilter === 'all') return true;
+      return e.type === cardSubFilter;
+    }
+    if (e.is_variable_amount) return false; // cards excluded from non-card tabs
     if (activeTab === 'all') return true;
     return e.type === activeTab;
   });
@@ -102,16 +109,24 @@ export default function ExpensesScreen() {
     });
 
     return BUCKETS
-      .map((bucket) => ({
-        bucket,
-        data: byBucket[bucket],
-        subtotal: byBucket[bucket].reduce((sum, e) => {
+      .map((bucket) => {
+        const items = byBucket[bucket];
+        const subtotal = items.reduce((sum, e) => {
           const planned = e.is_variable_amount
             ? (e.record?.statement_balance ?? e.amount)
             : e.amount;
           return sum + planned;
-        }, 0),
-      }))
+        }, 0);
+        const settled = items
+          .filter((e) => e.record?.is_paid || e.record?.is_waived)
+          .reduce((sum, e) => {
+            const planned = e.is_variable_amount
+              ? (e.record?.statement_balance ?? e.amount)
+              : e.amount;
+            return sum + planned;
+          }, 0);
+        return { bucket, data: items, subtotal, remaining: subtotal - settled };
+      })
       .filter((s) => s.data.length > 0);
   }, [filtered]);
 
@@ -219,6 +234,31 @@ export default function ExpensesScreen() {
         })}
       </View>
 
+      {/* Cards sub-filter: Personal / All / Business */}
+      {activeTab === 'cards' && (
+        <View style={[styles.tabs, { marginTop: -spacing.xs }]}>
+          {(['all', 'personal', 'business'] as CardSubFilter[]).map((sf) => {
+            const active = cardSubFilter === sf;
+            const sfColor = sf === 'personal' ? colors.personal : sf === 'business' ? colors.business : colors.charged;
+            return (
+              <TouchableOpacity
+                key={sf}
+                style={[
+                  styles.tab,
+                  { flex: undefined, paddingHorizontal: spacing.base },
+                  active && { backgroundColor: sfColor, borderColor: sfColor },
+                ]}
+                onPress={() => setCardSubFilter(sf)}
+              >
+                <Text style={[styles.tabText, active ? styles.tabTextActive : { color: colors.textSecondary }]}>
+                  {sf === 'all' ? t('commitments.all') : sf === 'personal' ? t('commitments.personal') : t('commitments.business')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
       {/* Tab-level total */}
       {!loading && filtered.length > 0 && (
         <View style={styles.tabTotalRow}>
@@ -259,9 +299,19 @@ export default function ExpensesScreen() {
                 </Text>
               </View>
               {section.subtotal > 0 && (
-                <Text style={styles.sectionHeaderSubtotal}>
-                  {formatCurrency(section.subtotal)}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                  {section.remaining > 0 && section.remaining < section.subtotal && (
+                    <Text style={[styles.sectionHeaderSubtotal, { color: colors.warning, fontSize: typography.xs }]}>
+                      {formatCurrency(section.remaining)} {t('commitments.remaining')}
+                    </Text>
+                  )}
+                  {section.remaining === 0 && section.subtotal > 0 && (
+                    <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                  )}
+                  <Text style={styles.sectionHeaderSubtotal}>
+                    {formatCurrency(section.subtotal)}
+                  </Text>
+                </View>
               )}
             </View>
           )}
@@ -285,9 +335,9 @@ export default function ExpensesScreen() {
                   ? t('commitments.noCommitmentsTitle')
                   : activeTab === 'personal'
                     ? t('commitments.noPersonalCommitments')
-                    : activeTab === 'cards'
-                      ? t('commitments.noCardsCommitments')
-                      : t('commitments.noBusinessCommitments')}
+                    : activeTab === 'business'
+                      ? t('commitments.noBusinessCommitments')
+                      : t('commitments.noCardsCommitments')}
               </Text>
               <TouchableOpacity
                 style={styles.emptyBtn}

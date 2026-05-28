@@ -317,6 +317,69 @@ export interface CustomCategory {
 }
 
 // ─────────────────────────────────────────────
+// Recurring Income Types
+// ─────────────────────────────────────────────
+
+/**
+ * RecurringIncome — a periodic income that arrives in the personal bank account
+ * on a fixed day each month (e.g. W-2 payroll on the 15th).
+ */
+export interface RecurringIncome {
+  id: string;
+  household_id: string;
+  name: string;
+  amount: number;
+  day_of_month: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurringIncomeFormData {
+  name: string;
+  amount: string;
+  day_of_month: number;
+  is_active: boolean;
+}
+
+/** One commitment inside a transfer cycle (personal only, non-card). */
+export interface CycleCommitment {
+  expense: ExpenseWithRecord;
+  /** Effective amount (statement_balance ?? amount) */
+  amount: number;
+  isPaid: boolean;
+  isWaived: boolean;
+}
+
+/** One of the two bi-weekly transfer cycles per month. */
+export interface TransferCycle {
+  /** 1 = transfer on 9th, covers 10–22; 2 = transfer on 23rd, covers 23–9 next */
+  cycleNumber: 1 | 2;
+  /** Day the manual transfer should be made */
+  transferDay: number;
+  /** Human-readable window label */
+  windowLabel: string;
+  /** Calendar month this cycle is anchored to */
+  month: number;
+  year: number;
+  /** Personal commitments (non-card) whose due_day falls in this window */
+  commitments: CycleCommitment[];
+  /** Recurring incomes whose day_of_month falls in this window */
+  incomeInWindow: { name: string; amount: number; day: number }[];
+  /** Sum of all personal commitments in window (paid + unpaid) */
+  totalNeeded: number;
+  /** Sum of already-paid / waived personal commitments */
+  totalSettled: number;
+  /** Sum of recurring income amounts in this window */
+  incomeTotal: number;
+  /**
+   * Cash that must come from the business account:
+   * max(0, totalNeeded - totalSettled - incomeTotal)
+   */
+  manualTransfer: number;
+}
+
+// ─────────────────────────────────────────────
 // Notification Types
 // ─────────────────────────────────────────────
 

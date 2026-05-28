@@ -156,6 +156,19 @@ export default function SettingsScreen() {
           <SettingsRow icon="language-outline" iconColor={colors.teal} iconBg={colors.tealLight} label={t('settings.language')} right={{ type: 'value', text: languageLabel }} onPress={() => navigation.navigate('Language')} />
         </Section>
 
+        {/* Recurring Income */}
+        <Section label={t('settings.recurringIncomeSection')}>
+          <SettingsRow
+            icon="swap-horizontal-outline"
+            iconColor={colors.primary}
+            iconBg={colors.primaryLight}
+            label={t('settings.recurringIncome')}
+            right={{ type: 'chevron' }}
+            onPress={() => navigation.navigate('RecurringIncome')}
+            isFirst
+          />
+        </Section>
+
         {/* Support */}
         <Section label={t('settings.support')}>
           <SettingsRow icon="help-circle-outline" iconColor={colors.business} iconBg={colors.businessLight} label={t('settings.helpFaq')} right={{ type: 'chevron' }} onPress={() => navigation.navigate('HelpFaq')} isFirst />

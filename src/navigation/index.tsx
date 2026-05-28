@@ -18,7 +18,7 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 // Main Screens
-import FlowScreen from '../screens/FlowScreen';
+import TransferScreen from '../screens/TransferScreen';
 import ExpensesScreen from '../screens/ExpensesScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import BudgetScreen from '../screens/BudgetScreen';
@@ -35,6 +35,7 @@ import LanguageScreen from '../screens/settings/LanguageScreen';
 import HelpFaqScreen from '../screens/settings/HelpFaqScreen';
 import PrivacyPolicyScreen from '../screens/settings/PrivacyPolicyScreen';
 import HouseholdScreen from '../screens/settings/HouseholdScreen';
+import RecurringIncomeScreen from '../screens/settings/RecurringIncomeScreen';
 import HouseholdOnboardingScreen from '../screens/HouseholdOnboardingScreen';
 
 import {
@@ -79,6 +80,7 @@ const SettingsNavigator = () => (
     <SettingsStack.Screen name="HelpFaq" component={HelpFaqScreen} />
     <SettingsStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     <SettingsStack.Screen name="Household" component={HouseholdScreen} />
+    <SettingsStack.Screen name="RecurringIncome" component={RecurringIncomeScreen} />
   </SettingsStack.Navigator>
 );
 
@@ -87,7 +89,7 @@ const MainNavigator = () => {
   const { t } = useTranslation();
   return (
     <MainTab.Navigator
-      initialRouteName="Flow"
+      initialRouteName="Transfer"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.teal,
@@ -112,7 +114,7 @@ const MainNavigator = () => {
         },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, { active: string; inactive: string }> = {
-            Flow: { active: 'pulse', inactive: 'pulse-outline' },
+            Transfer: { active: 'swap-horizontal', inactive: 'swap-horizontal-outline' },
             Commitments: { active: 'receipt', inactive: 'receipt-outline' },
             Overview: { active: 'grid', inactive: 'grid-outline' },
             Budget: { active: 'pie-chart', inactive: 'pie-chart-outline' },
@@ -124,7 +126,7 @@ const MainNavigator = () => {
         },
       })}
     >
-      <MainTab.Screen name="Flow" component={FlowScreen} options={{ tabBarLabel: t('nav.flow') }} />
+      <MainTab.Screen name="Transfer" component={TransferScreen} options={{ tabBarLabel: t('nav.transfer') }} />
       <MainTab.Screen name="Commitments" component={ExpensesScreen} options={{ tabBarLabel: t('nav.commitments') }} />
       <MainTab.Screen name="Overview" component={DashboardScreen} options={{ tabBarLabel: t('nav.overview') }} />
       <MainTab.Screen name="Budget" component={BudgetScreen} options={{ tabBarLabel: t('nav.budget') }} />
