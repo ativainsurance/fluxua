@@ -17,6 +17,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ExpenseWithRecord, RecurringIncome, TransferCycle, CycleCommitment } from '../types';
 import { fetchExpenses, fetchExpenseRecords } from '../services/supabase';
 import { useHousehold } from '../contexts/HouseholdContext';
+import { isExpenseActive } from './useExpenses';
 
 // ─── Window helpers ───────────────────────────────────────────────────────────
 
@@ -169,8 +170,19 @@ export const computeTransferCycles = (
   nextMonthExpenses: ExpenseWithRecord[],
   incomes: RecurringIncome[]
 ): [TransferCycle, TransferCycle] => {
-  const personal = expenses.filter((e) => e.type === 'personal');
-  const nextPersonal = nextMonthExpenses.filter((e) => e.type === 'personal');
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+
+  // isExpenseActive is the shared authoritative check used by both the Commitments
+  // tab and Transfer math — enforces start_date, end_date, and recurrence type.
+  // is_excluded is intentionally NOT applied: Transfer must count commitments
+  // regardless of per-month display exclusion status.
+  const personal = expenses.filter(
+    (e) => e.type === 'personal' && isExpenseActive(e, month, year)
+  );
+  const nextPersonal = nextMonthExpenses.filter(
+    (e) => e.type === 'personal' && isExpenseActive(e, nextMonth, nextYear)
+  );
 
   const c1 = buildCycle(1, month, year, personal, [], incomes);
   const c2 = buildCycle(2, month, year, personal, nextPersonal, incomes);

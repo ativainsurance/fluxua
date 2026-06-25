@@ -32,7 +32,7 @@ import { useHousehold } from '../contexts/HouseholdContext';
 // Helpers
 // ─────────────────────────────────────────────
 
-const isExpenseActive = (expense: Expense, month: number, year: number): boolean => {
+export const isExpenseActive = (expense: Expense, month: number, year: number): boolean => {
   const interval =
     expense.recurrence_type === 'quarterly' ? 3
     : expense.recurrence_type === 'semiannual' ? 6
