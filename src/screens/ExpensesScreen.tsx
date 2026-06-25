@@ -67,7 +67,8 @@ export default function ExpensesScreen() {
   const [pendingPaid, setPendingPaid] = useState<PendingPaid | null>(null);
   const [paymentModalExpense, setPaymentModalExpense] = useState<ExpenseWithRecord | null>(null);
 
-  const { expenses, summary, bucketTotals, loading, reload, markAsPaid, removeExpense, excludeFromMonth, waiveExpense, addCardPayment, deleteCardPayment } =
+  const { expenses, summary, bucketTotals, loading, reload, markAsPaid, removeExpense,
+          excludeFromMonth, waiveExpense, addCardPayment, deleteCardPayment, enterStatementBalance } =
     useExpenses(month, year);
 
   const isCurrentMonth = month === currentMonth && year === currentYear;
@@ -384,6 +385,10 @@ export default function ExpensesScreen() {
           onClose={() => setPaymentModalExpense(null)}
           onAddPayment={addCardPayment}
           onDeletePayment={deleteCardPayment}
+          onEnterBalance={async (balance, cm, cy) => {
+            if (!currentModalExpense) return;
+            await enterStatementBalance(currentModalExpense, balance, cm, cy);
+          }}
         />
       )}
     </SafeAreaView>

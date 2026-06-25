@@ -72,7 +72,13 @@ export const ExpenseCard = ({
   const actualAmount = expense.record?.actual_amount;
   const lateFee = expense.record?.late_fee;
   const creditAmount = expense.record?.credit_amount;
-  const needsBalance = expense.is_variable_amount && !expense.record?.statement_balance && !isResolved;
+  // Only show badge when a record EXISTS for this cycle_month but balance wasn't entered.
+  // If record is undefined (no statement for this month), the badge is suppressed —
+  // cards naturally have no record for months that aren't their cycle_month.
+  const needsBalance = expense.is_variable_amount &&
+    expense.record != null &&
+    !expense.record.statement_balance &&
+    !isResolved;
   const hasActualDiff = isPaid && !expense.is_variable_amount && actualAmount !== undefined && actualAmount !== plannedAmount;
   const hasLateFee = isPaid && lateFee !== undefined && lateFee > 0;
   const hasCredit = isResolved && creditAmount !== undefined && creditAmount > 0;

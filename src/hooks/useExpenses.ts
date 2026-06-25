@@ -220,12 +220,18 @@ export const useExpenses = (month: number, year: number) => {
     []
   );
 
-  /** Save this month's statement balance for a variable-amount expense (credit card) */
+  /**
+   * Save a statement balance for a variable-amount expense (credit card).
+   * cycleMonth/cycleYear = the PAYMENT DEBIT month (defaults to the hook's
+   * current month/year when omitted, for backward-compat with FlowScreen).
+   */
   const enterStatementBalance = useCallback(
-    async (expense: ExpenseWithRecord, balance: number) => {
+    async (expense: ExpenseWithRecord, balance: number, cycleMonth?: number, cycleYear?: number) => {
       if (!user || !householdId) return;
       try {
-        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, month, year);
+        const targetMonth = cycleMonth ?? month;
+        const targetYear  = cycleYear  ?? year;
+        const record = await getOrCreateExpenseRecord(user.id, householdId, expense.id, targetMonth, targetYear);
         const updated = await setStatementBalance(record.id, balance);
         setRecords((prev) => {
           const exists = prev.find((r) => r.id === updated.id);

@@ -181,9 +181,6 @@ const CycleCard = ({ cycle, isExpanded, onToggle }: {
               {t('transfer.mathTitle')}
             </Text>
             <CycleMathRow label={t('transfer.mathCommitments')} amount={cycle.totalNeeded} />
-            {cycle.totalSettled > 0 && (
-              <CycleMathRow label={`− ${t('transfer.mathSettled')}`} amount={cycle.totalSettled} color={colors.success} />
-            )}
             {cycle.incomeTotal > 0 && cycle.incomeInWindow.map((inc) => (
               <CycleMathRow
                 key={inc.name + inc.day}

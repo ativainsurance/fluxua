@@ -6,8 +6,11 @@
  * Cycle 2 — transfer on the 23rd, covers personal commitments due 23–31 of M
  *            plus 1–9 of M+1.  Fetches two months of records.
  *
- * Only personal (type='personal') non-card (is_variable_amount=false) commitments
- * are counted toward cycle math; business commitments are excluded.
+ * Phase 6 semantics: expense_records.month/year for variable-amount (card)
+ * expenses represents the PAYMENT DEBIT month (cycle_month), not the entry
+ * month. A card appears in cycle math only when it has an expense_record
+ * with month/year matching the target cycle — no fallback to expense.amount.
+ * Business commitments are always excluded.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -30,7 +33,7 @@ function buildCycle(
   cycleNumber: 1 | 2,
   month: number,
   year: number,
-  personalNonCardExpenses: ExpenseWithRecord[],
+  personalExpenses: ExpenseWithRecord[],
   nextMonthExpenses: ExpenseWithRecord[],
   incomes: RecurringIncome[]
 ): TransferCycle {
@@ -38,9 +41,17 @@ function buildCycle(
   const commitments: CycleCommitment[] = [];
 
   const addCommitment = (e: ExpenseWithRecord) => {
-    const amount = e.is_variable_amount
-      ? (e.record?.statement_balance ?? e.amount)
-      : e.amount;
+    let amount: number;
+    if (e.is_variable_amount) {
+      // Only include a card when it has a real statement for this cycle_month.
+      // expense_records.month = cycle_month after Phase 6 migration; no fallback
+      // to expense.amount (which is a placeholder/limit reminder, not a debt).
+      const balance = e.record?.statement_balance;
+      if (!balance) return;
+      amount = balance;
+    } else {
+      amount = e.amount;
+    }
     commitments.push({
       expense: e,
       amount,
@@ -50,11 +61,11 @@ function buildCycle(
   };
 
   if (cycleNumber === 1) {
-    personalNonCardExpenses
+    personalExpenses
       .filter((e) => inCycle1Window(e.due_day))
       .forEach(addCommitment);
   } else {
-    personalNonCardExpenses
+    personalExpenses
       .filter((e) => inCycle2WindowCurrentMonth(e.due_day))
       .forEach(addCommitment);
     nextMonthExpenses
@@ -80,7 +91,7 @@ function buildCycle(
     .filter((c) => c.isPaid || c.isWaived)
     .reduce((s, c) => s + c.amount, 0);
   const incomeTotal = incomeInWindow.reduce((s, i) => s + i.amount, 0);
-  const manualTransfer = Math.max(0, totalNeeded - totalSettled - incomeTotal);
+  const manualTransfer = Math.max(0, totalNeeded - incomeTotal);
 
   const transferDay = cycleNumber === 1 ? 9 : 23;
   const windowLabel = cycleNumber === 1 ? '10–22' : '23–9';
@@ -158,12 +169,8 @@ export const computeTransferCycles = (
   nextMonthExpenses: ExpenseWithRecord[],
   incomes: RecurringIncome[]
 ): [TransferCycle, TransferCycle] => {
-  const personal = expenses.filter(
-    (e) => e.type === 'personal' && !(e.record?.is_excluded)
-  );
-  const nextPersonal = nextMonthExpenses.filter(
-    (e) => e.type === 'personal' && !(e.record?.is_excluded)
-  );
+  const personal = expenses.filter((e) => e.type === 'personal');
+  const nextPersonal = nextMonthExpenses.filter((e) => e.type === 'personal');
 
   const c1 = buildCycle(1, month, year, personal, [], incomes);
   const c2 = buildCycle(2, month, year, personal, nextPersonal, incomes);

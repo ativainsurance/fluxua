@@ -39,6 +39,7 @@ interface Props {
     notes?: string
   ) => Promise<void>;
   onDeletePayment: (paymentId: string) => Promise<void>;
+  onEnterBalance: (balance: number, cycleMonth: number, cycleYear: number) => Promise<void>;
 }
 
 const todayIso = (): string => {
@@ -54,12 +55,13 @@ export const CardPaymentsModal = ({
   onClose,
   onAddPayment,
   onDeletePayment,
+  onEnterBalance,
 }: Props) => {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { currencySymbol } = useSettings();
   const formatCurrency = useFormatCurrency();
-  const { monthYear } = useFormatDate();
+  const { monthYear, ordinalDay } = useFormatDate();
   const energyState = useEnergyState();
   const { members } = useHousehold();
   const { user } = useAuth();
@@ -71,6 +73,9 @@ export const CardPaymentsModal = ({
   };
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const next = navigateMonth(month, year, 'next');
+
+  // Progress bar always reflects the CURRENT COMMITMENTS MONTH's data
   const stmtBalance = expense.record?.statement_balance ?? expense.amount;
   const payments = expense.cardPayments ?? [];
   const paymentTotal = payments.reduce((s, p) => s + p.amount, 0);
@@ -81,32 +86,79 @@ export const CardPaymentsModal = ({
   const energyLevel = isFullyPaid ? 'charged' : ratio >= 0.5 ? 'flowing' : ratio > 0 ? 'thinning' : 'draining';
   const barState = energyState({ status: isFullyPaid ? 'paid' : ratio >= 0.5 ? 'upcoming' : 'due-soon' });
 
-  // Statement selector: current or next month
-  const next = navigateMonth(month, year, 'next');
+  // Cycle picker: which payment month we're managing (statement entry + payments)
+  // Smart default: if today's day-of-month is past the card's due_day, the upcoming
+  // debit is next month; otherwise it's this month.
   const [stmtMonth, setStmtMonth] = useState(month);
   const [stmtYear, setStmtYear] = useState(year);
 
-  // Form state
+  // Statement balance entry state
+  const [balanceStr, setBalanceStr] = useState('');
+  const [savingBalance, setSavingBalance] = useState(false);
+
+  // Payment form state
   const [amountStr, setAmountStr] = useState('');
   const [paymentDate, setPaymentDate] = useState(todayIso());
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const computeSmartDefault = () => {
+    const todayDay = new Date().getDate();
+    return todayDay < expense.due_day
+      ? { month, year }
+      : { month: next.month, year: next.year };
+  };
+
+  const balanceForCycle = (m: number, y: number): string => {
+    const isCurrentMonth = m === month && y === year;
+    if (isCurrentMonth && expense.record?.statement_balance) {
+      return expense.record.statement_balance.toFixed(2);
+    }
+    return '';
+  };
+
   useEffect(() => {
     if (visible) {
+      const def = computeSmartDefault();
+      setStmtMonth(def.month);
+      setStmtYear(def.year);
+      setBalanceStr(balanceForCycle(def.month, def.year));
       setAmountStr(remaining > 0 ? remaining.toFixed(2) : '');
       setPaymentDate(todayIso());
       setNotes('');
-      setStmtMonth(month);
-      setStmtYear(year);
     }
-  }, [visible, remaining, month, year]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, month, year]);
+
+  const handleCycleChange = (m: number, y: number) => {
+    setStmtMonth(m);
+    setStmtYear(y);
+    setBalanceStr(balanceForCycle(m, y));
+  };
+
+  const isNextSelected = stmtMonth === next.month && stmtYear === next.year;
+  const selectedMonthLabel = monthYear(new Date(stmtYear, stmtMonth - 1, 1));
+  const currentMonthLabel  = monthYear(new Date(year, month - 1, 1));
+  const nextMonthLabel     = monthYear(new Date(next.year, next.month - 1, 1));
+
+  const parsedBalance = parseFloat(balanceStr);
+  const isBalanceValid = !isNaN(parsedBalance) && parsedBalance > 0;
 
   const parsedAmount = parseFloat(amountStr);
-  const isValid = !isNaN(parsedAmount) && parsedAmount > 0 && paymentDate.length === 10;
+  const isPaymentValid = !isNaN(parsedAmount) && parsedAmount > 0 && paymentDate.length === 10;
+
+  const handleSaveBalance = async () => {
+    if (!isBalanceValid) return;
+    setSavingBalance(true);
+    try {
+      await onEnterBalance(parsedBalance, stmtMonth, stmtYear);
+    } finally {
+      setSavingBalance(false);
+    }
+  };
 
   const handleSave = async () => {
-    if (!isValid) return;
+    if (!isPaymentValid) return;
     setSaving(true);
     try {
       await onAddPayment(expense, parsedAmount, paymentDate, stmtMonth, stmtYear, notes.trim() || undefined);
@@ -142,11 +194,6 @@ export const CardPaymentsModal = ({
     );
   };
 
-  const stmtMonthLabel = monthYear(new Date(year, month - 1, 1));
-  const nextMonthLabel = monthYear(new Date(next.year, next.month - 1, 1));
-
-  const isNextSelected = stmtMonth === next.month && stmtYear === next.year;
-
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -164,7 +211,7 @@ export const CardPaymentsModal = ({
               <View>
                 <Text style={styles.cardName}>{expense.name}</Text>
                 <Text style={styles.stmtLabel}>
-                  {t('cardPayments.statementFor', { month: stmtMonthLabel })}
+                  {t('cardPayments.statementFor', { month: selectedMonthLabel })}
                 </Text>
               </View>
             </View>
@@ -173,7 +220,7 @@ export const CardPaymentsModal = ({
             </TouchableOpacity>
           </View>
 
-          {/* Progress bar + summary */}
+          {/* Progress bar + summary (always shows current Commitments month data) */}
           <View style={styles.progressSection}>
             <FlowBar ratio={ratio} state={energyLevel} height={8} trackColor={colors.surfaceAlt} />
             <View style={styles.progressRow}>
@@ -203,7 +250,60 @@ export const CardPaymentsModal = ({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
           >
-            {/* Payment history */}
+            {/* ── Payment Cycle ──────────────────────────────────────── */}
+            <Text style={styles.sectionLabel}>{t('cardPayments.paymentCycle')}</Text>
+            <View style={styles.stmtSelector}>
+              <TouchableOpacity
+                style={[styles.stmtOption, !isNextSelected && styles.stmtOptionActive]}
+                onPress={() => handleCycleChange(month, year)}
+              >
+                <Text style={[styles.stmtOptionText, !isNextSelected && styles.stmtOptionTextActive]}>
+                  {currentMonthLabel}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.stmtOption, isNextSelected && styles.stmtOptionActive]}
+                onPress={() => handleCycleChange(next.month, next.year)}
+              >
+                <Text style={[styles.stmtOptionText, isNextSelected && styles.stmtOptionTextActive]}>
+                  {nextMonthLabel}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* ── Statement Balance ──────────────────────────────────── */}
+            <View style={styles.divider} />
+            <Text style={styles.sectionLabel}>{t('cardPayments.statementSection')}</Text>
+            <Text style={styles.debitsContext}>
+              {t('cardPayments.debitsOn', {
+                day: ordinalDay(expense.due_day),
+                month: selectedMonthLabel,
+              })}
+            </Text>
+            <View style={styles.inputRow}>
+              <Text style={styles.currencySymbol}>{currencySymbol}</Text>
+              <TextInput
+                style={styles.amountInput}
+                value={balanceStr}
+                onChangeText={setBalanceStr}
+                keyboardType="decimal-pad"
+                selectTextOnFocus
+                placeholder="0.00"
+                placeholderTextColor={colors.textDisabled}
+              />
+            </View>
+            <TouchableOpacity
+              style={[styles.saveBalanceBtn, (!isBalanceValid || savingBalance) && styles.btnDisabled]}
+              onPress={handleSaveBalance}
+              disabled={!isBalanceValid || savingBalance}
+            >
+              <Text style={styles.saveBalanceBtnText}>
+                {savingBalance ? t('common.saving') : t('cardPayments.saveBalance')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* ── Payment history ────────────────────────────────────── */}
+            <View style={styles.divider} />
             <Text style={styles.sectionLabel}>{t('cardPayments.paymentsHistory')}</Text>
             {payments.length === 0 ? (
               <Text style={styles.noPayments}>{t('cardPayments.noPayments')}</Text>
@@ -229,7 +329,7 @@ export const CardPaymentsModal = ({
               ))
             )}
 
-            {/* Add payment form */}
+            {/* ── Add payment form ───────────────────────────────────── */}
             {!isFullyPaid && (
               <>
                 <View style={styles.divider} />
@@ -256,27 +356,6 @@ export const CardPaymentsModal = ({
                   value={paymentDate}
                   onChange={setPaymentDate}
                 />
-
-                {/* Statement selector */}
-                <Text style={styles.fieldLabel}>{t('cardPayments.applyTo')}</Text>
-                <View style={styles.stmtSelector}>
-                  <TouchableOpacity
-                    style={[styles.stmtOption, !isNextSelected && styles.stmtOptionActive]}
-                    onPress={() => { setStmtMonth(month); setStmtYear(year); }}
-                  >
-                    <Text style={[styles.stmtOptionText, !isNextSelected && styles.stmtOptionTextActive]}>
-                      {t('cardPayments.currentStatement', { month: stmtMonthLabel })}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.stmtOption, isNextSelected && styles.stmtOptionActive]}
-                    onPress={() => { setStmtMonth(next.month); setStmtYear(next.year); }}
-                  >
-                    <Text style={[styles.stmtOptionText, isNextSelected && styles.stmtOptionTextActive]}>
-                      {t('cardPayments.nextStatement', { month: nextMonthLabel })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
 
                 {/* Notes */}
                 <Text style={styles.fieldLabel}>
@@ -308,9 +387,9 @@ export const CardPaymentsModal = ({
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
-                    style={[styles.saveBtn, (!isValid || saving) && styles.btnDisabled]}
+                    style={[styles.saveBtn, (!isPaymentValid || saving) && styles.btnDisabled]}
                     onPress={handleSave}
-                    disabled={!isValid || saving}
+                    disabled={!isPaymentValid || saving}
                   >
                     <Text style={styles.saveBtnText}>
                       {saving ? t('cardPayments.saving') : t('cardPayments.savePayment')}
@@ -336,7 +415,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    maxHeight: '90%',
+    maxHeight: '92%',
     ...shadows.lg,
   },
   handle: {
@@ -395,6 +474,13 @@ const makeStyles = (colors: any) => StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
     marginTop: spacing.xs,
+  },
+  debitsContext: {
+    fontSize: typography.xs,
+    color: colors.textTertiary,
+    fontStyle: 'italic',
+    marginBottom: spacing.sm,
+    marginTop: -spacing.xs,
   },
   noPayments: {
     fontSize: typography.sm,
@@ -497,6 +583,19 @@ const makeStyles = (colors: any) => StyleSheet.create({
   stmtOptionTextActive: {
     color: colors.charged,
     fontWeight: typography.semibold,
+  },
+  saveBalanceBtn: {
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  saveBalanceBtnText: {
+    fontSize: typography.sm,
+    fontWeight: typography.semibold,
+    color: colors.textInverse,
   },
   notesInput: {
     borderWidth: 1.5,

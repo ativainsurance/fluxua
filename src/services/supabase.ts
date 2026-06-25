@@ -479,9 +479,11 @@ export const updateActualAmount = async (
 // ─────────────────────────────────────────────
 
 /**
- * Compute the auto-derived outstanding credit-card debt for the current month.
- * Outstanding = sum over each variable expense of max(0, statement_balance - payments).
- * Returns 0 if no statements found.
+ * Compute outstanding credit-card debt for the given budget month.
+ * After Phase 6: expense_records.month = cycle_month (payment debit month).
+ * We query both the given month AND the next month so that a budget view
+ * for month M surfaces statements that debit in M+1 (the upcoming cycle).
+ * Outstanding = sum over statements of max(0, statement_balance − payments).
  */
 export const fetchAutoCCDebt = async (
   householdId: string,
@@ -496,15 +498,19 @@ export const fetchAutoCCDebt = async (
 
   if (!expenses?.length) return 0;
 
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear  = month === 12 ? year + 1 : year;
+
   const { data: records } = await supabase
     .from('expense_records')
     .select('id, statement_balance')
     .eq('household_id', householdId)
-    .eq('month', month)
-    .eq('year', year)
     .in('expense_id', expenses.map((e) => e.id))
     .not('statement_balance', 'is', null)
-    .gt('statement_balance', 0);
+    .gt('statement_balance', 0)
+    .or(
+      `and(month.eq.${month},year.eq.${year}),and(month.eq.${nextMonth},year.eq.${nextYear})`
+    );
 
   if (!records?.length) return 0;
 
