@@ -12,7 +12,7 @@ import { ExpenseWithRecord,
 import { useCategoryLabel } from '../utils/categories';
 import { useFormatCurrency,
   useFormatDate,
-  getBillStatus } from '../utils/dateUtils';
+  getBillStatusForDate } from '../utils/dateUtils';
 import { useEnergyState } from '../utils/energyState';
 import { useTranslation } from 'react-i18next';
 
@@ -63,8 +63,12 @@ export const ExpenseCard = ({
   const isPaid = expense.is_variable_amount ? isCardSettled : isPaidFlag;
 
   const isResolved = isPaid || isWaived;
-  const effectiveDueDay = expense.occurrenceDate?.getDate() ?? expense.due_day;
-  const status = isWaived ? 'waived' : getBillStatus(effectiveDueDay, isPaid);
+  // effectiveDueDate is the full calendar date set by useExpenses for the viewed month.
+  // Using the full date (not just day-of-month) ensures status is correct when
+  // browsing past or future months.
+  const effectiveDueDate = expense.effectiveDueDate
+    ?? new Date(new Date().getFullYear(), new Date().getMonth(), expense.due_day);
+  const status = isWaived ? 'waived' : getBillStatusForDate(effectiveDueDate, isPaid);
   const statusConfig = energyState({ status });
   const categoryIcon = getCategoryIcon(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);

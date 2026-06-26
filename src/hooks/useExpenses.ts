@@ -126,12 +126,24 @@ export const useExpenses = (month: number, year: number) => {
       const payments = expense.is_variable_amount && record
         ? cardPayments.filter((p) => p.statement_id === record.id)
         : undefined;
-      const base: ExpenseWithRecord = { ...expense, record, cardPayments: payments };
 
-      if (!expense.anchor_date) return [base];
+      if (!expense.anchor_date) {
+        // Pre-migration: no anchor_date — derive due date from due_day in viewed month
+        const effectiveDueDate = new Date(year, month - 1, expense.due_day);
+        return [{ ...expense, record, cardPayments: payments, effectiveDueDate }];
+      }
+
       const occs = getOccurrenceDates(expense, month, year);
-      if (occs.length <= 1) return [base];
-      return occs.map((date) => ({ ...base, occurrenceDate: date }));
+      if (occs.length <= 1) {
+        const effectiveDueDate = occs[0] ?? new Date(year, month - 1, expense.due_day);
+        return [{ ...expense, record, cardPayments: payments, effectiveDueDate }];
+      }
+      // Sub-monthly: each occurrence carries its own date for status calculation
+      return occs.map((date) => ({
+        ...expense, record, cardPayments: payments,
+        occurrenceDate: date,
+        effectiveDueDate: date,
+      }));
     });
 
   /** Mark a non-card expense as paid/unpaid for the current month */

@@ -200,6 +200,12 @@ export interface ExpenseWithRecord extends Expense {
    * Undefined for monthly expenses that occur once per month.
    */
   occurrenceDate?: Date;
+  /**
+   * The full calendar date this item is due in the viewed month/year.
+   * Always set by useExpenses so ExpenseCard can compute status without
+   * needing to know the current viewing month.
+   */
+  effectiveDueDate?: Date;
 }
 
 /**

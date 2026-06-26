@@ -121,6 +121,25 @@ export const getBillStatus = (
 };
 
 /**
+ * Date-aware status calculation. Unlike getBillStatus, this compares the full
+ * calendar date (including month and year) against today, so it works correctly
+ * when viewing past or future months.
+ */
+export const getBillStatusForDate = (
+  dueDate: Date,
+  isPaid: boolean
+): 'paid' | 'overdue' | 'due-soon' | 'upcoming' => {
+  if (isPaid) return 'paid';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  const daysUntil = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (daysUntil < 0) return 'overdue';
+  if (daysUntil <= 3) return 'due-soon';
+  return 'upcoming';
+};
+
+/**
  * Splits a monthly amount into weekly chunks.
  * Returns raw data — callers format date labels using useFormatDate().
  */
