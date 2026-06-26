@@ -338,7 +338,21 @@
     "bucket_debt": "Deuda",
     "assignTo": "ASIGNAR A",
     "assignAll": "Todos",
-    "assignYou": "Yo"
+    "assignYou": "Yo",
+    "frequency": "FRECUENCIA",
+    "freq_weekly": "Semanal",
+    "freq_biweekly": "Quincenal",
+    "freq_every_n_weeks": "Cada N sem.",
+    "freq_monthly": "Mensual",
+    "freq_bimonthly": "Bimestral",
+    "freq_quarterly": "Trimestral",
+    "freq_semiannual": "Semestral",
+    "freq_annual": "Anual",
+    "repeatEvery": "REPETIR CADA",
+    "weeksUnit": "semanas",
+    "anchorDateLabel": "PRIMERA OCURRENCIA",
+    "anchorDateHint": "Fecha de la primera ocurrencia — las siguientes se repiten desde aquí.",
+    "errorAnchorDateRequired": "Ingresa la fecha de la primera ocurrencia."
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

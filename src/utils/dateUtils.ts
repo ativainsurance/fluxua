@@ -62,6 +62,10 @@ export const useFormatDate = () => {
     shortMonth: (date: Date) =>
       new Intl.DateTimeFormat(language, { month: 'short' }).format(date),
 
+    /** "6 de jul." / "Jul 6" / "6 de jul." — compact month+day for occurrence labels */
+    shortDate: (date: Date) =>
+      new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' }).format(date),
+
     /** "15–21 de mai" / "May 15–21" / "15–21 de may" */
     dateRange: (start: Date, end: Date) => {
       const fmt = new Intl.DateTimeFormat(language, { month: 'short', day: 'numeric' });

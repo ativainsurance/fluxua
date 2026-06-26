@@ -174,6 +174,9 @@ export const createExpense = async (
       budget_bucket: formData.budget_bucket ?? 'needs',
       emoji: formData.emoji || null,
       holder_user_id: formData.holder_user_id || null,
+      frequency_type: formData.frequency_type ?? 'monthly',
+      frequency_interval: formData.frequency_interval ?? 1,
+      anchor_date: formData.anchor_date || null,
     })
     .select()
     .single();
@@ -210,6 +213,9 @@ export const updateExpense = async (
   if (formData.budget_bucket !== undefined) updates.budget_bucket = formData.budget_bucket;
   if (formData.emoji !== undefined) updates.emoji = formData.emoji || null;
   if (formData.holder_user_id !== undefined) updates.holder_user_id = formData.holder_user_id || null;
+  if (formData.frequency_type !== undefined) updates.frequency_type = formData.frequency_type;
+  if (formData.frequency_interval !== undefined) updates.frequency_interval = formData.frequency_interval;
+  if (formData.anchor_date !== undefined) updates.anchor_date = formData.anchor_date || null;
 
   const { data, error } = await supabase
     .from('expenses')

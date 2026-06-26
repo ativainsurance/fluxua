@@ -338,7 +338,21 @@
     "bucket_debt": "Debt",
     "assignTo": "ASSIGN TO",
     "assignAll": "All members",
-    "assignYou": "Me"
+    "assignYou": "Me",
+    "frequency": "FREQUENCY",
+    "freq_weekly": "Weekly",
+    "freq_biweekly": "Every 2 wks",
+    "freq_every_n_weeks": "Every N wks",
+    "freq_monthly": "Monthly",
+    "freq_bimonthly": "Bimonthly",
+    "freq_quarterly": "Quarterly",
+    "freq_semiannual": "Semiannual",
+    "freq_annual": "Annual",
+    "repeatEvery": "REPEAT EVERY",
+    "weeksUnit": "weeks",
+    "anchorDateLabel": "FIRST OCCURRENCE",
+    "anchorDateHint": "The date of the first occurrence — future occurrences repeat from here.",
+    "errorAnchorDateRequired": "Please enter the first occurrence date."
   },
   "dateInput": {
     "placeholder": "MM/DD/YYYY",

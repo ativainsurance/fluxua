@@ -43,7 +43,7 @@ export const ExpenseCard = ({
   const { t } = useTranslation();
   const energyState = useEnergyState();
   const formatCurrency = useFormatCurrency();
-  const { monthYear, ordinalDay } = useFormatDate();
+  const { monthYear, ordinalDay, shortDate } = useFormatDate();
   const getCategoryLabel = useCategoryLabel();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -63,7 +63,8 @@ export const ExpenseCard = ({
   const isPaid = expense.is_variable_amount ? isCardSettled : isPaidFlag;
 
   const isResolved = isPaid || isWaived;
-  const status = isWaived ? 'waived' : getBillStatus(expense.due_day, isPaid);
+  const effectiveDueDay = expense.occurrenceDate?.getDate() ?? expense.due_day;
+  const status = isWaived ? 'waived' : getBillStatus(effectiveDueDay, isPaid);
   const statusConfig = energyState({ status });
   const categoryIcon = getCategoryIcon(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
@@ -191,7 +192,11 @@ export const ExpenseCard = ({
         <View style={styles.metaRow}>
           <Text style={styles.category}>{categoryLabel}</Text>
           <View style={styles.metaDot} />
-          <Text style={styles.dueDay}>{t('commitments.dueOnDay', { day: ordinalDay(expense.due_day) })}</Text>
+          <Text style={styles.dueDay}>
+            {expense.occurrenceDate
+              ? shortDate(expense.occurrenceDate)
+              : t('commitments.dueOnDay', { day: ordinalDay(expense.due_day) })}
+          </Text>
           {expense.is_recurring && (
             <>
               <View style={styles.metaDot} />

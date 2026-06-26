@@ -25,6 +25,7 @@ import {
   CardPayment,
   BudgetBucket,
 } from '../types';
+import { getOccurrenceDates } from '../utils/occurrences';
 import { useAuth } from '../contexts/AuthContext';
 import { useHousehold } from '../contexts/HouseholdContext';
 
@@ -33,25 +34,31 @@ import { useHousehold } from '../contexts/HouseholdContext';
 // ─────────────────────────────────────────────
 
 export const isExpenseActive = (expense: Expense, month: number, year: number): boolean => {
-  const interval =
-    expense.recurrence_type === 'quarterly' ? 3
-    : expense.recurrence_type === 'semiannual' ? 6
-    : null;
-
   if (expense.start_date) {
     const [sy, sm] = expense.start_date.split('-').map(Number);
     if (year < sy || (year === sy && month < sm)) return false;
-    if (interval !== null) {
-      const monthsElapsed = (year - sy) * 12 + (month - sm);
-      if (monthsElapsed % interval !== 0) return false;
-    }
-  } else if (interval !== null) {
-    if ((month - 1) % interval !== 0) return false;
   }
-
   if (expense.end_date) {
     const [ey, em] = expense.end_date.split('-').map(Number);
     if (year > ey || (year === ey && month > em)) return false;
+  }
+  // Post-migration: anchor_date + frequency_type are the authoritative occurrence source
+  if (expense.anchor_date) {
+    return getOccurrenceDates(expense, month, year).length > 0;
+  }
+  // Legacy fallback for pre-migration expenses without anchor_date
+  const interval =
+    expense.recurrence_type === 'quarterly' ? 3 :
+    expense.recurrence_type === 'semiannual' ? 6 :
+    null;
+  if (interval !== null) {
+    if (expense.start_date) {
+      const [sy, sm] = expense.start_date.split('-').map(Number);
+      const monthsElapsed = (year - sy) * 12 + (month - sm);
+      if (monthsElapsed % interval !== 0) return false;
+    } else {
+      if ((month - 1) % interval !== 0) return false;
+    }
   }
   return true;
 };
@@ -105,19 +112,26 @@ export const useExpenses = (month: number, year: number) => {
     load();
   }, [load]);
 
-  /** Join expenses with their monthly records and card payments */
+  /** Join expenses with their monthly records and card payments.
+   *  Sub-monthly expenses (weekly, every-N-weeks) are expanded into one item
+   *  per occurrence, each carrying an occurrenceDate. */
   const expensesWithRecords: ExpenseWithRecord[] = expenses
     .filter((expense) => isExpenseActive(expense, month, year))
     .filter((expense) => {
       const record = records.find((r) => r.expense_id === expense.id);
       return !record?.is_excluded;
     })
-    .map((expense) => {
+    .flatMap((expense) => {
       const record = records.find((r) => r.expense_id === expense.id);
       const payments = expense.is_variable_amount && record
         ? cardPayments.filter((p) => p.statement_id === record.id)
         : undefined;
-      return { ...expense, record, cardPayments: payments };
+      const base: ExpenseWithRecord = { ...expense, record, cardPayments: payments };
+
+      if (!expense.anchor_date) return [base];
+      const occs = getOccurrenceDates(expense, month, year);
+      if (occs.length <= 1) return [base];
+      return occs.map((date) => ({ ...base, occurrenceDate: date }));
     });
 
   /** Mark a non-card expense as paid/unpaid for the current month */

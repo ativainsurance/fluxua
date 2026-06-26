@@ -31,6 +31,7 @@ import {
   ExpenseFormData,
   ExpenseType,
   RecurrenceType,
+  FrequencyType,
   AutopayMethod,
   BudgetBucket,
   BUILT_IN_CATEGORIES,
@@ -70,6 +71,20 @@ const defaultForm: ExpenseFormData = {
   budget_bucket: 'needs',
   emoji: '',
   holder_user_id: '',
+  frequency_type: 'monthly',
+  frequency_interval: 1,
+  anchor_date: todayIso(),
+};
+
+const frequencyToRecurrenceType = (ft: FrequencyType): RecurrenceType => {
+  switch (ft) {
+    case 'weekly': case 'biweekly': case 'every_n_weeks': return 'weekly';
+    case 'bimonthly': case 'monthly': return 'monthly';
+    case 'quarterly': return 'quarterly';
+    case 'semiannual': return 'semiannual';
+    case 'annual': return 'yearly';
+    default: return 'monthly';
+  }
 };
 
 const BUCKET_COLORS: Record<string, string> = {
@@ -129,6 +144,9 @@ export default function AddExpenseScreen() {
         budget_bucket: existingExpense.budget_bucket ?? defaultBudgetBucket(existingExpense.category, existingExpense.is_variable_amount),
         emoji: existingExpense.emoji ?? '',
         holder_user_id: existingExpense.holder_user_id ?? '',
+        frequency_type: existingExpense.frequency_type ?? 'monthly',
+        frequency_interval: existingExpense.frequency_interval ?? 1,
+        anchor_date: existingExpense.anchor_date ?? todayIso(),
       });
     }
   }, [existingExpense]);
@@ -150,13 +168,41 @@ export default function AddExpenseScreen() {
       budget_bucket: defaultBudgetBucket(prev.category, v),
     }));
 
+  const setFrequencyType = (ft: FrequencyType) => {
+    setForm((prev) => ({
+      ...prev,
+      frequency_type: ft,
+      // Default interval to 3 when first selecting every_n_weeks
+      ...(ft === 'every_n_weeks' && (prev.frequency_interval || 1) < 2
+        ? { frequency_interval: 3 }
+        : {}),
+    }));
+  };
+
+  // Sync anchor_date when due_day changes (monthly only)
+  const setDueDay = (day: number) => {
+    setForm((prev) => {
+      const base = prev.start_date || todayIso();
+      const parts = base.split('-');
+      const [sy, sm] = [Number(parts[0]), Number(parts[1])];
+      const daysInMonth = new Date(sy, sm, 0).getDate();
+      const clamped = Math.min(day, daysInMonth);
+      const anchor = `${parts[0]}-${parts[1]}-${String(clamped).padStart(2, '0')}`;
+      return { ...prev, due_day: day, anchor_date: anchor };
+    });
+  };
+
   const validate = (): string | null => {
     if (!form.name.trim()) return t('addExpense.errorNameRequired');
     if (!form.amount || isNaN(parseFloat(form.amount)))
       return t('addExpense.errorInvalidAmount');
     if (parseFloat(form.amount) <= 0) return t('addExpense.errorAmountZero');
-    if (form.due_day < 1 || form.due_day > 31)
-      return t('addExpense.errorDueDayRange');
+    if (!form.is_recurring || form.frequency_type === 'monthly') {
+      if (form.due_day < 1 || form.due_day > 31)
+        return t('addExpense.errorDueDayRange');
+    }
+    if (form.is_recurring && form.frequency_type !== 'monthly' && !form.anchor_date)
+      return t('addExpense.errorAnchorDateRequired');
     if (!form.start_date) return t('addExpense.errorStartDateRequired');
     if (form.end_date && form.end_date < form.start_date)
       return t('addExpense.errorEndDateOrder');
@@ -171,10 +217,25 @@ export default function AddExpenseScreen() {
     }
     setLoading(true);
     try {
+      // For monthly (recurring or one-time): anchor_date derives from due_day + start_date month
+      let anchorDate = form.anchor_date;
+      if (!form.is_recurring || form.frequency_type === 'monthly') {
+        const base = form.start_date || todayIso();
+        const parts = base.split('-');
+        const [sy, sm] = [Number(parts[0]), Number(parts[1])];
+        const daysInMonth = new Date(sy, sm, 0).getDate();
+        const day = Math.min(form.due_day, daysInMonth);
+        anchorDate = `${parts[0]}-${parts[1]}-${String(day).padStart(2, '0')}`;
+      }
+      const formToSave: ExpenseFormData = {
+        ...form,
+        anchor_date: anchorDate,
+        recurrence_type: frequencyToRecurrenceType(form.frequency_type),
+      };
       if (isEditing && existingExpense) {
-        await editExpense(existingExpense.id, form);
+        await editExpense(existingExpense.id, formToSave);
       } else {
-        await addExpense(form);
+        await addExpense(formToSave);
       }
       navigation.goBack();
     } catch (e) {
@@ -526,29 +587,6 @@ export default function AddExpenseScreen() {
             </View>
           </View>
 
-          {/* Due Day */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('addExpense.dueDay')}</Text>
-            <View style={styles.dueDayRow}>
-              <TouchableOpacity
-                style={styles.dueDayBtn}
-                onPress={() => set('due_day', Math.max(1, form.due_day - 1))}
-              >
-                <Ionicons name="remove" size={20} color={colors.textPrimary} />
-              </TouchableOpacity>
-              <View style={styles.dueDayValue}>
-                <Text style={styles.dueDayNum}>{form.due_day}</Text>
-                <Text style={styles.dueDaySub}>{t('addExpense.ofEachMonth')}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.dueDayBtn}
-                onPress={() => set('due_day', Math.min(31, form.due_day + 1))}
-              >
-                <Ionicons name="add" size={20} color={colors.textPrimary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Recurring toggle */}
           <View style={[styles.section, styles.row]}>
             <View style={styles.flex}>
@@ -563,38 +601,113 @@ export default function AddExpenseScreen() {
             />
           </View>
 
-          {/* Recurrence type */}
+          {/* Frequency — shown for recurring commitments */}
           {form.is_recurring && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{t('addExpense.recurrence')}</Text>
+              <Text style={styles.sectionLabel}>{t('addExpense.frequency')}</Text>
               <View style={styles.recurrGrid}>
                 <View style={styles.recurrRow}>
-                  {(['weekly', 'monthly', 'quarterly'] as RecurrenceType[]).map((r) => (
+                  {(['weekly', 'biweekly', 'every_n_weeks'] as FrequencyType[]).map((ft) => (
                     <TouchableOpacity
-                      key={r}
-                      style={[styles.recurrBtn, form.recurrence_type === r && styles.recurrBtnActive]}
-                      onPress={() => set('recurrence_type', r)}
+                      key={ft}
+                      style={[styles.recurrBtn, form.frequency_type === ft && styles.recurrBtnActive]}
+                      onPress={() => setFrequencyType(ft)}
                     >
-                      <Text style={[styles.recurrText, form.recurrence_type === r && styles.recurrTextActive]}>
-                        {t(`commitments.recurrence${r.charAt(0).toUpperCase()}${r.slice(1)}`)}
+                      <Text style={[styles.recurrText, form.frequency_type === ft && styles.recurrTextActive]}>
+                        {t(`addExpense.freq_${ft}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
                 <View style={styles.recurrRow}>
-                  {(['semiannual', 'yearly'] as RecurrenceType[]).map((r) => (
+                  {(['monthly', 'bimonthly', 'quarterly'] as FrequencyType[]).map((ft) => (
                     <TouchableOpacity
-                      key={r}
-                      style={[styles.recurrBtn, form.recurrence_type === r && styles.recurrBtnActive]}
-                      onPress={() => set('recurrence_type', r)}
+                      key={ft}
+                      style={[styles.recurrBtn, form.frequency_type === ft && styles.recurrBtnActive]}
+                      onPress={() => setFrequencyType(ft)}
                     >
-                      <Text style={[styles.recurrText, form.recurrence_type === r && styles.recurrTextActive]}>
-                        {t(`commitments.recurrence${r.charAt(0).toUpperCase()}${r.slice(1)}`)}
+                      <Text style={[styles.recurrText, form.frequency_type === ft && styles.recurrTextActive]}>
+                        {t(`addExpense.freq_${ft}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.recurrRow}>
+                  {(['semiannual', 'annual'] as FrequencyType[]).map((ft) => (
+                    <TouchableOpacity
+                      key={ft}
+                      style={[styles.recurrBtn, form.frequency_type === ft && styles.recurrBtnActive]}
+                      onPress={() => setFrequencyType(ft)}
+                    >
+                      <Text style={[styles.recurrText, form.frequency_type === ft && styles.recurrTextActive]}>
+                        {t(`addExpense.freq_${ft}`)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </View>
+
+              {/* Interval stepper — only for every_n_weeks */}
+              {form.frequency_type === 'every_n_weeks' && (
+                <View style={{ marginTop: spacing.md }}>
+                  <Text style={[styles.sectionLabel, { marginBottom: spacing.sm }]}>{t('addExpense.repeatEvery')}</Text>
+                  <View style={styles.dueDayRow}>
+                    <TouchableOpacity
+                      style={styles.dueDayBtn}
+                      onPress={() => set('frequency_interval', Math.max(2, (form.frequency_interval || 2) - 1))}
+                    >
+                      <Ionicons name="remove" size={20} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                    <View style={styles.dueDayValue}>
+                      <Text style={styles.dueDayNum}>{form.frequency_interval || 2}</Text>
+                      <Text style={styles.dueDaySub}>{t('addExpense.weeksUnit')}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.dueDayBtn}
+                      onPress={() => set('frequency_interval', Math.min(26, (form.frequency_interval || 2) + 1))}
+                    >
+                      <Ionicons name="add" size={20} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Due Day — shown for monthly (recurring) and all non-recurring commitments */}
+          {(!form.is_recurring || form.frequency_type === 'monthly') && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>{t('addExpense.dueDay')}</Text>
+              <View style={styles.dueDayRow}>
+                <TouchableOpacity
+                  style={styles.dueDayBtn}
+                  onPress={() => setDueDay(Math.max(1, form.due_day - 1))}
+                >
+                  <Ionicons name="remove" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+                <View style={styles.dueDayValue}>
+                  <Text style={styles.dueDayNum}>{form.due_day}</Text>
+                  <Text style={styles.dueDaySub}>{t('addExpense.ofEachMonth')}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.dueDayBtn}
+                  onPress={() => setDueDay(Math.min(31, form.due_day + 1))}
+                >
+                  <Ionicons name="add" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Anchor date — shown for non-monthly recurring commitments */}
+          {form.is_recurring && form.frequency_type !== 'monthly' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>{t('addExpense.anchorDateLabel')}</Text>
+              <Text style={styles.fieldHint}>{t('addExpense.anchorDateHint')}</Text>
+              <DateInput
+                value={form.anchor_date}
+                onChange={(iso) => set('anchor_date', iso)}
+              />
             </View>
           )}
 

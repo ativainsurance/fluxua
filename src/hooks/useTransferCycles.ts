@@ -18,6 +18,7 @@ import { ExpenseWithRecord, RecurringIncome, TransferCycle, CycleCommitment } fr
 import { fetchExpenses, fetchExpenseRecords } from '../services/supabase';
 import { useHousehold } from '../contexts/HouseholdContext';
 import { isExpenseActive } from './useExpenses';
+import { getOccurrenceDates } from '../utils/occurrences';
 
 // ─── Window helpers ───────────────────────────────────────────────────────────
 
@@ -61,16 +62,19 @@ function buildCycle(
     });
   };
 
+  // Use occurrenceDate when set (sub-monthly expenses), else fall back to due_day
+  const effectiveDay = (e: ExpenseWithRecord) => e.occurrenceDate?.getDate() ?? e.due_day;
+
   if (cycleNumber === 1) {
     personalExpenses
-      .filter((e) => inCycle1Window(e.due_day))
+      .filter((e) => inCycle1Window(effectiveDay(e)))
       .forEach(addCommitment);
   } else {
     personalExpenses
-      .filter((e) => inCycle2WindowCurrentMonth(e.due_day))
+      .filter((e) => inCycle2WindowCurrentMonth(effectiveDay(e)))
       .forEach(addCommitment);
     nextMonthExpenses
-      .filter((e) => inCycle2WindowNextMonth(e.due_day))
+      .filter((e) => inCycle2WindowNextMonth(effectiveDay(e)))
       .forEach(addCommitment);
   }
 
@@ -177,12 +181,25 @@ export const computeTransferCycles = (
   // tab and Transfer math — enforces start_date, end_date, and recurrence type.
   // is_excluded is intentionally NOT applied: Transfer must count commitments
   // regardless of per-month display exclusion status.
-  const personal = expenses.filter(
-    (e) => e.type === 'personal' && isExpenseActive(e, month, year)
-  );
-  const nextPersonal = nextMonthExpenses.filter(
-    (e) => e.type === 'personal' && isExpenseActive(e, nextMonth, nextYear)
-  );
+  //
+  // Sub-monthly expenses (weekly, every-N-weeks) are expanded into one item per
+  // occurrence so each can be placed in the correct cycle window by date.
+  const expandOccurrences = (
+    exps: ExpenseWithRecord[],
+    m: number,
+    y: number
+  ): ExpenseWithRecord[] =>
+    exps
+      .filter((e) => e.type === 'personal' && isExpenseActive(e, m, y))
+      .flatMap((e) => {
+        if (!e.anchor_date) return [e];
+        const occs = getOccurrenceDates(e, m, y);
+        if (occs.length <= 1) return [e];
+        return occs.map((date) => ({ ...e, occurrenceDate: date }));
+      });
+
+  const personal = expandOccurrences(expenses, month, year);
+  const nextPersonal = expandOccurrences(nextMonthExpenses, nextMonth, nextYear);
 
   const c1 = buildCycle(1, month, year, personal, [], incomes);
   const c2 = buildCycle(2, month, year, personal, nextPersonal, incomes);

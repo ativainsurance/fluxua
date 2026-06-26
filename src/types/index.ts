@@ -37,6 +37,16 @@ export const defaultBudgetBucket = (
 
 export type RecurrenceType = 'monthly' | 'weekly' | 'quarterly' | 'semiannual' | 'yearly' | 'one-time';
 
+export type FrequencyType =
+  | 'weekly'
+  | 'biweekly'
+  | 'every_n_weeks'
+  | 'monthly'
+  | 'bimonthly'
+  | 'quarterly'
+  | 'semiannual'
+  | 'annual';
+
 export const RECURRENCE_LABELS: Record<RecurrenceType, string> = {
   weekly: 'Weekly',
   monthly: 'Monthly',
@@ -124,6 +134,12 @@ export interface Expense {
   budget_bucket: BudgetBucket;
   /** Optional emoji displayed as the commitment's leading icon */
   emoji?: string;
+  /** How often this commitment repeats */
+  frequency_type: FrequencyType;
+  /** For 'every_n_weeks': how many weeks between occurrences */
+  frequency_interval: number;
+  /** The first occurrence date (ISO YYYY-MM-DD) — all future occurrences derive from this */
+  anchor_date: string;
   created_at: string;
   updated_at: string;
 }
@@ -178,6 +194,12 @@ export interface ExpenseWithRecord extends Expense {
   record?: ExpenseRecord;
   /** Populated for is_variable_amount expenses when record exists */
   cardPayments?: CardPayment[];
+  /**
+   * Set when this item represents one of several occurrences of the same
+   * expense within a month (e.g. weekly cleaning on Jul 6, Jul 13, etc.).
+   * Undefined for monthly expenses that occur once per month.
+   */
+  occurrenceDate?: Date;
 }
 
 /**
@@ -236,6 +258,12 @@ export interface ExpenseFormData {
   emoji: string;
   /** User ID of the household member responsible for this commitment (empty = all) */
   holder_user_id: string;
+  /** How often this commitment repeats */
+  frequency_type: FrequencyType;
+  /** For 'every_n_weeks': how many weeks between occurrences */
+  frequency_interval: number;
+  /** First occurrence date (ISO YYYY-MM-DD) */
+  anchor_date: string;
 }
 
 // ─────────────────────────────────────────────

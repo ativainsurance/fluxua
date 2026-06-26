@@ -338,7 +338,21 @@
     "bucket_debt": "Dívida",
     "assignTo": "ATRIBUIR A",
     "assignAll": "Todos",
-    "assignYou": "Eu"
+    "assignYou": "Eu",
+    "frequency": "FREQUÊNCIA",
+    "freq_weekly": "Semanal",
+    "freq_biweekly": "Quinzenal",
+    "freq_every_n_weeks": "A cada N sem.",
+    "freq_monthly": "Mensal",
+    "freq_bimonthly": "Bimestral",
+    "freq_quarterly": "Trimestral",
+    "freq_semiannual": "Semestral",
+    "freq_annual": "Anual",
+    "repeatEvery": "REPETIR A CADA",
+    "weeksUnit": "semanas",
+    "anchorDateLabel": "PRIMEIRA OCORRÊNCIA",
+    "anchorDateHint": "Data da primeira ocorrência — as próximas repetem a partir daqui.",
+    "errorAnchorDateRequired": "Informe a data da primeira ocorrência."
   },
   "dateInput": {
     "placeholder": "MM/DD/AAAA",

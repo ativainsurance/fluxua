@@ -276,7 +276,11 @@ export default function ExpensesScreen() {
       ) : (
         <SectionList
           sections={sections}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) =>
+            item.occurrenceDate
+              ? `${item.id}_${item.occurrenceDate.toISOString().slice(0, 10)}`
+              : item.id
+          }
           contentContainerStyle={[
             styles.list,
             sections.length === 0 && styles.listEmpty,
